@@ -1,0 +1,12 @@
+{
+  "name": "cookiecutter",
+  "description": "AI-guided Django project setup — create only what you need, understand everything you create",
+  "version": "0.1.0",
+  "author": {
+    "name": "Mikhail Podgurskiy",
+    "email": "mikhail@viewflow.io"
+  },
+  "homepage": "https://github.com/viewflow/cookiecutter",
+  "repository": "https://github.com/viewflow/cookiecutter",
+  "license": "MIT"
+}
