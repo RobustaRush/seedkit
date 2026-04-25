@@ -1,4 +1,5 @@
 ---
+name: cookiecutter
 description: Set up a new Django project with only the components you need.
 ---
 
