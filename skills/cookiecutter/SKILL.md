@@ -16,6 +16,7 @@ uv --version
 - `references/uv.md` — uv installation and commands
 - `references/new-project.md` — new project (Two Scoops layout, django-environ, uv)
 - `references/docker.md` — Docker + local docker-compose
+- `references/lint.md` — Ruff (Django-aware rules, optional pre-commit hook)
 
 ### Add-ons
 
