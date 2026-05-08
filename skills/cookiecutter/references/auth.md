@@ -75,7 +75,13 @@ uv run manage.py migrate
 
 Allauth ships its own templates; override only when the user wants custom branding.
 
-If a custom user model from `references/custom-user.md` is in use, drop the `username` field and use the email-as-`USERNAME_FIELD` variant — otherwise email-only signup will fail because `AbstractUser` requires a username.
+If a custom user model from `references/custom-user.md` is in use, drop the `username` field and use the email-as-`USERNAME_FIELD` variant — otherwise email-only signup will fail because `AbstractUser` requires a username. With `username = None` on the user model, also add to settings:
+
+```python
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+```
+
+Without it, allauth's `get_username_max_length()` calls `User._meta.get_field("username")` and `/accounts/signup/` raises `FieldDoesNotExist`.
 
 ---
 
@@ -117,6 +123,30 @@ urlpatterns = [
     path("accounts/", include("mailauth.urls", namespace="mailauth")),
 ]
 ```
+
+### Templates (required)
+
+`django-mail-auth` does not ship default templates — `/accounts/login/` returns 500 without them. Create at minimum:
+
+```html
+{# templates/mailauth/login.html #}
+{% extends "base.html" %}
+{% block content %}
+<form method="post">{% csrf_token %}{{ form }}<button>Send link</button></form>
+{% endblock %}
+
+{# templates/mailauth/login_email_sent.html #}
+{% extends "base.html" %}
+{% block content %}<p>Check your inbox.</p>{% endblock %}
+
+{# templates/mailauth/email/login_email.html #}
+<a href="{{ login_url }}">Sign in</a>
+
+{# templates/mailauth/email/login_email_subject.txt #}
+Sign in
+```
+
+Add `BASE_DIR / "templates"` to `TEMPLATES[0]["DIRS"]` if it isn't there already.
 
 ### Migrate
 

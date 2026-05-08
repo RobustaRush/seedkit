@@ -47,7 +47,10 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True  # silence Celery 5+ deprecatio
 
 ## Define a task
 
+Tasks must live in a registered Django app (`<app>/tasks.py`) — `app.autodiscover_tasks()` only scans `INSTALLED_APPS`. **Don't put `tasks.py` in `config/`** — `config/` is the project package and isn't in `INSTALLED_APPS`, so tasks defined there are never discovered. If no domain app exists yet, create one (`uv run django-admin startapp <name>`) and put the task in `<name>/tasks.py`.
+
 ```python
+# <app>/tasks.py
 from celery import shared_task
 
 @shared_task
@@ -121,6 +124,8 @@ Run the worker as a separate process/service alongside web:
 ## Periodic Tasks — Celery Beat
 
 Add this section only if the user needs scheduled/periodic tasks.
+
+Beat's default `PersistentScheduler` writes a `celerybeat-schedule` file (plus `-shm` and `-wal` SQLite sidecars) to the working directory at runtime. Add `celerybeat-schedule*` to `.gitignore` — the generic `*.sqlite3` rule misses them because they have no extension.
 
 ### Settings
 

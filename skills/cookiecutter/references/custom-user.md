@@ -101,6 +101,9 @@ class UserCreationFormEmail(UserCreationForm):
 class UserChangeFormEmail(UserChangeForm):
     class Meta(UserChangeForm.Meta):
         model = User
+        # Don't inherit Meta.field_classes from the parent — it pins
+        # `{"username": UsernameField}`, and `username` no longer exists.
+        field_classes = {}  # type: ignore[assignment]
 
 
 @admin.register(User)
