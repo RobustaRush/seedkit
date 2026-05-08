@@ -49,7 +49,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else None)
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])  # DEBUG already accepts localhost / 127.0.0.1 / [::1]
-DATABASES = {"default": env.db("DATABASE_URL", default="sqlite:///db.sqlite3" if DEBUG else None)}
+DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}" if DEBUG else None)}  # 4 slashes = absolute, survives running manage.py from any cwd
 ```
 
 Defaults are gated by `DEBUG`: in production `DJANGO_DEBUG` is unset, the defaults vanish, and missing values raise `ImproperlyConfigured`.
@@ -76,7 +76,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else None)
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
-DATABASES = {"default": env.db("DATABASE_URL", default="sqlite:///db.sqlite3" if DEBUG else None)}
+DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}" if DEBUG else None)}  # 4 slashes = absolute, survives running manage.py from any cwd
 ```
 
 `local.py` and `production.py` carry **only deltas** from `base.py`. Use them for things that only make sense per-environment: dev tooling (debug-toolbar, query loggers, relaxed CORS) in `local.py`; production hardening (HSTS, secure cookies, manifest static storage) in `production.py`. Never restate values base sets; never redeclare `MIDDLEWARE` / `INSTALLED_APPS` / `DATABASES` / `EMAIL_BACKEND` / `STORAGES`. Mutate inherited lists in place:
@@ -114,7 +114,8 @@ Commit `.env.example` with every env var settings reads:
 DJANGO_SECRET_KEY=replace-me
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
-DATABASE_URL=sqlite:///db.sqlite3
+# DATABASE_URL — leave unset for dev SQLite anchored to BASE_DIR; set with 4 slashes for an absolute path:
+# DATABASE_URL=sqlite:////absolute/path/to/db.sqlite3
 ```
 
 Then `cp .env.example .env` and set a real dev key:

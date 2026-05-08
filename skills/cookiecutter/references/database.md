@@ -4,9 +4,13 @@
 
 ## SQLite
 
+The in-code default in `base.py` already anchors the file to `BASE_DIR` (4-slash absolute URL), so dev works without setting `DATABASE_URL`. Only set it when you want a path outside the project:
+
 ```sh
-DATABASE_URL=sqlite:///db.sqlite3
+DATABASE_URL=sqlite:////absolute/path/to/db.sqlite3
 ```
+
+Three-slash URLs (`sqlite:///db.sqlite3`) are CWD-relative — running `manage.py` from a sub-dir creates a second DB file. Always use four slashes.
 
 No extra dependency. Add `db.sqlite3` to `.gitignore`.
 
