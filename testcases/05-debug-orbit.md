@@ -43,6 +43,15 @@ curl -sf http://127.0.0.1:8025/ > /dev/null
 # send a test mail via shell, check Mailpit JSON API for receipt
 ```
 
+## Log check
+
+Run after the boot check; the testcase is a failure if any of these print matches:
+
+```sh
+docker compose logs --tail=30 mailpit
+! docker compose logs mailpit 2>&1 | grep -iE 'fatal|panic'
+```
+
 ## Check report
 
 **Execute this command yourself before stopping. Do not present it as a "next step" for the user — the testcase isn't done until the review file exists.** It runs an independent review (the model that built the project shouldn't grade its own output) and writes the result to `REVIEW.md` in the project dir.

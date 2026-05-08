@@ -58,6 +58,17 @@ curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
 docker build -t 07-vps-saas:test .
 ```
 
+## Log check
+
+Run after the boot check; the testcase is a failure if any of these print matches:
+
+```sh
+docker compose logs --tail=80 web db redis celery
+! docker compose logs web celery 2>&1 | grep -iE 'traceback|^error|critical|unhandled'
+# celery should report worker ready:
+docker compose logs celery 2>&1 | grep -iE 'celery@.*ready|mingle|sync with'
+```
+
 ## Check report
 
 **Execute this command yourself before stopping. Do not present it as a "next step" for the user — the testcase isn't done until the review file exists.** It runs an independent review (the model that built the project shouldn't grade its own output) and writes the result to `REVIEW.md` in the project dir.

@@ -58,6 +58,16 @@ docker build -t 08-fly-app:test .
 docker images 08-fly-app:test
 ```
 
+## Log check
+
+Run after the boot check; the testcase is a failure if any of these print matches:
+
+```sh
+docker compose logs --tail=80 web worker db redis minio
+! docker compose logs web worker 2>&1 | grep -iE 'traceback|^error|critical|unhandled'
+docker compose logs worker 2>&1 | grep -iE 'celery@.*ready|mingle|sync with'
+```
+
 ## Check report
 
 **Execute this command yourself before stopping. Do not present it as a "next step" for the user — the testcase isn't done until the review file exists.** It runs an independent review (the model that built the project shouldn't grade its own output) and writes the result to `REVIEW.md` in the project dir.

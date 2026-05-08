@@ -57,6 +57,16 @@ docker build -t 09-ssh-deploy:test .
 grep -E 'SSH_(HOST|USER|KEY)' .github/workflows/deploy.yml
 ```
 
+## Log check
+
+Run after the boot check; the testcase is a failure if any of these print matches:
+
+```sh
+docker compose logs --tail=80 web worker db redis
+! docker compose logs web worker 2>&1 | grep -iE 'traceback|^error|critical|unhandled'
+docker compose logs worker 2>&1 | grep -iE 'rqworker|listening on|default'
+```
+
 ## Check report
 
 **Execute this command yourself before stopping. Do not present it as a "next step" for the user — the testcase isn't done until the review file exists.** It runs an independent review (the model that built the project shouldn't grade its own output) and writes the result to `REVIEW.md` in the project dir.

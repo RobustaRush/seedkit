@@ -48,6 +48,16 @@ uv run celery -A config beat -l info &
 # enqueue + observe one task
 ```
 
+## Log check
+
+Run after the boot check; the testcase is a failure if any of these print matches:
+
+```sh
+docker compose logs --tail=50 db redis
+# fail if anything in db/redis logs looks fatal:
+! docker compose logs db redis 2>&1 | grep -iE 'fatal|panic|traceback'
+```
+
 ## Check report
 
 **Execute this command yourself before stopping. Do not present it as a "next step" for the user — the testcase isn't done until the review file exists.** It runs an independent review (the model that built the project shouldn't grade its own output) and writes the result to `REVIEW.md` in the project dir.
