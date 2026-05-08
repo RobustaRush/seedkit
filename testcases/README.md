@@ -22,18 +22,25 @@ Each test case is one `.md` file:
 ## Run
 <commands the AI should execute end-to-end>
 
-## Cleanup
-<commands to drop external resources: host DBs, docker volumes, built
-images, deployed remote artifacts. Leave the project code in place —
-the report references it.>
-
 ## Check report
-_(filled in after the run)_
+Run `claude -p` from the project dir with `--model claude-opus-4-7`,
+restricted to read-only tools so the reviewer can't trigger the
+cookiecutter skill and rebuild the project. Word the prompt as
+"audit the existing code", not "review the Django project" — the
+latter pattern-matches the skill description and starts a build.
+Pipe the output to `REVIEW.md` inside the project (`| tee REVIEW.md`)
+so the report is persisted next to the code. Paste a digest below.
 
 - What worked out of the box: …
 - What broke: …
 - Fixes applied: …
 - Suggested skill changes: …
+
+## Cleanup
+<commands to drop external resources: host DBs, docker volumes, built
+images, deployed remote artifacts. Run *after* the review so the
+reviewer can still inspect a live stack. Leave the project code in
+place — the report references it.>
 ```
 
 ## Requirements for the test set
@@ -75,7 +82,7 @@ Coverage rules. Use these to regenerate the suite when the skill changes.
 
 6. **Each test case must run end-to-end** in the chosen dev mode, including `migrate`, `createsuperuser`, and the boot check (admin login). Add-on-specific checks (e.g. "enqueue and consume a Celery task") belong in the test case.
 
-7. **Check report is mandatory.** After running, the AI fills in the report section honestly: list every manual fix applied, even small ones. If everything worked first try, say so. The report is the actual deliverable — it drives skill improvements.
+7. **Check report is mandatory and produced by an independent reviewer.** After running, invoke `claude -p "..." --model claude-opus-4-7` from a fresh session against the generated project; do not let the same model that built the project grade its own output. Paste the reviewer's response into the report and add the human-curated bullets (what worked, what broke, fixes applied, suggested skill changes). The report drives skill improvements.
 
 8. **Keep the suite small.** Aim for ~6–10 test cases total. Beyond that, maintenance cost outweighs coverage value. Drop a case before adding a redundant one.
 

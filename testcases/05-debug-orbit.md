@@ -40,6 +40,25 @@ curl -sf http://127.0.0.1:8025/ > /dev/null
 # send a test mail via shell, check Mailpit JSON API for receipt
 ```
 
+## Check report
+
+**Execute this command yourself before stopping. Do not present it as a "next step" for the user — the testcase isn't done until the review file exists.** It runs an independent review (the model that built the project shouldn't grade its own output) and writes the result to `REVIEW.md` in the project dir.
+
+```sh
+claude -p \
+  --model claude-opus-4-7 \
+  --allowedTools "Read,Grep,Glob,Bash(ls:*),Bash(cat:*),Bash(rg:*)" \
+  "Audit the existing code in this directory. Do NOT create, generate, or modify any files — read-only review only. Do NOT invoke any skill (especially cookiecutter). List bugs, inconsistencies with Django best practices, and concrete fixes. Be brief, top issues first." \
+  | tee REVIEW.md
+```
+
+Paste the output below.
+
+- What worked out of the box:
+- What broke:
+- Fixes applied:
+- Suggested skill changes:
+
 ## Cleanup
 
 Leave the code. Tear down the Mailpit container:
@@ -47,12 +66,3 @@ Leave the code. Tear down the Mailpit container:
 ```sh
 docker compose down -v
 ```
-
-## Check report
-
-_(filled in after the run)_
-
-- What worked out of the box:
-- What broke:
-- Fixes applied:
-- Suggested skill changes:

@@ -3,11 +3,15 @@
 ## Create
 
 ```sh
-uv init {project_slug}
+uv init --bare {project_slug}     # --bare skips main.py / README.md / .python-version
 cd {project_slug}
 uv add django django-environ
 uv run django-admin startproject config .
 ```
+
+After `startproject`, only **edit** `config/settings.py` — do not strip lines `django-admin` wrote (keep `DEFAULT_AUTO_FIELD`, `STATIC_URL`, etc.). The instructions below replace `SECRET_KEY` / `DEBUG` / `ALLOWED_HOSTS` / `DATABASES`; everything else stays.
+
+Don't create an app named after the project (e.g. `shop/`) unless the user explicitly asked for one. The Django package is `config/`; apps come later when there's something to put in them.
 
 ## Settings — ask the user which structure they prefer
 
@@ -30,7 +34,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else None)
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"] if DEBUG else [])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])  # DEBUG already accepts localhost / 127.0.0.1 / [::1]
 DATABASES = {"default": env.db("DATABASE_URL", default="sqlite:///db.sqlite3" if DEBUG else None)}
 ```
 
@@ -61,7 +65,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else None)
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"] if DEBUG else [])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])  # DEBUG already accepts localhost / 127.0.0.1 / [::1]
 DATABASES = {"default": env.db("DATABASE_URL", default="sqlite:///db.sqlite3" if DEBUG else None)}
 ```
 
@@ -85,6 +89,14 @@ from .base import *
 
 ---
 
+## STATIC_ROOT
+
+Append to `config/settings.py` (or `config/settings/base.py` for split layout) so `collectstatic` has a destination — `startproject` only writes `STATIC_URL`:
+
+```python
+STATIC_ROOT = BASE_DIR / "staticfiles"
+```
+
 ## .env
 
 ```sh
@@ -96,16 +108,7 @@ DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
 
 ## .gitignore
 
-```gitignore
-.venv/
-.env
-db.sqlite3
-staticfiles/
-__pycache__/
-*.pyc
-```
-
-(Add `media/` if you wire up user uploads.)
+Write a `.gitignore` for a Django + uv project. Must include `.venv/`, `.env`, `*.sqlite3`, `staticfiles/`, `media/`. Add the other standard Python / Django / editor / tooling entries you know belong. Do this before the first commit.
 
 ## Boot check
 
