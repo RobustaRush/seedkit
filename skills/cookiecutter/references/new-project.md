@@ -65,17 +65,28 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])  # DEBUG already ac
 DATABASES = {"default": env.db("DATABASE_URL", default="sqlite:///db.sqlite3" if DEBUG else None)}
 ```
 
-**config/settings/local.py**
+**config/settings/local.py** and **config/settings/production.py** contain **only deltas** from `base.py` — settings that genuinely differ. Use them for things that *only make sense in that environment*: dev-only tooling (debug-toolbar, query loggers, relaxed CORS) goes in `local.py`; production hardening (HSTS, secure cookies, manifest static storage) goes in `production.py`. Never restate values that are already in base; never redeclare `MIDDLEWARE` / `INSTALLED_APPS` / `DATABASES` / `EMAIL_BACKEND` / `STORAGES`. Mutate the inherited list in place when something needs to be added (e.g. WhiteNoise middleware in production):
 
 ```python
+# config/settings/local.py
 from .base import *
-```
 
-**config/settings/production.py**
+# only what differs from base
+```
 
 ```python
+# config/settings/production.py
 from .base import *
+
+# Append when order doesn't matter:
+# MIDDLEWARE += ["some.middleware.SomeThing"]
+#
+# Insert at a specific position when the middleware requires it
+# (e.g. WhiteNoise must be directly after SecurityMiddleware):
+# MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 ```
+
+Don't re-instantiate `env = environ.Env()` — it's already imported via `from .base import *`.
 
 **manage.py** — change `DJANGO_SETTINGS_MODULE` to `"config.settings.local"`.
 

@@ -13,13 +13,11 @@ uv add whitenoise
 
 ## config/settings/base.py
 
-```python
-MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # right after SecurityMiddleware
-    ...
-]
+Insert `whitenoise.middleware.WhiteNoiseMiddleware` into the **existing** `MIDDLEWARE` list — directly after `SecurityMiddleware`. Do not redeclare the full list.
 
+Add the rest below:
+
+```python
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
@@ -35,6 +33,8 @@ STORAGES = {
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 ```
+
+The `CompressedManifestStaticFilesStorage` backend is the **only** switch needed for compression + hashed filenames. Don't invent `WHITENOISE_COMPRESS`, `WHITENOISE_USE_FINDERS`, `STATICFILES_STORAGE`, or other settings — they're either deprecated or don't exist.
 
 ## config/urls.py
 
