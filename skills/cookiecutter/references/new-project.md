@@ -5,7 +5,7 @@
 ```sh
 uv init --bare {project_slug}     # --bare skips main.py / README.md / .python-version
 cd {project_slug}
-uv add django django-environ
+uv add 'django>=6.0,<7.0' django-environ
 uv run django-admin startproject config .
 ```
 

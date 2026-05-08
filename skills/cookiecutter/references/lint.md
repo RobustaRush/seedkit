@@ -45,6 +45,13 @@ known-first-party = ["{project_slug}"]
 quote-style = "double"
 ```
 
+After installing and configuring Ruff, run once to normalize the just-generated codebase (`startproject` writes single quotes by default):
+
+```sh
+uv run ruff format .
+uv run ruff check . --fix
+```
+
 ## Poe tasks
 
 Add to `[tool.poe.tasks]`:
