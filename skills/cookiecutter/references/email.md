@@ -1,6 +1,6 @@
 # Email
 
-Console backend in development, SMTP backend in production — controlled by a single `EMAIL_URL` env var parsed by `django-environ`.
+Stock Django requires picking the email backend (`EMAIL_BACKEND`, plus host/port/user/password/tls knobs) one setting at a time. This reference uses `django-environ`'s `email_url` parser so a single `EMAIL_URL` env var (`consolemail://`, `smtp+tls://user:pass@host:port`, etc.) drives everything — same shape as `DATABASE_URL`, swap providers without touching code, console in dev / SMTP in prod from one variable.
 
 ## Settings
 

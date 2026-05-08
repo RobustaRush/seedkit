@@ -1,6 +1,6 @@
 # Django Tasks (Django 6.0+)
 
-Uses the built-in `django.tasks` API. Requires a third-party backend for production.
+Django 6.0 ships the `django.tasks` API in core: a vendor-neutral `@task` decorator + `enqueue` / `enqueue_on_commit` / result-checking, modelled after `django.core.cache`. Pick a third-party backend for the actual queue. Lighter footprint than Celery (no separate broker required if you pick the DB backend), but no Beat-equivalent scheduler, no chained workflows, no Flower-class monitoring UI yet.
 
 Ask the user which backend they prefer:
 - **Database** (`django-tasks-db`) — simplest, no extra infrastructure, tasks stored in DB

@@ -1,5 +1,7 @@
 # Celery
 
+Django itself has no background-task system — the request/response cycle is the whole runtime. Celery is the long-established Python distributed task queue: workers process jobs off a broker (Redis here), with retries, rate limits, schedules (Beat), priority queues, chained workflows, and a large ecosystem (Flower UI, monitoring exporters). Use it when you have non-trivial background work — emails, image processing, periodic syncs, multi-step pipelines.
+
 Requires Redis. Set up `reference/redis.md` first if not already done.
 
 Ask the user if they also need **periodic tasks** (celery beat) — add the Beat section if yes.

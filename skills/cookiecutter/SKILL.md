@@ -51,14 +51,16 @@ Before any question, send one short message that summarises — in your own word
 
 ### 2. Foundation — ask one question at a time, in this order
 
+Before each question that involves a third-party package, briefly tell the user — in 1–2 sentences — *what that package adds beyond stock Django* (drawn from the matching reference file's intro), so they can decide on capability rather than terminology. Then ask.
+
 1. Project name and a one-line purpose.
 2. Settings layout: single `settings.py` or split `base/local/production`.
-3. Database: **SQLite** (zero-setup) or **PostgreSQL**.
-4. Local dev mode: **uv on host** or **docker-compose**.
-   - Postgres + uv-on-host → ask: create a local Postgres DB on the host, or run only Postgres in Docker while Django runs on the host.
+3. Database: SQLite or PostgreSQL.
+4. Local dev mode: uv on host or docker-compose.
+   - Postgres + uv-on-host → host Postgres or Postgres-only in Docker.
    - docker-compose → full stack in Compose.
-   - SQLite + Docker is allowed but warn the file lives in a container volume.
-5. Custom user model (`AUTH_USER_MODEL`): yes (recommended) / no. Must be decided now — adding it after the first migrate is painful. See `references/custom-user.md`.
+   - SQLite + Docker — warn that the file lives in a container volume.
+5. Custom user model: yes / no. Must be decided now (see `references/custom-user.md`).
 6. Lint with Ruff: yes / no.
 
 Never bundle multiple questions in one message.
@@ -81,7 +83,7 @@ Do not proceed to add-ons until the user confirms they can log in to `/admin/`.
 
 ### 5. Add-ons, then production
 
-Ask which add-ons the user wants. For production deployment, ask which target (VPS / managed / GitHub SSH) before loading the deploy reference.
+Ask which add-ons the user wants — same briefing rule as the foundation: before each question, summarise the options in 1–2 sentences each, derived from the matching reference file's intro, so the user understands *what each one does* and *when to pick it*. Then ask. For production deployment, ask which target (VPS / managed / GitHub SSH) before loading the deploy reference.
 
 ### 6. README
 

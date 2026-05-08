@@ -1,6 +1,11 @@
 # Authentication
 
-Pick **one** of the two options below. Both replace `django.contrib.auth`'s bare login views with something usable; they don't compose. If the user said "no auth add-on", skip this whole reference and stay on `django.contrib.auth` defaults.
+Stock Django ships only barebones login/logout views and a `User` model. Pick one of the two add-ons:
+
+- **`django-allauth`** — full account flows on top of Django: signup, email verification, password reset, optional social providers (Google / GitHub / etc.), 2FA support. The most-used auth library in the Django ecosystem.
+- **`django-mail-auth`** — passwordless magic-link login. Single tiny dependency, no passwords stored, no social providers. Trade off feature breadth for simplicity.
+
+If the user said "no auth add-on", skip this reference and stay on `django.contrib.auth` defaults.
 
 Email backend (console / SMTP / Mailpit) must be configured first — both options send mail. See `references/email.md`.
 

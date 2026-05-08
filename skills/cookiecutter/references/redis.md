@@ -1,5 +1,7 @@
 # Redis
 
+`django-redis` plugs Redis into Django's cache framework. Stock Django ships local-memory and DB cache backends only — neither survives a process restart or scales past one worker. Redis adds a shared, durable, fast cache plus the broker Celery and django-tasks-rq need.
+
 ## Install
 
 ```sh
