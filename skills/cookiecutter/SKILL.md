@@ -79,4 +79,8 @@ Ask which add-ons the user wants. For production deployment, ask which target (V
 
 ### 6. README
 
-After any setup step, update `README.md` with the key decisions (stack, DB, dev mode, add-ons, deploy target) and the main commands (install, test, migrate, run, deploy).
+After any setup step, update `README.md` with the key decisions (stack, DB, dev mode, add-ons, deploy target) and the main commands (install, test, migrate, run, deploy). Don't hardcode dependency versions — read them from `pyproject.toml` if you want to mention them.
+
+### Don't improvise
+
+Use the reference snippets as written. Don't add packages the user didn't ask for (e.g. `django-extensions`), don't keep boilerplate left over from `startproject` that the snippet replaces, don't reimplement what `django-environ` already does.

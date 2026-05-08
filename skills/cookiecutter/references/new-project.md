@@ -11,6 +11,8 @@ uv run django-admin startproject config .
 
 ## Settings — ask the user which structure they prefer
 
+Use the snippets below verbatim. Don't keep `import os` from the generated `settings.py`, don't add a redundant `env("DEBUG", ...)` after the cast, don't reimplement `env.list` with `.split(",")`. The shape is intentional.
+
 ---
 
 ### Option A: Single settings file (simpler)
@@ -94,7 +96,16 @@ DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
 
 ## .gitignore
 
-Create `.gitignore` for Django + uv.
+```gitignore
+.venv/
+.env
+db.sqlite3
+staticfiles/
+__pycache__/
+*.pyc
+```
+
+(Add `media/` if you wire up user uploads.)
 
 ## Boot check
 
