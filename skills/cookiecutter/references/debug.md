@@ -60,15 +60,26 @@ uv run manage.py migrate
 
 ### Logging (optional)
 
+`django-orbit` is a dev dependency, so this `LOGGING` block must live in `config/settings/local.py` only — never `base.py` or `production.py`, otherwise prod boot fails on the missing `orbit` import. Keep a `console` handler alongside `orbit` so `runserver` output isn't swallowed:
+
 ```python
+# config/settings/local.py
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {
+        "console": {"class": "logging.StreamHandler"},
         "orbit": {"()": "orbit.handlers.OrbitLogHandler"},
     },
-    "root": {"handlers": ["orbit"], "level": "DEBUG"},
+    "root": {"handlers": ["console", "orbit"], "level": "DEBUG"},
 }
+```
+
+For single-file layout, gate on `DEBUG`:
+
+```python
+if DEBUG:
+    LOGGING = { ... }
 ```
 
 ### MCP — AI assistant integration (optional)
