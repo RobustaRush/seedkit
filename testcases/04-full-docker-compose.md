@@ -46,6 +46,14 @@ curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
 # enqueue + observe one task
 ```
 
+## Cleanup
+
+Leave the code. Tear down containers and volumes (web, db, redis, worker, minio + named volumes):
+
+```sh
+docker compose down -v
+```
+
 ## Check report
 
 _(filled in after the run)_

@@ -43,6 +43,14 @@ curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
 uv run ruff check .
 ```
 
+## Cleanup
+
+Leave the code. Drop the host Postgres database:
+
+```sh
+dropdb shop_db
+```
+
 ## Check report
 
 _(filled in after the run)_

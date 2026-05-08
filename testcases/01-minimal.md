@@ -37,6 +37,10 @@ uv run manage.py runserver &
 curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
 ```
 
+## Cleanup
+
+Leave the code in place; no external resources to remove (SQLite file lives inside the project dir).
+
 ## Check report
 
 _(filled in after the run)_

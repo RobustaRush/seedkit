@@ -40,6 +40,14 @@ curl -sf http://127.0.0.1:8025/ > /dev/null
 # send a test mail via shell, check Mailpit JSON API for receipt
 ```
 
+## Cleanup
+
+Leave the code. Tear down the Mailpit container:
+
+```sh
+docker compose down -v
+```
+
 ## Check report
 
 _(filled in after the run)_

@@ -53,6 +53,15 @@ docker build -t 09-ssh-deploy:test .
 grep -E 'SSH_(HOST|USER|KEY)' .github/workflows/deploy.yml
 ```
 
+## Cleanup
+
+Leave the code. Tear down local containers and the built image. If you actually ran the deploy workflow, SSH into the remote and `docker compose down -v` there, then revoke the deploy SSH key from `~/.ssh/authorized_keys` and the GitHub repo secrets.
+
+```sh
+docker compose down -v
+docker rmi 09-ssh-deploy:test
+```
+
 ## Check report
 
 _(filled in after the run)_

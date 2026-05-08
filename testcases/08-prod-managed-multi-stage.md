@@ -54,6 +54,15 @@ docker build -t 08-fly-app:test .
 docker images 08-fly-app:test
 ```
 
+## Cleanup
+
+Leave the code. Tear down local containers and the built image. If you ran `flyctl launch` for real, also `fly apps destroy 08-fly-app` and revoke any tokens; otherwise nothing to undo on Fly.io.
+
+```sh
+docker compose down -v
+docker rmi 08-fly-app:test
+```
+
 ## Check report
 
 _(filled in after the run)_

@@ -43,6 +43,14 @@ uv run manage.py db_worker &
 # enqueue + observe one task; hit a profiled view; check /silk/
 ```
 
+## Cleanup
+
+Leave the code. Drop the host Postgres database:
+
+```sh
+dropdb silk_db
+```
+
 ## Check report
 
 _(filled in after the run)_

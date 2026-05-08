@@ -44,6 +44,14 @@ uv run celery -A config beat -l info &
 # enqueue + observe one task
 ```
 
+## Cleanup
+
+Leave the code. Tear down containers and volumes:
+
+```sh
+docker compose down -v
+```
+
 ## Check report
 
 _(filled in after the run)_

@@ -52,6 +52,15 @@ curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
 docker build -t 07-vps-saas:test .
 ```
 
+## Cleanup
+
+Leave the code. Tear down local containers and remove the built image. No remote VPS was provisioned — nothing to undo there.
+
+```sh
+docker compose down -v
+docker rmi 07-vps-saas:test
+```
+
 ## Check report
 
 _(filled in after the run)_

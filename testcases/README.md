@@ -22,6 +22,11 @@ Each test case is one `.md` file:
 ## Run
 <commands the AI should execute end-to-end>
 
+## Cleanup
+<commands to drop external resources: host DBs, docker volumes, built
+images, deployed remote artifacts. Leave the project code in place —
+the report references it.>
+
 ## Check report
 _(filled in after the run)_
 
