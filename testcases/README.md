@@ -32,7 +32,11 @@ skill (gated `default=... if DEBUG else None`; `globals().update(env.email_url(.
 `local.py` deltas-only; WhiteNoise `STORAGES` in `production.py` only;
 `wsgi.py`/`asgi.py` → production, `manage.py` → local; email-only custom
 user with `UserManager`; `ACCOUNT_EMAIL_VERIFICATION` optional in base /
-mandatory in production) so the reviewer doesn't keep flagging them as
+mandatory in production; SQLite default anchored to `BASE_DIR` via 4-slash
+absolute URL; `.env.example` is a dev template — `DJANGO_DEBUG=True` is
+correct there, prod env vars come from the deploy platform's secrets, not
+this file; `DATABASE_URL` is intentionally absent from `.env.example`
+because dev uses the in-code default) so the reviewer doesn't keep flagging them as
 bugs. Word the prompt as "audit the existing code", not "review the
 Django project" — the latter pattern-matches the skill description and
 starts a build. Pipe the output to `REVIEW.md` inside the project
