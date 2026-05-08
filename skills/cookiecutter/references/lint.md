@@ -31,6 +31,7 @@ select = [
 ignore = [
     "E501",     # line length — formatter handles it
     "S101",     # assert — fine in tests
+    "RUF012",   # mutable class attrs — Django idiom (Meta.fields, REQUIRED_FIELDS, list_display, fieldsets, …)
 ]
 
 [tool.ruff.lint.per-file-ignores]

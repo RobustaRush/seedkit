@@ -50,9 +50,13 @@ DEBUG = env.bool("DJANGO_DEBUG", default=False)
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else None)
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])  # DEBUG already accepts localhost / 127.0.0.1 / [::1]
 DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}" if DEBUG else None)}  # 4 slashes = absolute, survives running manage.py from any cwd
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 ```
 
 Defaults are gated by `DEBUG`: in production `DJANGO_DEBUG` is unset, the defaults vanish, and missing values raise `ImproperlyConfigured`.
+
+After inserting these lines at the top of `settings.py`, delete the original hardcoded `DATABASES` block that `startproject` generated (the `# Database` comment + the dict). Use a single Edit that replaces the entire block — don't leave it in place or it will shadow the env-driven definition above it.
 
 ### Option B — split (base / local / production)
 
