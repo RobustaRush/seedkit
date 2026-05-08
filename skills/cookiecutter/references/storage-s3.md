@@ -12,15 +12,18 @@ uv add django-storages[s3]
 
 ## config/settings/base.py
 
+This block **replaces** any `STATIC_URL` / `STATIC_ROOT` / `MEDIA_URL` / `MEDIA_ROOT` set in the foundation. With S3 there's no local `STATIC_ROOT` — `collectstatic` writes straight to the bucket.
+
 ```python
 AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
 AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="us-east-1")
-# For S3-compatible providers uncomment and set:
-# AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL")
-
-AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+# For S3-compatible providers (MinIO, R2, B2, Spaces) — set the endpoint
+# and skip AWS_S3_CUSTOM_DOMAIN so django-storages signs URLs against
+# the endpoint. AWS-only deployments should set AWS_S3_CUSTOM_DOMAIN.
+AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default="")
+AWS_S3_CUSTOM_DOMAIN = env("AWS_S3_CUSTOM_DOMAIN", default="")
 
 STORAGES = {
     "default": {
@@ -33,8 +36,12 @@ STORAGES = {
     },
 }
 
-STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
-MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+# When AWS_S3_CUSTOM_DOMAIN is set (real AWS / CloudFront) we can hardcode
+# the URL prefix; otherwise let django-storages generate URLs against the
+# endpoint, which is correct for MinIO and other compatibles.
+if AWS_S3_CUSTOM_DOMAIN:
+    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
 ```
 
 ## .env / .env.prod
@@ -44,6 +51,8 @@ AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
 AWS_STORAGE_BUCKET_NAME=...
 AWS_S3_REGION_NAME=us-east-1
+# AWS_S3_ENDPOINT_URL=http://minio:9000      # set for non-AWS providers
+# AWS_S3_CUSTOM_DOMAIN=cdn.example.com       # set for real AWS + CloudFront
 ```
 
 ## Dockerfile

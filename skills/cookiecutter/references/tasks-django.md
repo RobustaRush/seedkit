@@ -22,11 +22,12 @@ uv add django-tasks-db
 
 ### INSTALLED_APPS
 
+`django.tasks` is built into Django 6.0+, so it doesn't go in `INSTALLED_APPS`. Only the backend's app does:
+
 ```python
 INSTALLED_APPS = [
     ...
-    "django_tasks",
-    "django_tasks_db",
+    "django_tasks_db",   # ships migrations for the task table
 ]
 ```
 
@@ -99,17 +100,20 @@ Requires Redis. Set up `reference/redis.md` first if not already done.
 
 ### Install
 
+`django-rq` provides the `rqworker` management command + admin; `django-tasks-rq` is the adapter from `django.tasks` to RQ.
+
 ```sh
-uv add django-tasks-rq
+uv add django-tasks-rq django-rq
 ```
 
 ### INSTALLED_APPS
 
+`django.tasks` is built in. `django_tasks_rq` is just a backend class. Only `django_rq` registers as an app:
+
 ```python
 INSTALLED_APPS = [
     ...
-    "django_tasks",
-    "django_tasks_rq",
+    "django_rq",
 ]
 ```
 
@@ -121,6 +125,12 @@ TASKS = {
         "BACKEND": "django_tasks_rq.RQBackend",
         "QUEUES": ["default"],
     }
+}
+
+# django-rq reads RQ_QUEUES separately from TASKS. Use the URL form so
+# host/port come from REDIS_URL (works in both Compose and host modes).
+RQ_QUEUES = {
+    "default": {"URL": REDIS_URL},
 }
 ```
 
