@@ -113,6 +113,7 @@ class UserAdmin(BaseUserAdmin):
     list_display = ("email", "is_staff", "is_superuser")
     ordering = ("email",)
     search_fields = ("email",)
+    readonly_fields = ("last_login", "date_joined")
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),

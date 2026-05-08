@@ -9,7 +9,10 @@ In `config/settings.py` (or `config/settings/base.py` for split settings):
 ```python
 globals().update(env.email_url("EMAIL_URL", default="consolemail://"))
 
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="webmaster@localhost")
+DEFAULT_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL",
+    default="webmaster@localhost" if DEBUG else None,
+)
 SERVER_EMAIL = env("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 
 ADMINS = [("Admin", email) for email in env.list("DJANGO_ADMINS", default=[])]
