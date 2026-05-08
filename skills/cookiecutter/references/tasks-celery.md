@@ -7,7 +7,7 @@ Ask the user if they also need **periodic tasks** (celery beat) — add the Beat
 ## Install
 
 ```sh
-uv add celery[redis]
+uv add 'celery[redis]'
 ```
 
 ## config/celery.py
@@ -16,7 +16,9 @@ uv add celery[redis]
 import os
 from celery import Celery
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.production")
+# Single-file layout: "config.settings"
+# Split layout: "config.settings.production"
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 app = Celery("config")
 app.config_from_object("django.conf:settings", namespace="CELERY")
@@ -31,15 +33,16 @@ from .celery import app as celery_app
 __all__ = ("celery_app",)
 ```
 
-## config/settings/base.py
+## Settings
 
-Add after `REDIS_URL` (or define it here if Redis reference wasn't used):
+Add to your settings module (`config/settings.py` for single-file, `config/settings/base.py` for split). If `redis.md` was already applied, reuse `REDIS_URL`; otherwise define it here:
 
 ```python
 REDIS_URL = env("REDIS_URL", default="redis://127.0.0.1:6379/0")
 
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True  # silence Celery 5+ deprecation
 ```
 
 ## Define a task
@@ -60,14 +63,22 @@ send_welcome_email.delay(user.id)
 
 ## Local — docker-compose.yml
 
-Add `celery` service (shares the same image as `web`):
+Mirror the dev `web` service: raw uv image + bind mount + shared `venv` / `uv-cache` volumes so code edits hit the worker without a rebuild.
 
 ```yaml
 services:
   celery:
-    build: .
-    command: uv run celery -A config worker -l info
+    image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    working_dir: /app
+    environment:
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_LINK_MODE: copy
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+      - uv-cache:/tmp/uv-cache
     env_file: .env
+    command: sh -c "uv sync && uv run celery -A config worker -l info"
     depends_on:
       db:
         condition: service_healthy
@@ -77,12 +88,14 @@ services:
 
 ## VPS — docker-compose.prod.yml
 
+Production image has `/app/.venv/bin` on `PATH`, so call `celery` directly — no `uv run` overhead per container start.
+
 ```yaml
 services:
   celery:
     image: ghcr.io/{owner}/{project_slug}:latest
     restart: unless-stopped
-    command: uv run celery -A config worker -l info
+    command: celery -A config worker -l info
     env_file: .env.prod
     depends_on:
       db:
@@ -93,15 +106,15 @@ services:
 
 ## Managed platforms
 
-Run the worker as a separate process/service alongside the web process:
+Run the worker as a separate process/service alongside web:
 
-- **Fly.io**: add a `[processes]` section in `fly.toml`:
+- **Fly.io** — add a `[processes]` section in `fly.toml`:
   ```toml
   [processes]
-    web = "uv run gunicorn config.wsgi --bind 0.0.0.0:8000"
-    worker = "uv run celery -A config worker -l info"
+    web = "gunicorn config.wsgi --bind 0.0.0.0:8000"
+    worker = "celery -A config worker -l info"
   ```
-- **Railway / Render**: add a second service pointing at the same Docker image with command `uv run celery -A config worker -l info`.
+- **Railway / Render** — add a second service pointing at the same image with command `celery -A config worker -l info`.
 
 ---
 
@@ -109,7 +122,9 @@ Run the worker as a separate process/service alongside the web process:
 
 Add this section only if the user needs scheduled/periodic tasks.
 
-### config/settings/base.py
+### Settings
+
+Add to the same settings module as above:
 
 ```python
 from celery.schedules import crontab
@@ -127,9 +142,17 @@ CELERY_BEAT_SCHEDULE = {
 ```yaml
 services:
   celery-beat:
-    build: .
-    command: uv run celery -A config beat -l info
+    image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    working_dir: /app
+    environment:
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_LINK_MODE: copy
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+      - uv-cache:/tmp/uv-cache
     env_file: .env
+    command: sh -c "uv sync && uv run celery -A config beat -l info"
     depends_on:
       - celery
 ```
@@ -141,7 +164,7 @@ services:
   celery-beat:
     image: ghcr.io/{owner}/{project_slug}:latest
     restart: unless-stopped
-    command: uv run celery -A config beat -l info
+    command: celery -A config beat -l info
     env_file: .env.prod
     depends_on:
       - celery

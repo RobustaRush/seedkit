@@ -8,6 +8,8 @@ Ask the user which backend they prefer:
 
 Ask if they also need **periodic tasks** (django-crontask) — add the crontask section if yes.
 
+Settings snippets below assume your settings module is `config/settings.py` (single-file) or `config/settings/base.py` (split). Apply to whichever layout was chosen.
+
 ---
 
 ## Backend A: Database
@@ -28,7 +30,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-### config/settings/base.py
+### Settings
 
 ```python
 TASKS = {
@@ -44,7 +46,7 @@ TASKS = {
 uv run manage.py migrate
 ```
 
-### Run worker
+### Run worker (host)
 
 ```sh
 uv run manage.py db_worker
@@ -52,12 +54,22 @@ uv run manage.py db_worker
 
 ### Local — docker-compose.yml
 
+Mirror the dev `web` service: raw uv image + bind mount + shared volumes so code edits reach the worker without a rebuild.
+
 ```yaml
 services:
   worker:
-    build: .
-    command: uv run manage.py db_worker
+    image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    working_dir: /app
+    environment:
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_LINK_MODE: copy
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+      - uv-cache:/tmp/uv-cache
     env_file: .env
+    command: sh -c "uv sync && uv run manage.py db_worker"
     depends_on:
       db:
         condition: service_healthy
@@ -65,12 +77,14 @@ services:
 
 ### VPS — docker-compose.prod.yml
 
+Production image has `/app/.venv/bin` on `PATH` — call `manage.py` directly via `python`.
+
 ```yaml
 services:
   worker:
     image: ghcr.io/{owner}/{project_slug}:latest
     restart: unless-stopped
-    command: uv run manage.py db_worker
+    command: python manage.py db_worker
     env_file: .env.prod
     depends_on:
       db:
@@ -99,7 +113,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-### config/settings/base.py
+### Settings
 
 ```python
 TASKS = {
@@ -110,7 +124,7 @@ TASKS = {
 }
 ```
 
-### Run worker
+### Run worker (host)
 
 ```sh
 uv run manage.py rqworker default
@@ -121,9 +135,17 @@ uv run manage.py rqworker default
 ```yaml
 services:
   worker:
-    build: .
-    command: uv run manage.py rqworker default
+    image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    working_dir: /app
+    environment:
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_LINK_MODE: copy
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+      - uv-cache:/tmp/uv-cache
     env_file: .env
+    command: sh -c "uv sync && uv run manage.py rqworker default"
     depends_on:
       db:
         condition: service_healthy
@@ -138,7 +160,7 @@ services:
   worker:
     image: ghcr.io/{owner}/{project_slug}:latest
     restart: unless-stopped
-    command: uv run manage.py rqworker default
+    command: python manage.py rqworker default
     env_file: .env.prod
     depends_on:
       db:
@@ -168,15 +190,15 @@ transaction.on_commit(lambda: send_welcome_email.enqueue(user.id))
 
 ## Managed platforms
 
-Run the worker as a separate process/service alongside the web process:
+Run the worker as a separate process/service alongside web:
 
-- **Fly.io**: add a `[processes]` section in `fly.toml`:
+- **Fly.io** — add a `[processes]` section in `fly.toml`:
   ```toml
   [processes]
-    web = "uv run gunicorn config.wsgi --bind 0.0.0.0:8000"
-    worker = "uv run manage.py db_worker"  # or rqworker default
+    web = "gunicorn config.wsgi --bind 0.0.0.0:8000"
+    worker = "python manage.py db_worker"  # or rqworker default
   ```
-- **Railway / Render**: add a second service pointing at the same Docker image with the worker command.
+- **Railway / Render** — add a second service pointing at the same image with the worker command.
 
 ---
 
@@ -211,7 +233,7 @@ def daily_report() -> None:
     ...
 ```
 
-### Run
+### Run (host)
 
 ```sh
 uv run manage.py crontask
@@ -222,9 +244,17 @@ uv run manage.py crontask
 ```yaml
 services:
   cron:
-    build: .
-    command: uv run manage.py crontask
+    image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    working_dir: /app
+    environment:
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_LINK_MODE: copy
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+      - uv-cache:/tmp/uv-cache
     env_file: .env
+    command: sh -c "uv sync && uv run manage.py crontask"
     depends_on:
       db:
         condition: service_healthy
@@ -237,7 +267,7 @@ services:
   cron:
     image: ghcr.io/{owner}/{project_slug}:latest
     restart: unless-stopped
-    command: uv run manage.py crontask
+    command: python manage.py crontask
     env_file: .env.prod
     depends_on:
       db:

@@ -26,11 +26,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
-SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
-DATABASES = {"default": env.db("DATABASE_URL")}
+SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else None)
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"] if DEBUG else [])
+DATABASES = {"default": env.db("DATABASE_URL", default="sqlite:///db.sqlite3" if DEBUG else None)}
 ```
+
+The `if DEBUG else None` defaults let dev / build steps boot with no `.env`. Production has `DJANGO_DEBUG` unset, so the defaults disappear and missing values raise `ImproperlyConfigured`.
 
 `manage.py`, `config/wsgi.py`, and `config/asgi.py` keep the default `DJANGO_SETTINGS_MODULE = "config.settings"`.
 
@@ -55,11 +57,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
-SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
-DATABASES = {"default": env.db("DATABASE_URL")}
+SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else None)
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"] if DEBUG else [])
+DATABASES = {"default": env.db("DATABASE_URL", default="sqlite:///db.sqlite3" if DEBUG else None)}
 ```
+
+Dev-only defaults are gated by `DEBUG`. Production has `DJANGO_DEBUG` unset → defaults vanish → missing values raise `ImproperlyConfigured`.
 
 **config/settings/local.py**
 
@@ -85,19 +89,22 @@ from .base import *
 DJANGO_SECRET_KEY=local-dev-secret-key-change-in-production
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
-DATABASE_URL=sqlite:///db.sqlite3
+# DATABASE_URL — set per references/database.md (SQLite or PostgreSQL)
 ```
 
 ## .gitignore
 
 Create `.gitignore` for Django + uv.
 
-## Run
+## Boot check
 
 ```sh
 uv run manage.py migrate
+uv run manage.py createsuperuser
 uv run manage.py runserver
 ```
+
+Confirm `/admin/` login works before continuing.
 
 ## Scripts
 
