@@ -14,6 +14,7 @@ Settings layout: split.
 Database: PostgreSQL.
 Local dev mode: uv on host. Postgres location: on the host (use `createdb silk_db`).
 Lint with Ruff: yes.
+Custom user model: no.
 Add-ons:
   - debug: django-silk (profiling + `@silk_profile`)
   - tasks: Django Tasks with the Database backend (`django-tasks-db`)

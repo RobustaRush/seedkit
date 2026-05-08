@@ -16,6 +16,7 @@ uv --version
 - `references/uv.md` — uv installation and commands
 - `references/new-project.md` — new project (Two Scoops layout, django-environ, uv)
 - `references/database.md` — SQLite vs PostgreSQL (host or Docker)
+- `references/custom-user.md` — custom `AUTH_USER_MODEL` (must be set before first migrate)
 - `references/docker.md` — local docker-compose dev + production image
 - `references/lint.md` — Ruff (Django-aware rules, optional pre-commit hook)
 
@@ -55,13 +56,16 @@ Before any question, send one short message that summarises — in your own word
    - Postgres + uv-on-host → ask: create a local Postgres DB on the host, or run only Postgres in Docker while Django runs on the host.
    - docker-compose → full stack in Compose.
    - SQLite + Docker is allowed but warn the file lives in a container volume.
-5. Lint with Ruff: yes / no.
+5. Custom user model (`AUTH_USER_MODEL`): yes (recommended) / no. Must be decided now — adding it after the first migrate is painful. See `references/custom-user.md`.
+6. Lint with Ruff: yes / no.
 
 Never bundle multiple questions in one message.
 
 ### 3. Apply the foundation
 
 Generate files using the matching references. `.env` `DATABASE_URL` must match the chosen DB + dev mode (sqlite path, host Postgres URL, or `db` service host).
+
+If the user opted into a custom user model, apply `references/custom-user.md` **before** the boot check — `AUTH_USER_MODEL` must be set before the first `migrate`.
 
 ### 4. Boot check — mandatory before moving on
 

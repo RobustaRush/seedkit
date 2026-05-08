@@ -14,6 +14,7 @@ Settings layout: split.
 Database: PostgreSQL.
 Local dev mode: docker-compose (web + db + redis).
 Lint with Ruff: yes.
+Custom user model: no.
 Add-ons:
   - redis
   - tasks: Django Tasks with the Redis Queue backend (`django-tasks-rq`)

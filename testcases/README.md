@@ -61,6 +61,7 @@ Coverage rules. Use these to regenerate the suite when the skill changes.
    - Database: `sqlite` / `postgres`
    - Local dev mode: `uv-host` / `docker-compose`
    - Postgres location (only when `postgres` + `uv-host`): `host` / `docker-db-only`
+   - Custom user model (`AUTH_USER_MODEL`): `yes` / `no`
    - Lint (Ruff): `yes` / `no`
 
    **Add-ons** (each at least once across the suite, but not in the minimal case)

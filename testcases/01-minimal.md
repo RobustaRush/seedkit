@@ -14,6 +14,7 @@ Settings layout: single file (`config/settings.py`).
 Database: SQLite.
 Local dev mode: uv on host.
 Lint with Ruff: no.
+Custom user model: no.
 Add-ons: none.
 Production setup: skip.
 

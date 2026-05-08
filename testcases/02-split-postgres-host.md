@@ -14,6 +14,7 @@ Settings layout: split (`config/settings/base.py`, `local.py`, `production.py`).
 Database: PostgreSQL.
 Local dev mode: uv on host. Postgres location: on the host (use `createdb` for the project DB).
 Lint with Ruff: yes.
+Custom user model: yes (custom `users.User` extending `AbstractUser`).
 Add-ons:
   - storage: WhiteNoise for static files (no media volume yet)
   - email: SMTP (console backend in local, SMTP in production)
@@ -30,6 +31,7 @@ Assume Postgres is already running locally on port 5432 with user `postgres` / p
 - Ruff config in `pyproject.toml`; `uv run ruff check .` exits 0.
 - WhiteNoise middleware listed in production settings only.
 - Email backend `django.core.mail.backends.console.EmailBackend` in local; SMTP wired via env in production.
+- `users/` app with `AbstractUser` subclass and admin registration; `AUTH_USER_MODEL = "users.User"` set **before** the initial migration; `users_user` table exists (no `auth_user`).
 
 ## Run
 

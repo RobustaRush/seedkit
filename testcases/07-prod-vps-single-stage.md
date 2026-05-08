@@ -14,6 +14,7 @@ Settings layout: split.
 Database: PostgreSQL.
 Local dev mode: docker-compose (full stack: web + db + redis).
 Lint with Ruff: yes.
+Custom user model: yes (custom `users.User` extending `AbstractUser`).
 Add-ons:
   - redis
   - tasks: Celery (no Beat)
@@ -39,6 +40,7 @@ Run the foundation + boot check locally. Generate `Dockerfile`, `docker-compose.
 - Sentry initialised in `production.py` only, DSN from env.
 - `.github/workflows/test.yml` runs migrations + pytest against Postgres.
 - Security settings apply only in `production.py`.
+- `users/` app with `AbstractUser` subclass and admin registration; `AUTH_USER_MODEL = "users.User"` set **before** the initial migration; `users_user` table exists.
 
 ## Run
 

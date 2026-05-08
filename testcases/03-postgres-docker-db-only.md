@@ -14,6 +14,7 @@ Settings layout: single file.
 Database: PostgreSQL.
 Local dev mode: uv on host. Postgres location: run only Postgres in Docker, Django runs on the host (publish 5432 to localhost).
 Lint with Ruff: no.
+Custom user model: no.
 Add-ons:
   - redis (for Celery)
   - tasks: Celery, with periodic tasks (Celery Beat)
