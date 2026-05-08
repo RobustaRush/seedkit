@@ -97,14 +97,18 @@ Append to `config/settings.py` (or `config/settings/base.py` for split layout) s
 STATIC_ROOT = BASE_DIR / "staticfiles"
 ```
 
-## .env
+## .env.example and .env
+
+Write `.env.example` (committed) with every env var the settings module reads. Set `DATABASE_URL` per `references/database.md` (SQLite or PostgreSQL):
 
 ```sh
-DJANGO_SECRET_KEY=local-dev-secret-key-change-in-production
+DJANGO_SECRET_KEY=replace-me
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
-# DATABASE_URL — set per references/database.md (SQLite or PostgreSQL)
+DATABASE_URL=sqlite:///db.sqlite3
 ```
+
+Then `cp .env.example .env` and set `DJANGO_SECRET_KEY` to a real dev value (`uv run python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`). `.env` is gitignored; `.env.example` is committed. Keep `.env.example` in sync whenever you add a new `env(...)` call to settings.
 
 ## .gitignore
 

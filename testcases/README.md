@@ -25,9 +25,12 @@ Each test case is one `.md` file:
 ## Check report
 Run `claude -p` from the project dir with `--model claude-opus-4-7`,
 restricted to read-only tools so the reviewer can't trigger the
-cookiecutter skill and rebuild the project. Word the prompt as
-"audit the existing code", not "review the Django project" — the
-latter pattern-matches the skill description and starts a build.
+cookiecutter skill and rebuild the project. Tell the reviewer the
+project is a freshly generated *starter / scaffold* with no business
+logic on purpose, so it focuses on config / security / deployment
+correctness rather than flagging the missing feature code. Word the
+prompt as "audit the existing code", not "review the Django project" —
+the latter pattern-matches the skill description and starts a build.
 Pipe the output to `REVIEW.md` inside the project (`| tee REVIEW.md`)
 so the report is persisted next to the code. Paste a digest below.
 
