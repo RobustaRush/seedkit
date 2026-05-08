@@ -12,6 +12,8 @@ Minimal compose for dev. Source is mounted; `runserver` reloads on edit.
 
 ### docker-compose.yml
 
+Do not include a top-level `version:` field — Compose v2 ignores it and warns on every invocation.
+
 ```yaml
 services:
   web:
