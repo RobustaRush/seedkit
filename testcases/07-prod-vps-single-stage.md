@@ -13,6 +13,7 @@ Purpose: production-ready SaaS skeleton deployed to a single VPS via docker-comp
 Settings layout: split.
 Database: PostgreSQL.
 Local dev mode: docker-compose (full stack: web + db + redis).
+Docker structure: simple (separate `Dockerfile.dev` for dev, single-stage production `Dockerfile`).
 Lint with Ruff: yes.
 Test runner: pytest + pytest-django.
 Type check (pyright + django-stubs): no.
@@ -27,12 +28,21 @@ Add-ons:
   - storage: WhiteNoise (static), media volume on the VPS host
   - email: SMTP in production, console backend in local. Use a placeholder Postmark URL (`EMAIL_URL=smtp+tls://<token>:<token>@smtp.postmarkapp.com:587`); also wire `DEFAULT_FROM_EMAIL`, `SERVER_EMAIL`, `DJANGO_ADMINS`.
   - CORS: no.
+  - REST API: none.
+  - Frontend: none.
+  - Auth hardening: `django-axes` (yes), 2FA (yes).
+  - Health check endpoints: yes.
+  - `robots.txt`: no.
+  - `django-extensions`: no.
+  - Devcontainer: no.
 
 Production setup:
   - apply Django security settings (HSTS, secure cookies, X-Frame, SSL redirect)
+  - CSP via `django-csp`: yes
   - error reporting: Sentry SaaS (sentry-sdk)
   - CI: GitHub Actions test workflow
   - deploy target: VPS (Docker + Caddy)
+  - database backups via `django-dbbackup`: yes
   - production Dockerfile: single-stage
 Skip GDPR for this case.
 
@@ -52,6 +62,11 @@ Run the foundation + boot check locally. Generate `Dockerfile`, `docker-compose.
 - `users/` app with `AbstractUser` subclass and admin registration; `AUTH_USER_MODEL = "users.User"` set **before** the initial migration; `users_user` table exists.
 - `django-allauth` installed; `allauth`, `allauth.account`, `django.contrib.sites` in `INSTALLED_APPS`; `AccountMiddleware` in `MIDDLEWARE`; `accounts/` URL include; `ACCOUNT_EMAIL_VERIFICATION = "mandatory"`; `/accounts/login/` and `/accounts/signup/` render.
 - `structlog` installed; `LOGGING` with `json` (prod) / `console` (dev) formatters; `RequestContextMiddleware` inserted into `MIDDLEWARE`; production logs are valid JSON lines carrying `request_id`.
+- `django-axes` installed; `axes` in `INSTALLED_APPS`; `axes.middleware.AxesMiddleware` is the **last** entry in `MIDDLEWARE`; `axes.backends.AxesBackend` is **first** in `AUTHENTICATION_BACKENDS`. `AXES_FAILURE_LIMIT` set; `axes_*` tables migrated.
+- `allauth-2fa` installed; `allauth_2fa` in `INSTALLED_APPS`; `allauth_2fa.middleware.AllauthTwoFactorMiddleware` in `MIDDLEWARE`; `accounts/` URL include also mounts `allauth_2fa.urls`. `ACCOUNT_LOGIN_BY_2FA_REQUIRED = True` in `production.py` only (dev login still works without enrolment).
+- `django-csp` installed; `csp.middleware.CSPMiddleware` in `MIDDLEWARE` of `production.py` only (NOT base.py / local.py). `CONTENT_SECURITY_POLICY` defines `default-src 'self'`, `frame-ancestors 'none'`, `base-uri 'self'`, `form-action 'self'`. The directive set does NOT include `'unsafe-inline'` for `script-src`. (Admin renders, so `style-src` may include `'unsafe-inline'` — that's the documented concession.)
+- `django-dbbackup` installed; `dbbackup` in `INSTALLED_APPS` of `production.py`; `DBBACKUP_STORAGE` points at `storages.backends.s3boto3.S3Boto3Storage`; `DBBACKUP_BUCKET` (or equivalent) is in `.env.example`. A cron entry for `manage.py dbbackup --clean` exists in deploy artefacts (`docker-compose.prod.yml`, sidecar systemd unit, or a `crontab` file shipped with the deploy).
+- `pages` app exposes `liveness` and `readiness`; `path('healthz', ...)` and `path('readyz', ...)` (no trailing slash) in `urlpatterns`. `Caddyfile` upstream block uses `health_uri /readyz`. `curl http://127.0.0.1:8000/healthz` returns 200 `ok` against the local Compose stack.
 
 ## Run
 
@@ -62,6 +77,13 @@ cd 07-vps-saas
 docker compose up -d
 docker compose exec web uv run manage.py migrate
 curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
+# Healthchecks
+test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
+test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
+# Caddyfile probes the readyz path
+grep -q '/readyz' Caddyfile
+# CSP enforced in production settings
+grep -q 'csp.middleware.CSPMiddleware' config/settings/production.py
 docker build -t 07-vps-saas:test .
 ```
 

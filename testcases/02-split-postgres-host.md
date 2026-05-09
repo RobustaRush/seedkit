@@ -1,6 +1,6 @@
-# 02 — Split settings, Postgres on host, WhiteNoise + SMTP
+# 02 — Split settings, Postgres on host, WhiteNoise + SMTP, Tailwind CSS
 
-Covers split settings layout, host Postgres, Ruff, WhiteNoise statics, and SMTP email.
+Covers split settings layout, host Postgres, Ruff, WhiteNoise statics, SMTP email, and `django-tailwind-cli` frontend integration verified through a public index page.
 
 ## Prompt
 
@@ -25,10 +25,16 @@ Add-ons:
   - storage: WhiteNoise for static files (no media volume yet)
   - email: SMTP (console backend in local, SMTP in production)
   - CORS: no.
+  - REST API: none.
+  - Frontend: `tailwind-cli` (custom 404/403/500 templates: yes; DaisyUI: yes). Also add a `pages` app with an `IndexView(TemplateView)` wired at `/`. Its `index.html` must include `text-blue-600` and `text-4xl` (utility check) and a `<button class="btn btn-primary">` (DaisyUI check) — concrete grep targets for the integration tests below.
+  - Auth hardening: `django-axes` (yes), 2FA (no).
+  - Health check endpoints: yes.
+  - `robots.txt`: yes.
+  - `django-extensions`: no.
 
 Production setup: skip.
 
-Assume Postgres is already running locally on port 5432 with user `postgres` / password `postgres`. Create database `shop_db` if missing (Postgres identifiers can't start with a digit, so use a clean name). Run the foundation + boot check.
+Assume Postgres is already running locally on port 5432 with user `postgres` / password `postgres`. Create database `shop_db` if missing (Postgres identifiers can't start with a digit, so use a clean name). Run the foundation + boot check, then run `python manage.py tailwind build` once so the CSS asset exists, and verify the index page returns the Tailwind-styled HTML.
 ```
 
 ## Expected outcome
@@ -41,6 +47,18 @@ Assume Postgres is already running locally on port 5432 with user `postgres` / p
 - Email backend `django.core.mail.backends.console.EmailBackend` in local; SMTP wired via env in production.
 - `users/` app with `AbstractUser` subclass and admin registration; `AUTH_USER_MODEL = "users.User"` set **before** the initial migration; `users_user` table exists (no `auth_user`).
 - `django-allauth` installed; `allauth`, `allauth.account`, `django.contrib.sites` in `INSTALLED_APPS`; `AccountMiddleware` in `MIDDLEWARE`; `accounts/` URL include; `ACCOUNT_EMAIL_VERIFICATION = "mandatory"`; `/accounts/login/` and `/accounts/signup/` render.
+- `django-tailwind-cli` in dependencies; `django_tailwind_cli` in `INSTALLED_APPS`. `STATICFILES_DIRS = [BASE_DIR / "assets"]` and the `assets/` directory exists on disk (Django raises at startup if missing). `TAILWIND_CLI_VERSION = "4.1.3"` pinned.
+- `templates/base.html` loads `{% load tailwind_cli %}` and calls `{% tailwind_css %}` inside `<head>`. `templates/index.html` extends `base.html` and uses Tailwind utility classes including `text-blue-600` and `text-4xl`.
+- `pages/` Django app exists with `IndexView(TemplateView)` and is wired as the root URL.
+- `python manage.py tailwind build` succeeds and produces a CSS file under `assets/` (default `assets/css/tailwind.css`) that contains rules for the classes used in `index.html`. The downloaded CLI lives in `<BASE_DIR>/.django_tailwind_cli/`.
+- DaisyUI vendored: `assets/css/daisyui.mjs` and `assets/css/daisyui-theme.mjs` exist in the repo (committed, not gitignored). `assets/css/source.css` exists, contains `@import "tailwindcss";`, `@source not "./tailwindcss";`, `@source not "./daisyui{,*}.mjs";`, and `@plugin "./daisyui.mjs";`. `TAILWIND_CLI_SRC_CSS = "assets/css/source.css"` is set in `base.py`. `TAILWIND_CLI_USE_DAISY_UI` is **not** set (the upstream `@plugin` path is used, not the cli-extra fork).
+- Built CSS contains DaisyUI's `.btn` and `.btn-primary` rules (in addition to the utility classes from the previous bullet).
+- `<html data-theme="light">` is present in `templates/base.html`.
+- `curl http://127.0.0.1:8000/` returns 200, the response body contains the literal `text-blue-600`, and the `<link>` element rendered by `{% tailwind_css %}` resolves to a 200 response whose body contains a rule matching `.text-blue-600`.
+- `templates/404.html`, `403.html`, `500.html` exist and load `tailwind_cli`. With `DEBUG=False` and `ALLOWED_HOSTS` set, `curl /this-route-does-not-exist` returns 404 and the body contains a Tailwind utility class (e.g. `text-6xl`). `500.html` does NOT extend `base.html`.
+- `django-axes` in dependencies; `axes` in `INSTALLED_APPS`; `axes.middleware.AxesMiddleware` is the **last** entry in `MIDDLEWARE`; `axes.backends.AxesBackend` is **first** in `AUTHENTICATION_BACKENDS`. After 5 wrong logins from the same IP+username, the 6th login attempt to `/accounts/login/` is locked out (axes returns its lockout response, not allauth's "wrong password").
+- `pages` app exposes `liveness` and `readiness` views; `urlpatterns` includes `path('healthz', ...)` and `path('readyz', ...)` (no trailing slash). `curl /healthz` returns 200 with body `ok`; `curl /readyz` returns 200 with body `ready`.
+- `pages` app exposes a `robots_txt` view; `path('robots.txt', ...)` is wired. `curl /robots.txt` returns 200 with `Content-Type: text/plain` and body containing `User-agent: *` and `Disallow: /admin/` (when `DEBUG=False`).
 
 ## Run
 
@@ -49,8 +67,27 @@ Assume Postgres is already running locally on port 5432 with user `postgres` / p
 createdb shop_db || true
 # AI executes the skill here, then:
 cd 02-shop
+# One-shot CSS build so the asset exists before the smoke test (watch mode is optional in dev)
+uv run manage.py tailwind build
 uv run manage.py runserver &
 curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
+# Index page returns 200 and contains a Tailwind utility class from the template
+curl -sf http://127.0.0.1:8000/ | grep -q 'text-blue-600'
+# The CSS link injected by {% tailwind_css %} actually resolves and ships the rule
+CSS_URL=$(curl -sf http://127.0.0.1:8000/ | grep -oE 'href="[^"]*tailwind[^"]*\.css[^"]*"' | head -1 | sed 's/href="//;s/"//')
+test -n "$CSS_URL"
+curl -sf "http://127.0.0.1:8000${CSS_URL}" | grep -q '\.text-blue-600'
+# DaisyUI integration: vendored bundle present, @plugin directive wired, .btn rule shipped in served CSS, theme attribute on root
+test -f assets/css/daisyui.mjs
+test -f assets/css/daisyui-theme.mjs
+grep -q '@plugin "./daisyui.mjs"' assets/css/source.css
+curl -sf "http://127.0.0.1:8000${CSS_URL}" | grep -q '\.btn'
+curl -sf http://127.0.0.1:8000/ | grep -q 'data-theme='
+# Healthcheck endpoints
+test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
+test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
+# robots.txt
+curl -sf http://127.0.0.1:8000/robots.txt | grep -q 'User-agent: \*'
 uv run ruff check .
 ```
 

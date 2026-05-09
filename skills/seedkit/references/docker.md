@@ -1,5 +1,12 @@
 # Docker
 
+The skill asks the user up-front (Foundation step 4) which structure to use:
+
+- **`simple`** — separate `Dockerfile.dev` + separate production `Dockerfile`, single `docker-compose.yml`. Easier to read, two files can drift. **Default.**
+- **`override`** — one multi-stage `Dockerfile` with `dev` and `prod` targets, `docker-compose.yml` (prod-shaped) + `docker-compose.override.yml` (dev layer, auto-loaded by `docker compose`). One source of truth; dev and prod can't silently diverge.
+
+The same choice applies in production — don't re-ask. The "Local development" and "Production" sections below each have a **simple** subsection (default) and an **override** subsection.
+
 ## .dockerignore
 
 `.dockerignore` for Django + uv. Always include `.venv` so the host venv doesn't leak into the image.
@@ -10,7 +17,7 @@
 
 `.venv` is baked into the image; source is bind-mounted for live reload; no named volume for the venv. Adding a dependency is a `docker compose build`, not a live `uv add` inside a running container.
 
-### Dockerfile.dev
+### Simple — Dockerfile.dev
 
 ```dockerfile
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
@@ -32,7 +39,7 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 No `USER` switch (dev keeps root, simpler permissions). No `collectstatic` (`runserver` serves statics in DEBUG).
 
-### docker-compose.yml
+### Simple — docker-compose.yml
 
 ```yaml
 services:
@@ -101,6 +108,111 @@ docker compose up -d
 - **Source edits not picked up** — confirm the bind-mount is `.:/app`, not a copy. `docker compose exec web ls /app` should show host changes immediately.
 - **`Ignoring existing virtual environment linked to non-existent Python interpreter`** — means a host `.venv` slipped into the image build (missing `.dockerignore` entry) or the anonymous volume above isn't declared. Add `.venv` to `.dockerignore`, ensure the compose service has `- /app/.venv`, then `docker compose build --no-cache web`.
 
+### Override — multi-stage Dockerfile + compose override
+
+One `Dockerfile` with two named targets (`dev` and `prod`). `docker-compose.yml` describes the prod-shaped stack and builds `target: prod`; `docker-compose.override.yml` is auto-loaded by `docker compose` and switches the `web` service to `target: dev`, mounts source, runs `runserver`. The same image definition serves both worlds — env-specific commands and mounts are layered on, not duplicated.
+
+#### Dockerfile
+
+```dockerfile
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-install-project
+
+COPY . .
+RUN uv sync --frozen
+
+
+FROM base AS dev
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+
+FROM base AS prod
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+RUN groupadd --system django && useradd --system --gid django django
+RUN chown -R django:django /app
+
+# Same S3 / DEBUG caveat as the single-stage variant below.
+RUN DJANGO_SETTINGS_MODULE=config.settings.production DJANGO_DEBUG=True \
+    python manage.py collectstatic --noinput
+
+USER django
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000"]
+```
+
+`uv add gunicorn` before building the prod target — the `CMD` calls it directly.
+
+#### docker-compose.yml (prod-shaped, committed)
+
+```yaml
+services:
+  web:
+    build:
+      context: .
+      target: prod
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+```
+
+#### docker-compose.override.yml (dev layer, auto-loaded)
+
+```yaml
+services:
+  web:
+    build:
+      target: dev
+    volumes:
+      - .:/app          # source live-reload
+      - /app/.venv      # anonymous volume shadows host .venv
+
+  db:
+    ports:
+      - "5432:5432"
+```
+
+`docker compose up` in dev merges both files automatically. CI / production runs `docker compose -f docker-compose.yml up` (no override) to get the prod build.
+
+Drop the `db` service everywhere for SQLite.
+
+#### Boot check
+
+Identical to the simple path:
+
+```sh
+docker compose up -d --build
+docker compose exec web python manage.py migrate
+docker compose exec web python manage.py createsuperuser
+```
+
 ---
 
 ## Production
@@ -115,7 +227,9 @@ The Dockerfile's `CMD` calls `gunicorn` directly. Without this step it's not in 
 
 **Match the `python3.X` image tag to `requires-python` in `pyproject.toml`** — `uv sync --frozen` refuses to install on a mismatch.
 
-**Ask the user**: does image size matter? Multi-stage saves ~150 MB at the cost of a more complex Dockerfile. Default to single-stage.
+**If the user picked `override` in Foundation step 4**, the production image is the `prod` target of the multi-stage Dockerfile shown in *Local development → Override*. Skip the variants below — they apply only to the `simple` path.
+
+**Simple path only — ask the user**: does image size matter? Multi-stage saves ~150 MB at the cost of a more complex Dockerfile. Default to single-stage.
 
 Both variants apply the [astral-sh uv-in-Docker](https://docs.astral.sh/uv/guides/integration/docker/) flags:
 

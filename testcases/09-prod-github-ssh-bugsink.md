@@ -13,6 +13,7 @@ Purpose: production app deployed to a remote host over SSH from GitHub Actions, 
 Settings layout: split.
 Database: PostgreSQL.
 Local dev mode: docker-compose (web + db + redis).
+Docker structure: override (one multi-stage `Dockerfile` with `dev`/`prod` targets, `docker-compose.yml` + `docker-compose.override.yml`).
 Lint with Ruff: yes.
 Test runner: pytest + pytest-django.
 Type check (pyright + django-stubs): no.
@@ -27,9 +28,17 @@ Add-ons:
   - analytics: Umami (self-hosted, env-driven website ID and host)
   - email: none (deliberately skip `references/email.md`; this project does not send transactional mail and the test verifies the skip path).
   - CORS: no.
+  - REST API: none.
+  - Frontend: none.
+  - Auth hardening: N/A (auth = none).
+  - Health check endpoints: yes.
+  - `robots.txt`: no.
+  - `django-extensions`: no.
+  - Devcontainer: no.
 
 Production setup:
   - apply Django security settings
+  - CSP via `django-csp`: yes
   - error reporting: Bugsink (self-hosted, sentry-sdk DSN)
   - GDPR: PII scrubbing in error reports, retention defaults, user data export/delete
   - CI: GitHub Actions test workflow
@@ -50,6 +59,10 @@ Run the foundation + boot check locally. Generate `Dockerfile`, `docker-compose.
 - `.github/workflows/deploy.yml` uses SSH secrets, rsyncs source, runs `docker compose pull && up -d` on the remote.
 - Security settings applied only in `production.py`.
 - `structlog` installed; `LOGGING` with `json` (prod) / `console` (dev) formatters; `RequestContextMiddleware` inserted into `MIDDLEWARE`; production logs are valid JSON lines carrying `request_id`.
+- `axes` is **not** in `INSTALLED_APPS` and `django-axes` is **not** in dependencies — the auth-hardening follow-up must be skipped because auth = none.
+- `dbbackup` is **not** in `INSTALLED_APPS` and `django-dbbackup` is **not** in dependencies — the dbbackup follow-up is gated on `deploy = vps`, and this case is `github-ssh`.
+- `django-csp` installed; `csp.middleware.CSPMiddleware` only in `production.py` `MIDDLEWARE`. `CONTENT_SECURITY_POLICY['DIRECTIVES']['script-src']` resolves to include the Umami host at runtime (read from env). No `'unsafe-inline'` in `script-src`.
+- `pages` app exposes `liveness` / `readiness`; `urlpatterns` wires `path('healthz', ...)` and `path('readyz', ...)`. `.github/workflows/deploy.yml` curls `/readyz` against the remote after `docker compose up -d` and fails the job on non-200.
 
 ## Run
 
@@ -60,6 +73,16 @@ cd 09-ssh-deploy
 docker compose up -d
 docker compose exec web uv run manage.py migrate
 curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
+# Healthchecks
+test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
+test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
+# Deploy workflow probes /readyz post-deploy
+grep -q '/readyz' .github/workflows/deploy.yml
+# CSP enforced in production
+grep -q 'csp.middleware.CSPMiddleware' config/settings/production.py
+# Auth-hardening + dbbackup are correctly gated OFF
+! grep -E '^django-axes' pyproject.toml
+! grep -E '^django-dbbackup' pyproject.toml
 docker build -t 09-ssh-deploy:test .
 grep -E 'SSH_(HOST|USER|KEY)' .github/workflows/deploy.yml
 ```

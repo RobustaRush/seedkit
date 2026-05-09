@@ -218,3 +218,58 @@ EMAIL_URL=smtp://mailpit:1025
 ```
 
 Open <http://localhost:8025> to view captured emails.
+
+---
+
+## HTML email templates (short)
+
+Auth flows (allauth, mail-auth, password resets) and ad-hoc transactional mail send better-looking HTML than plain text. Stock Django gives you the wiring (`EmailMultiAlternatives`); the templates are project work.
+
+### Layout
+
+```
+templates/email/
+  base.html        # shared shell — header, footer, brand colours
+  base.txt         # plain-text shell (mandatory companion to every HTML email)
+  password_reset.html
+  password_reset.txt
+  account_confirmation.html
+  account_confirmation.txt
+```
+
+Always ship a `.txt` companion. Spam filters score HTML-only mail aggressively; `EmailMultiAlternatives` requires a plain-text body anyway.
+
+### Send
+
+```python
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+
+def send_password_reset(user, reset_url):
+    ctx = {"user": user, "reset_url": reset_url}
+    msg = EmailMultiAlternatives(
+        subject="Reset your password",
+        body=render_to_string("email/password_reset.txt", ctx),
+        to=[user.email],
+    )
+    msg.attach_alternative(render_to_string("email/password_reset.html", ctx), "text/html")
+    msg.send()
+```
+
+### Allauth override
+
+`django-allauth` looks up its templates by name first in the project, then falls back to its own. Drop the override into `templates/account/email/`:
+
+```
+templates/account/email/
+  email_confirmation_message.html   # allauth-specific name
+  email_confirmation_message.txt
+  password_reset_key_message.html
+  password_reset_key_message.txt
+```
+
+### Pitfalls
+
+- Inline every CSS rule. Gmail / Outlook strip `<style>` blocks. Tools like `premailer` can do this at build time; for a starter, write inline styles by hand and keep the palette small.
+- Don't reference Tailwind classes in email HTML. Tailwind output is purged against templates `@source`'d in `source.css` — email templates would either bloat the bundle (if added to `@source`) or miss styles (if not). Write the small inline subset you need.
+- Test with a real client. Litmus / Email on Acid render previews; or just send to one Gmail and one Outlook account before declaring a template done.

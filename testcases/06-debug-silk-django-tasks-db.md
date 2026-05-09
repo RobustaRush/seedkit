@@ -27,6 +27,12 @@ Add-ons:
   - analytics: GoatCounter (self-hosted snippet, env-driven site code)
   - email: console backend in local (`EMAIL_URL=consolemail://`).
   - CORS: no.
+  - REST API: none.
+  - Frontend: none.
+  - Devcontainer: no.
+  - Health check endpoints: yes.
+  - `robots.txt`: no.
+  - `django-extensions`: yes.
 
 Production setup: skip.
 
@@ -40,6 +46,8 @@ Run the foundation, the boot check, start `manage.py db_worker` in a second term
 - `django-tasks` and `django-tasks-db` installed; `db_worker` consumes a queued task.
 - GoatCounter snippet rendered in base template (site code from env).
 - Ruff config present; `uv run ruff check .` exits 0.
+- `django-extensions` installed as a **dev** dependency (`[tool.uv]` `dev-dependencies` or `[dependency-groups.dev]`), NOT a runtime dep. `django_extensions` appears in `INSTALLED_APPS` only via `local.py` (or DEBUG-gated for single-settings) — must NOT be in `base.py`'s static `INSTALLED_APPS` list. `uv run manage.py show_urls` runs without import error.
+- `pages` app exposes `liveness` / `readiness`; `curl /healthz` → `ok`, `curl /readyz` → `ready`.
 
 ## Run
 
@@ -51,6 +59,11 @@ cd 06-silk-lab
 uv run manage.py runserver &
 uv run manage.py db_worker &
 # enqueue + observe one task; hit a profiled view; check /silk/
+# django-extensions reachable
+uv run manage.py show_urls > /dev/null
+# Healthchecks
+test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
+test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
 ```
 
 ## Check report

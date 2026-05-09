@@ -100,6 +100,27 @@ No new env vars; no new services. Run `uv run manage.py migrate` to
 create the task storage table.
 ```
 
+Or on a project that was never started with seedkit at all:
+
+```text
+$ /seedkit auth hardened
+
+Reading the current project... django-allauth installed, stock
+configuration, no rate limiting, no 2FA.
+
+Hardening auth:
+  +  config/settings/base.py   ACCOUNT_LOGIN_ATTEMPTS_LIMIT,
+                                ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT,
+                                SESSION_COOKIE_AGE, SECURE_* headers
+  +  requirements.txt           django-axes
+  +  config/settings/base.py   axes middleware, AXES_* settings
+  ~  templates/account/         login page with lockout message
+
+Run `uv run manage.py migrate` to create the axes tables.
+```
+
+The skill reads what's already there before touching anything. It won't reinstall allauth; it won't reset settings you've already tuned. It adds what's missing and moves on.
+
 Files only get touched if the user said yes. The skill never rewrites your project from a template, because there is no template — the rules are Markdown the agent reads, and the project is whatever you have on disk.
 
 ## What's different

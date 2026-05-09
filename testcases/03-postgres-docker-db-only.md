@@ -26,6 +26,13 @@ Add-ons:
   - tasks: Celery, with periodic tasks (Celery Beat)
   - email: console backend in local (`EMAIL_URL=consolemail://`).
   - CORS: no.
+  - REST API: none.
+  - Frontend: none.
+  - Auth hardening: N/A (auth = none).
+  - Health check endpoints: yes.
+  - robots.txt: no.
+  - django-extensions: no.
+  - Devcontainer: no.
 
 Production setup: skip.
 

@@ -24,6 +24,13 @@ Structured logging: no.
 Add-ons:
   - email: console backend (`EMAIL_URL=consolemail://`).
   - CORS: no.
+  - REST API: none.
+  - Frontend: none.
+  - Auth hardening: N/A (auth = none).
+  - Health check endpoints: no (this case is the bare floor — no extra views).
+  - robots.txt: no.
+  - django-extensions: no.
+  - Devcontainer: no.
 
 Production setup: skip.
 
