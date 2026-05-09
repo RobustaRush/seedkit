@@ -75,6 +75,9 @@ Coverage rules. Use these to regenerate the suite when the skill changes.
    - Custom user model (`AUTH_USER_MODEL`): `yes` / `no`
    - Lint (Ruff): `yes` / `no`
    - Test runner: `pytest` / `manage.py test` (default)
+   - Type check (pyright): `yes` / `no` (default)
+   - Pre-commit hooks: `yes` / `no` (default)
+   - i18n (`gettext`): `yes` / `no` (default)
 
    **Add-ons** (each at least once across the suite, but not in the minimal case)
    - Auth: `django-allauth` / `django-mail-auth` / `none`
@@ -82,9 +85,10 @@ Coverage rules. Use these to regenerate the suite when the skill changes.
    - Redis: `yes` / `no`
    - Storage: `whitenoise` / `s3` / `none`
    - Tasks: `celery` / `django-tasks-db` / `django-tasks-rq` / `none`
-   - Email: `console` / `smtp` / `mailpit` / `none`
+   - Email: `console` / `smtp` / `mailpit` / `anymail` / `none`
    - Structured logging (`structlog`): `yes` / `no`
    - Analytics: `goatcounter` / `umami` / `shynet` / `ga4` / `none`
+   - CORS: `yes` / `no` (default no)
 
    **Production** (separate test cases focused on deploy)
    - Security settings: applied / not applied

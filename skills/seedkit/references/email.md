@@ -71,6 +71,88 @@ DJANGO_ADMINS=ops@example.com,alerts@example.com
 
 URL-encode special characters in the password (`%40` for `@`, `%23` for `#`).
 
+---
+
+## Provider HTTP APIs (django-anymail)
+
+SMTP works everywhere but is slower than provider HTTP APIs and exposes none of the provider's features (templated emails, click tracking, event webhooks). `django-anymail` ships per-provider `EmailBackend` classes that talk the provider's HTTP API instead.
+
+Pick this over SMTP when:
+
+- The provider charges per-message and you want delivery-event webhooks (delivered / bounced / complained / opened).
+- You want to use server-stored templates with merge variables instead of rendering MIME locally.
+- The platform blocks outbound port 587 (some serverless / managed runtimes do).
+
+### Install
+
+Pick the provider extra at install time:
+
+```sh
+uv add 'django-anymail[postmark]'      # or [amazon-ses], [sendgrid], [mailgun], [mandrill], [sparkpost], [brevo]
+```
+
+### Settings
+
+Anymail's `EMAIL_BACKEND` overrides whatever `EMAIL_URL` parsed, so the `globals().update(env.email_url(...))` line above is fine to keep — it remains the dev fallback when `EMAIL_BACKEND` isn't set.
+
+```python
+INSTALLED_APPS += ["anymail"]
+
+# Use provider API in prod; consolemail in dev. Same gating shape as
+# the rest of the foundation.
+if not DEBUG:
+    EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
+
+ANYMAIL = {
+    "POSTMARK_SERVER_TOKEN": env("POSTMARK_SERVER_TOKEN", default="" if DEBUG else None),
+    # Provider-specific keys — see anymail.readthedocs.io for the full list.
+    # SES: "AMAZON_SES_CLIENT_PARAMS", or use boto3's standard env vars.
+    # SendGrid: "SENDGRID_API_KEY".
+    # Mailgun: "MAILGUN_API_KEY", "MAILGUN_SENDER_DOMAIN".
+}
+```
+
+### .env.prod
+
+```sh
+POSTMARK_SERVER_TOKEN=<token>
+DEFAULT_FROM_EMAIL=no-reply@example.com
+SERVER_EMAIL=django@example.com
+```
+
+`EMAIL_URL` is no longer needed in prod with this setup — `EMAIL_BACKEND` wins.
+
+### Webhooks (optional)
+
+Provider event webhooks (delivered / bounced / opened / clicked) need a Django URL exposed:
+
+```python
+# config/urls.py
+urlpatterns = [
+    ...
+    path("anymail/", include("anymail.urls")),
+]
+```
+
+```python
+# settings — protect against forged webhook calls
+ANYMAIL["WEBHOOK_SECRET"] = env("ANYMAIL_WEBHOOK_SECRET", default="" if DEBUG else None)
+```
+
+The provider needs configuring with `ANYMAIL_WEBHOOK_SECRET` as HTTP basic auth (`https://<secret>@example.com/anymail/<provider>/tracking/`). Connect signals to react to events:
+
+```python
+from anymail.signals import tracking
+
+def handle_event(sender, event, esp_name, **kwargs):
+    # event.event_type: "delivered", "bounced", "opened", ...
+    ...
+
+tracking.connect(handle_event)
+```
+
+---
+
 ## Managed platforms
 
 Set `EMAIL_URL` and `DEFAULT_FROM_EMAIL` as platform env vars.

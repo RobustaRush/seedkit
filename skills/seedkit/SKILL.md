@@ -19,11 +19,15 @@ uv --version
 - `references/custom-user.md` — custom `AUTH_USER_MODEL` (set before first migrate)
 - `references/docker.md` — local docker-compose dev + production image
 - `references/lint.md` — Ruff (Django-aware rules, optional pre-commit)
-- `references/pytest.md` — pytest + pytest-django (replaces `manage.py test`); default no
+- `references/pytest.md` — pytest + pytest-django + coverage (replaces `manage.py test`); default no
+- `references/typecheck.md` — pyright + django-stubs static type checking; default no
+- `references/pre-commit.md` — pre-commit hook config wiring lint / format / typecheck; default no
+- `references/i18n.md` — gettext setup (LANGUAGES, LocaleMiddleware, `makemessages` workflow); default no
 
 ### Add-ons
 
 - `references/auth.md` — `django-allauth` (passwords, verification, social) or `django-mail-auth` (passwordless magic-link); ask, or none for stock auth
+- `references/cors.md` — `django-cors-headers` for cross-origin frontend / API consumers
 - `references/debug.md` — orbit / silk dispatcher → loads `debug-orbit.md` or `debug-silk.md`
 - `references/redis.md` — Redis cache (django-redis)
 - `references/storage-whitenoise.md` — static via WhiteNoise + media volume on VPS
@@ -64,6 +68,9 @@ For any question involving a third-party package, brief 1–2 sentences on *what
 5. Custom user model: yes / no. Decide now (see `references/custom-user.md`).
 6. Lint with Ruff: yes / no.
 7. Test runner: pytest + pytest-django, or stock `manage.py test`? **Default no** (stock). Apply `references/pytest.md` only if user picks pytest.
+8. Static type checking with pyright + django-stubs: yes / no. **Default no.** Apply `references/typecheck.md` only if yes.
+9. Pre-commit hooks: yes / no. **Default no.** Apply `references/pre-commit.md` only if yes (recommend yes when lint=yes).
+10. Internationalisation (`gettext`, `LocaleMiddleware`, `makemessages`): yes / no. **Default no.** Apply `references/i18n.md` only if yes — the cost of adding later is real.
 
 Never bundle questions.
 
@@ -92,9 +99,10 @@ Ask every question below. Don't drop any. Same briefing rule as foundation: 1–
 3. Redis cache: yes / no (`references/redis.md`).
 4. Static + media storage: `whitenoise` / `s3` / `none` (`references/storage-whitenoise.md`, `references/storage-s3.md`).
 5. Background tasks: `celery` / `django-tasks-db` / `django-tasks-rq` / `none` (`references/tasks-celery.md`, `references/tasks-django.md`).
-6. **Email backend: `console` / `smtp` / `mailpit` / `none` (`references/email.md`).** Always ask — every project sends mail eventually (password resets, error reports, allauth verification).
+6. **Email backend: `console` / `smtp` / `mailpit` / `anymail` / `none` (`references/email.md`).** Always ask — every project sends mail eventually (password resets, error reports, allauth verification). `anymail` is the provider-API option (Postmark / SES / SendGrid / Mailgun / etc.) — recommend over plain SMTP when production goes through one of those providers.
 7. Structured logging (`structlog`): yes / no (`references/logging.md`).
 8. Analytics: `goatcounter` / `umami` / `shynet` / `ga4` / `none` (`references/analytics.md`).
+9. CORS for cross-origin frontends or API consumers: yes / no (`references/cors.md`). Default no — only ask yes when the project has a separate frontend on a different domain.
 
 ### 6. Production
 

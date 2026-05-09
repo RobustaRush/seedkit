@@ -46,6 +46,50 @@ def test_admin_login(client, admin_user):
     assert response.status_code == 200
 ```
 
+## Coverage
+
+`pytest-cov` plugs `coverage.py` into the pytest run.
+
+```sh
+uv add --dev pytest-cov
+```
+
+`pyproject.toml`:
+
+```toml
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "**/migrations/**",
+    "**/tests/**",
+    "**/test_*.py",
+    "config/wsgi.py",
+    "config/asgi.py",
+    "manage.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 80      # adjust to project tolerance; lower while ramping up
+```
+
+Run:
+
+```sh
+uv run pytest --cov                # terminal report
+uv run pytest --cov --cov-report=html   # writes htmlcov/
+```
+
+In CI, emit Cobertura XML for upload to a coverage service (Codecov / Coveralls):
+
+```yaml
+      - run: uv run pytest --cov --cov-report=xml
+      - uses: codecov/codecov-action@v4    # optional
+```
+
+Add `htmlcov/` and `.coverage` to `.gitignore`.
+
 ## CI
 
 `references/ci.md`'s GitHub Actions workflow runs `uv run pytest` after `uv sync --frozen`. The dev deps installed above are what makes that step actually succeed.
