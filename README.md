@@ -1,4 +1,4 @@
-# cookiecutter
+# seedkit
 
 > Project scaffolding should be a conversation you can resume, not a stamp pressed once into wet clay. This is an experiment in whether a Markdown skill, plus a competent AI agent, can do that better than a `cookiecutter` template.
 
@@ -28,7 +28,7 @@ It is, at the moment, well... well tested. Nine end-to-end cases run the skill t
 What invoking the skill in an empty directory looks like (transcript trimmed):
 
 ```text
-$ /cookiecutter
+$ /seedkit
 
 This skill sets up a Django project incrementally. Foundation first
 (uv, settings, DB, dev mode, custom user, lint), then add-ons (auth,
@@ -82,7 +82,7 @@ django-mail-auth (passwordless magic links), or stock Django?
 Three months later, in the same directory:
 
 ```text
-$ /cookiecutter add tasks
+$ /seedkit add tasks
 
 Reading the current project... split settings, SQLite, no Redis yet.
 
@@ -161,24 +161,24 @@ You don't have to pick all of them. You don't have to pick most of them. The ski
 ### Claude Code (plugin)
 
 ```sh
-/plugin marketplace add RobustaRush/cookiecutter
-/plugin install cookiecutter@robusta
+/plugin marketplace add RobustaRush/seedkit
+/plugin install seedkit@robusta
 ```
 
 Then, in whatever empty directory you'd like to populate:
 
 ```
-/cookiecutter
+/seedkit
 ```
 
 The skill takes over from there.
 
 ### Anything else
 
-There is no npm package. The skill is plain Markdown. Clone the repo and point your agent at `skills/cookiecutter/SKILL.md`:
+There is no npm package. The skill is plain Markdown. Clone the repo and point your agent at `skills/seedkit/SKILL.md`:
 
 ```sh
-git clone https://github.com/RobustaRush/cookiecutter.git
+git clone https://github.com/RobustaRush/seedkit.git
 ```
 
 Cursor, Aider, Codex, OpenCode — they can all read a file. Tell yours to follow `SKILL.md` and apply the references it names. Results vary with the model: the better ones do this without supervision; the cheaper ones need to be told twice.

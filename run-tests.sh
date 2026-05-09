@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# Run cookiecutter testcases through `claude -p` one at a time.
+# Run seedkit testcases through `claude -p` one at a time.
 #
-# Each case runs in cookiecutter/workspace/ (gitignored). Workspace is wiped
+# Each case runs in seedkit/workspace/ (gitignored). Workspace is wiped
 # before every case so projects don't bleed into each other. Per-case stream
 # logs and a Markdown summary land in workspace/logs/.
 #
@@ -73,10 +73,10 @@ cleanup_workspace() {
 }
 
 link_skill() {
-    # Expose the cookiecutter skill to claude -p as a project-scoped skill.
+    # Expose the seedkit skill to claude -p as a project-scoped skill.
     # Without this the sub-claude can't find it and falls back to ad-hoc behavior.
     mkdir -p "$WORKSPACE/.claude/skills"
-    ln -snf "$REPO/skills/cookiecutter" "$WORKSPACE/.claude/skills/cookiecutter"
+    ln -snf "$REPO/skills/seedkit" "$WORKSPACE/.claude/skills/seedkit"
 }
 
 cleanup_workspace
@@ -91,6 +91,12 @@ for tc in "${FILES[@]}"; do
     echo "    prompt: $tc"
 
     cd "$WORKSPACE"
+
+    # Marker so we can identify REVIEW.md files written *during* this case.
+    # Without it, prior cases' REVIEW.md leak into later cases' summary rows
+    # (workspace is wiped only at the start of the run, not between cases).
+    marker="$LOGS/.start-$name-$STAMP"
+    touch "$marker"
 
     start=$(date +%s)
     claude -p "$(cat "$tc")" \
@@ -110,8 +116,9 @@ for tc in "${FILES[@]}"; do
         printf '\n[exit: %s, duration: %ss]\n' "$rc" "$duration"
     } >> "$log"
 
-    # Try to grab a REVIEW.md the testcase may have written.
-    review=$(find "$WORKSPACE" -mindepth 2 -maxdepth 4 -name 'REVIEW.md' -not -path "*/logs/*" 2>/dev/null | head -1)
+    # Only REVIEW.md files newer than the marker belong to this case.
+    review=$(find "$WORKSPACE" -mindepth 2 -name 'REVIEW.md' -not -path "*/logs/*" -newer "$marker" 2>/dev/null | head -1)
+    rm -f "$marker"
 
     {
         echo "## $name"

@@ -1,6 +1,6 @@
-# Cookiecutter test cases
+# Seedkit test cases
 
-End-to-end checks for the `cookiecutter` skill. Each test case is a single self-contained prompt that fully specifies every answer the skill would otherwise ask for, so the AI can run it without stopping for clarification. After execution, the AI appends a **check report** to the same file describing what worked, what didn't, and which manual fixes were applied to make it work.
+End-to-end checks for the `seedkit` skill. Each test case is a single self-contained prompt that fully specifies every answer the skill would otherwise ask for, so the AI can run it without stopping for clarification. After execution, the AI appends a **check report** to the same file describing what worked, what didn't, and which manual fixes were applied to make it work.
 
 The point is to catch drift between the skill's references and reality (Django version bumps, uv flags, Docker quirks, package renames) by running real builds.
 
@@ -12,7 +12,7 @@ Each test case is one `.md` file:
 # <Title>
 
 ## Prompt
-<Single fully-specified instruction for `/cookiecutter`. No open questions.>
+<Single fully-specified instruction for `/seedkit`. No open questions.>
 
 ## Expected outcome
 - Project boots (runserver or `docker compose up`)
@@ -25,7 +25,7 @@ Each test case is one `.md` file:
 ## Check report
 Run `claude -p` from the project dir with `--model claude-opus-4-7`,
 restricted to read-only tools so the reviewer can't trigger the
-cookiecutter skill and rebuild the project. Tell the reviewer the
+seedkit skill and rebuild the project. Tell the reviewer the
 project is a freshly generated *starter / scaffold* with no business
 logic on purpose, and list the intentional design decisions of the
 skill (gated `default=... if DEBUG else None`; `globals().update(env.email_url(...))`;
@@ -105,7 +105,7 @@ Coverage rules. Use these to regenerate the suite when the skill changes.
 
 ## Running a test case
 
-The harness is the AI itself. Open a fresh working directory, paste the prompt, let `/cookiecutter` run end-to-end, and append the check report. No automated runner — the value is in seeing whether the skill produces a working project unattended, not in shell-level assertions.
+The harness is the AI itself. Open a fresh working directory, paste the prompt, let `/seedkit` run end-to-end, and append the check report. No automated runner — the value is in seeing whether the skill produces a working project unattended, not in shell-level assertions.
 
 ## When to regenerate
 
