@@ -1,165 +1,207 @@
 ---
 name: seedkit
-description: Set up a new Django project with only the components you need.
+description: Bootstrap a new Django project, or add components — auth (allauth, magic-link, axes, 2FA), payments (Stripe, dj-stripe), REST (django-modern-rest, django-bolt), Celery / django-tasks, Tailwind+DaisyUI, S3 storage, structlog, healthchecks, Docker, CI, deploy (VPS / Fly / GitHub-SSH), dbbackup, Sentry/Bugsink — to an existing Django codebase. Use whenever the user wants to scaffold Django, integrate a Django package, set up production deploys, wire CI/CD, or extend an existing Django project.
 ---
 
-## Prerequisites
+## How this skill works
 
-```sh
-uv --version
-```
+Two paths:
+
+- **New project** (empty dir, only `.git/` or stub README): run §2 → §6 in order.
+- **Existing project** (has `pyproject.toml` and Django code): skip §2–§4. Read `references/existing-project.md` for the inventory workflow, then jump to §5/§6 and ask only about missing components.
+
+Before either path, run `uv --version` to confirm uv is installed.
+
+For every question that involves a third-party package: 1–2 sentences from the reference's intro on what it adds beyond stock Django, then ask. `none` (or `no`) is always a valid answer.
 
 ## Reference files
 
-### Foundation
+### Project Foundation
 
 - `references/uv.md` — uv installation and commands
 - `references/new-project.md` — Two Scoops layout, django-environ, uv
 - `references/database.md` — SQLite vs PostgreSQL (host or Docker)
 - `references/custom-user.md` — custom `AUTH_USER_MODEL` (set before first migrate)
 - `references/docker.md` — local docker-compose dev + production image
-- `references/lint.md` — Ruff (Django-aware rules, optional pre-commit)
-- `references/pytest.md` — pytest + pytest-django + coverage (replaces `manage.py test`); default no
-- `references/typecheck.md` — pyright + django-stubs static type checking; default no
-- `references/pre-commit.md` — pre-commit hook config wiring lint / format / typecheck; default no
-- `references/i18n.md` — gettext setup (LANGUAGES, LocaleMiddleware, `makemessages` workflow); default no
-- `references/devcontainer.md` — `.devcontainer/devcontainer.json` for VS Code / Codespaces / JetBrains Gateway; default no
+- `references/existing-project.md` — inventory workflow when extending an existing repo
 
-### Add-ons
+### Developer Experience
 
-- `references/auth.md` — `django-allauth` (passwords, verification, social) or `django-mail-auth` (passwordless magic-link); ask, or none for stock auth
-- `references/cors.md` — `django-cors-headers` for cross-origin frontend / API consumers
-- `references/db-safety.md` — django-zeal (N+1 detection), django-migration-linter (CI migration audit), django-test-migrations (migration rollback tests); all dev-only
-- `references/debug.md` — orbit / silk dispatcher → loads `debug-orbit.md` or `debug-silk.md`
-- `references/redis.md` — Redis cache (django-redis)
+- `references/lint.md` — Ruff (Django-aware rules)
+- `references/pytest.md` — pytest + pytest-django + coverage
+- `references/typecheck.md` — pyright + django-stubs
+- `references/pre-commit.md` — pre-commit hook config wiring lint / format / typecheck
+- `references/devcontainer.md` — `.devcontainer/devcontainer.json` for VS Code / Codespaces / JetBrains Gateway
+- `references/debug.md` — orbit / silk dispatcher
+- `references/db-safety.md` — django-zeal / django-migration-linter / django-test-migrations
+- `references/django-extensions.md` — `shell_plus`, `runserver_plus`, `show_urls`
+- `references/logging.md` — `structlog` JSON-in-prod / pretty-in-dev
+
+### Auth & Accounts
+
+- `references/auth.md` — `django-allauth` or `django-mail-auth`
+- `references/auth-hardening.md` — `django-axes` brute-force lockout + 2FA
+
+### Data & Storage
+
+- `references/redis.md` — Redis cache
 - `references/storage-whitenoise.md` — static via WhiteNoise + media volume on VPS
 - `references/storage-s3.md` — static + media on S3-compatible storage
-- `references/tasks-celery.md` — Celery + Redis
-- `references/tasks-django.md` — Django Tasks dispatcher → loads `tasks-django-db.md` or `tasks-django-rq.md`; optional `tasks-django-cron.md` for periodic
-- `references/email.md` — transactional email (console / SMTP / Mailpit)
-- `references/rest.md` — REST API dispatcher → loads `rest-modern-rest.md` or `rest-bolt.md`; default no
-- `references/billing.md` — Stripe billing: raw `stripe` SDK (simple checkout + webhooks) or `dj-stripe` (full ORM sync of Stripe objects); default no
-- `references/tailwind.md` — Tailwind CSS via the standalone CLI (no Node.js, no npm); custom 404/403/500 templates as a follow-up; default no
-- `references/auth-hardening.md` — `django-axes` brute-force lockout + 2FA (allauth-2fa or django-otp); ask only when auth ≠ none
-- `references/healthcheck.md` — `/healthz` (liveness) + `/readyz` (DB-touching); default yes
-- `references/robots.md` — `robots.txt` view; default no
-- `references/django-extensions.md` — dev toolbox (`shell_plus`, `runserver_plus`, `show_urls`); default no
-- `references/logging.md` — `structlog` JSON-in-prod / pretty-in-dev; ask yes / no
-- `references/analytics.md` — dispatcher → loads `analytics-goatcounter.md` / `-umami.md` / `-shynet.md` / `-ga4.md`
 
-### Production
+### Background & Email
+
+- `references/tasks-celery.md` — Celery + Redis
+- `references/tasks-django.md` — Django Tasks dispatcher (`-db.md` / `-rq.md` / `-cron.md`)
+- `references/email.md` — console / SMTP / Mailpit / anymail
+
+### Frontend & Site Basics
+
+- `references/tailwind.md` — Tailwind CSS standalone CLI; DaisyUI; custom 404/403/500
+- `references/i18n.md` — gettext, LocaleMiddleware, makemessages
+- `references/cors.md` — `django-cors-headers`
+- `references/robots.md` — `robots.txt`
+
+### SaaS / Product
+
+- `references/rest.md` — REST API dispatcher (`-modern-rest.md` / `-bolt.md`)
+- `references/billing.md` — Stripe SDK or dj-stripe
+- `references/analytics.md` — dispatcher (`-goatcounter.md` / `-umami.md` / `-shynet.md` / `-ga4.md`)
+
+### Production & Deploy
 
 - `references/security.md` — Django security settings
-- `references/csp.md` — `django-csp` Content Security Policy (production-only, gated on security=yes)
-- `references/error-reporting.md` — Bugsink / Sentry SaaS / GlitchTip (sentry-sdk)
-- `references/gdpr.md` — PII scrubbing, retention, user data export/delete
+- `references/csp.md` — `django-csp` Content Security Policy
+- `references/healthcheck.md` — `/healthz` + `/readyz`
+- `references/error-reporting.md` — Bugsink / Sentry / GlitchTip
+- `references/gdpr.md` — PII scrubbing, retention, user export/delete
 - `references/ci.md` — GitHub Actions test workflow
 - `references/deploy-vps.md` — VPS with Docker + Caddy
 - `references/deploy-managed.md` — Fly.io / Railway / Render
 - `references/deploy-github-ssh.md` — GitHub Actions deploy via SSH
-- `references/dbbackup.md` — `django-dbbackup` to S3-compatible target; gated on deploy=vps
+- `references/dbbackup.md` — `django-dbbackup` to S3-compatible target
 
 ## Instructions
 
-### 1. Overview
+### 1. Open the conversation
 
-Before any question, send one short message summarising — in your own words, drawn from the Reference files list above — what the skill can set up: foundation, add-ons, production. Phrase it fresh each time. End with an invitation to begin.
+Send one short message listing the groups from the Reference files section above with one sentence each on what's available. For existing projects: first follow `references/existing-project.md` and additionally list what's already detected per group. Invite the user to begin.
 
-### 2. Foundation — one question at a time, in order
+### 2. Project Foundation — new projects only, one question at a time, in order
 
-For any question involving a third-party package, brief 1–2 sentences on *what it adds beyond stock Django* (from the reference's intro). Then ask.
-
-1. Project name and a one-line purpose.
+1. Project name + one-line purpose (the explicit two-answer pair).
 2. Settings layout: single `settings.py` or split `base/local/production`.
 3. Database: SQLite or PostgreSQL.
 4. Local dev mode: uv on host or docker-compose.
    - Postgres + uv-on-host → host Postgres or Postgres-only in Docker.
    - docker-compose → full stack.
    - SQLite + Docker — warn the file lives in a container volume.
-   - If docker-compose: ask Docker structure — `simple` or `override`.
-     - `simple` (default): separate `Dockerfile.dev` for local + a separate production `Dockerfile` later. One `docker-compose.yml`. Easier to read; dev and prod files can drift.
-     - `override`: one multi-stage `Dockerfile` with `dev` and `prod` targets. `docker-compose.yml` describes the prod-shaped stack; `docker-compose.override.yml` (auto-loaded) layers on dev tweaks (bind mounts, `runserver`, target=dev). One source of truth, dev/prod stay aligned. Recommend for serious projects.
-     - Carry the choice through to the production step — don't re-ask, just apply the matching variant from `references/docker.md`.
-5. Custom user model: yes / no. Decide now (see `references/custom-user.md`).
-6. Lint with Ruff: yes / no.
-7. Test runner: pytest + pytest-django, or stock `manage.py test`? **Default no** (stock). Apply `references/pytest.md` only if user picks pytest.
-8. Static type checking with pyright + django-stubs: yes / no. **Default no.** Apply `references/typecheck.md` only if yes.
-9. Pre-commit hooks: yes / no. **Default no.** Apply `references/pre-commit.md` only if yes (recommend yes when lint=yes).
-10. Internationalisation (`gettext`, `LocaleMiddleware`, `makemessages`): yes / no. **Default no.** Apply `references/i18n.md` only if yes — the cost of adding later is real.
-11. Devcontainer (`.devcontainer/devcontainer.json` for VS Code / Codespaces / JetBrains Gateway): yes / no. **Default no.** Apply `references/devcontainer.md` only if yes; pick the uv-on-host or docker-compose flavour based on the dev mode chosen in step 4.
+   - If docker-compose: ask Docker structure — `simple` (default; separate `Dockerfile.dev`) or `override` (one multi-stage `Dockerfile` + auto-loaded `docker-compose.override.yml`; recommend for serious projects). See `references/docker.md`.
+5. Custom user model: yes / no — decide now (see `references/custom-user.md`).
 
-Never bundle questions.
+Never bundle questions beyond the explicit pair in step 1.
 
-### 3. Apply the foundation
+### 3. Apply the foundation (new projects only)
 
-Generate files from the matching references. `.env` `DATABASE_URL` must match DB + dev mode (sqlite path, host Postgres URL, or `db` service host).
+Generate files from the matching references. `.env` `DATABASE_URL` must match DB + dev mode. If custom user = yes, apply `references/custom-user.md` **before** the boot check.
 
-If the user opted into a custom user model, apply `references/custom-user.md` **before** the boot check.
+### 4. Boot check — mandatory, new projects only
 
-### 4. Boot check — mandatory
-
-In the chosen mode:
+Ask the user to run, in the chosen mode:
 
 - `migrate`
-- `createsuperuser` (interactive)
-- `collectstatic --noinput` only if a static-files add-on was applied; skip for the bare foundation (`runserver` serves statics in DEBUG).
+- `createsuperuser` (interactive — the user runs it themselves)
+- `collectstatic --noinput` only if a static-files add-on was applied
 
-Do not move on until the user confirms `/admin/` login works.
+Wait for the user to confirm `/admin/` login works before continuing.
 
-### 5. Add-ons — one question at a time, in this order
+### 5. Add-ons — one group at a time, one question at a time
 
-Ask every question below. Don't drop any. Same briefing rule as foundation: 1–2 sentences from the reference intro on what the package adds beyond stock Django, then the question. `none` is always a valid answer.
+For new projects: ask every question. For existing projects: only ask about components not already detected in §1; confirm and skip the rest.
 
-1. Auth: `django-allauth` / `django-mail-auth` / `none` (`references/auth.md`).
-   - If auth ≠ none, follow up with `references/auth-hardening.md`:
-     - `django-axes` brute-force lockout: yes / no. **Default yes.**
-     - 2FA: yes / no. **Default no.** When yes: `allauth-2fa` if auth=allauth, `django-otp` otherwise.
-2. Debug: `django-orbit` / `django-silk` / `none` (`references/debug.md`).
-3. Database safety: which of `django-zeal` (N+1 detection in dev) / `django-migration-linter` (CI migration audit) / `django-test-migrations` (migration rollback tests) to include? Each is independent; all are dev-only deps. **Default none.** Apply `references/db-safety.md` for whichever the user picks. Skip `django-test-migrations` if pytest was not chosen in the foundation.
-4. Redis cache: yes / no (`references/redis.md`).
-5. Static + media storage: `whitenoise` / `s3` / `none` (`references/storage-whitenoise.md`, `references/storage-s3.md`).
-6. Background tasks: `celery` / `django-tasks-db` / `django-tasks-rq` / `none` (`references/tasks-celery.md`, `references/tasks-django.md`).
-7. **Email backend: `console` / `smtp` / `mailpit` / `anymail` / `none` (`references/email.md`).** Always ask — every project sends mail eventually (password resets, error reports, allauth verification). `anymail` is the provider-API option (Postmark / SES / SendGrid / Mailgun / etc.) — recommend over plain SMTP when production goes through one of those providers.
-8. Structured logging (`structlog`): yes / no (`references/logging.md`).
-9. Analytics: `goatcounter` / `umami` / `shynet` / `ga4` / `none` (`references/analytics.md`).
-10. CORS for cross-origin frontends or API consumers: yes / no (`references/cors.md`). Default no — only ask yes when the project has a separate frontend on a different domain.
-11. REST API: `django-modern-rest` / `django-bolt` / `none` (`references/rest.md`). **Default no.** Stock Django doesn't ship a REST framework. `django-modern-rest` stays in the standard Django runtime (sync or async, pluggable schema lib). `django-bolt` runs a Rust HTTP server (Actix + PyO3 + msgspec) for high-RPS APIs and adds a separate `runbolt` process. Apply only the matching reference file.
-12. Billing: `stripe` (raw SDK — Stripe-hosted Checkout + Customer Portal, you store the customer ID, write webhook handlers) / `dj-stripe` (syncs Stripe objects into Django ORM — query subscription state with `.filter()`, react via Django signals) / `none` (`references/billing.md`). **Default no.** Both use Stripe-hosted Checkout for the payment UI — the difference is whether Stripe data lives only on Stripe's servers (`stripe`) or is mirrored locally (`dj-stripe`). Recommend `dj-stripe` when the project needs to filter users by plan, display billing history, or gate features in Python; recommend raw `stripe` for simpler one-time or subscription flows where the Customer Portal handles everything.
-13. Frontend: `tailwind` / `none` (`references/tailwind.md`). Default no.
-    - If tailwind=yes: custom 404/403/500 templates? Default yes.
-    - If tailwind=yes: enable DaisyUI components? **Always ask explicitly — no default.** Apply per `references/tailwind.md` (registers `daisyui.mjs` as a `@plugin` in the source CSS).
-14. Health check endpoints (`/healthz` liveness, `/readyz` DB-touching): yes / no. **Default yes** — almost every deploy target (Fly, Caddy, GitHub-SSH) wires probes against these. Apply `references/healthcheck.md`. If a deploy target is later selected, also wire the matching probe block in its compose / `fly.toml` / nginx config.
-15. `robots.txt`: yes / no. **Default no** — only ask yes when the project is a public-facing site. Apply `references/robots.md`.
-16. `django-extensions` (dev toolbox: `shell_plus`, `runserver_plus`, `show_urls`): yes / no. **Default no.** Apply `references/django-extensions.md` only if yes; the package goes into `--dev` deps and `INSTALLED_APPS` in `local.py` (or DEBUG-gated for single-settings).
+#### 5.1 Developer Experience
 
-### 6. Production
+1. Ruff lint: yes / no. **Default no.**
+2. Test runner: pytest or stock `manage.py test`. **Default no** (stock).
+3. Type checking with pyright + django-stubs: yes / no. **Default no.**
+4. Pre-commit hooks: yes / no. **Default no** — recommend yes if lint=yes; wires whichever of lint / format / typecheck were chosen.
+5. Devcontainer: yes / no. **Default no.** Match the dev-mode flavour: uv-on-host or docker-compose. New projects use the answer from §2.4; existing projects detect from `Dockerfile` / `compose*.yml` (see `references/existing-project.md`).
+6. Debug toolbar: `django-orbit` / `django-silk` / `none`. **Default none.**
+7. DB safety: any of `django-zeal` / `django-migration-linter` / `django-test-migrations`. **Default none.** Skip `django-test-migrations` if pytest = no.
+8. `django-extensions`: yes / no. **Default no.**
+9. Structured logging via `structlog`: yes / no. **Default no.**
 
-Ask only after add-ons. Same briefing-then-ask rule for each.
+#### 5.2 Auth & Accounts
 
-1. Security settings: yes / no (`references/security.md`).
-   - If security=yes, follow up: Content Security Policy via `django-csp`? **Default yes.** Apply `references/csp.md` — CSP is layered on top of Django's security settings; production-only.
-2. Error reporting: `bugsink` / `sentry` / `glitchtip` / `none` (`references/error-reporting.md`).
-3. GDPR helpers: yes / no (`references/gdpr.md`).
-4. CI on GitHub Actions: yes / no (`references/ci.md`).
-5. Deploy target: `vps` / `managed` / `github-ssh` / `none` (`references/deploy-vps.md` / `-managed.md` / `-github-ssh.md`).
-   - If deploy=vps, follow up: Database backups via `django-dbbackup`? **Default yes.** Apply `references/dbbackup.md` — managed platforms have native backups, so skip this for `managed` / `github-ssh`.
+1. Auth: `django-allauth` / `django-mail-auth` / `none`. **Default none.**
+2. `django-axes` brute-force lockout: yes / no. **Default yes.** Skip if auth = none.
+3. 2FA: yes / no. **Default no.** Skip if auth = none. When yes: `allauth-2fa` if auth = allauth, else `django-otp`.
+
+#### 5.3 Data & Storage
+
+1. Redis cache: yes / no. **Default no.**
+2. Static + media storage: `whitenoise` / `s3` / `none`. **Default none** — required before production but not for first boot.
+
+#### 5.4 Background & Email
+
+1. Background tasks: `celery` / `django-tasks-db` / `django-tasks-rq` / `none`. **Default none.**
+2. Email backend: `console` / `smtp` / `mailpit` / `anymail` / `none`. **Always ask** — every project sends mail eventually (password resets, error reports, allauth verification).
+
+#### 5.5 Frontend & Site Basics
+
+1. Frontend: `tailwind` / `none`. **Default none.**
+   - If tailwind: custom 404/403/500 templates? **Default no.**
+   - If tailwind: DaisyUI components? **No default — always ask explicitly.**
+2. i18n (gettext, LocaleMiddleware, makemessages): yes / no. **Default no** — cost of adding later is real.
+3. CORS: yes / no. **Default no** — only when there's a separate frontend on a different domain.
+4. `robots.txt`: yes / no. **Default no** — only for public-facing sites.
+
+#### 5.6 SaaS / Product
+
+1. REST API: `django-modern-rest` / `django-bolt` / `none`. **Default none.**
+2. Billing: `stripe` (raw SDK) / `dj-stripe` / `none`. **Default none.**
+3. Analytics: `goatcounter` / `umami` / `shynet` / `ga4` / `none`. **Default none.**
+
+### 6. Production & Deploy — one question at a time
+
+1. Security settings: yes / no. **Default no.**
+   - If yes: Content Security Policy via `django-csp`? **Default yes.**
+2. Health check endpoints (`/healthz`, `/readyz`): yes / no. **Default yes.** Apply before the deploy target so the deploy reference can wire the matching probe block in compose / `fly.toml` / nginx.
+3. Error reporting: `bugsink` / `sentry` / `glitchtip` / `none`. **Default none.**
+4. GDPR helpers: yes / no. **Default no.**
+5. CI on GitHub Actions: yes / no. **Default no.**
+6. Deploy target: `vps` / `managed` / `github-ssh` / `none`. **Default none.**
+   - If `vps`: database backups via `django-dbbackup`? **Default yes.** Managed platforms have native backups, so skip for `managed` / `github-ssh`.
 
 ### 7. README
 
-After any setup step, update `README.md` with the key decisions (stack, DB, dev mode, add-ons, deploy target) and the main commands (install, test, migrate, run, deploy). Don't hardcode dependency versions — read them from `pyproject.toml`.
+After applying any reference, append the decision and any new commands to `README.md`. Finalize at the end of the run with stack summary and key commands (install, test, migrate, run, deploy). Don't hardcode dependency versions — read them from `pyproject.toml`.
 
-### Don't improvise
+## Common pitfalls
 
-Use reference snippets as written.
+These are accumulated from runs where the model improvised and broke things. Each rule has a *why* — understand it and you can judge edge cases.
 
-- Env vars: always `DJANGO_DEBUG` / `DJANGO_SECRET_KEY` / `DJANGO_ALLOWED_HOSTS`.
-- Don't add packages the user didn't ask for. (`django-extensions` is now an explicit add-on question — apply only if the user said yes.)
-- Don't create an app dir named after the project unless asked.
-- Don't restate values in `local.py` / `production.py` that `base.py` already sets.
-- Don't reimplement what `django-environ` does (no manual `.split(",")`, no leftover `import os`).
-- After `uv init`, set `requires-python = ">=3.12"` in `pyproject.toml` (Django 6 supports 3.12+; the auto-detected pin from the host interpreter is too tight).
+**Snippet integrity**
+
+- Use snippets verbatim. Don't drop lines that look obvious or redundant (`DEFAULT_AUTO_FIELD`, gated env defaults, top-level `RQ = {"JOB_CLASS": ...}`). The reviewer caught the same drop in five previous runs — keep it.
+- Don't restate values in `local.py` / `production.py` that `base.py` already sets — DRY plus base wins anyway.
+- Don't reimplement `django-environ` (no manual `.split(",")`, no leftover `import os`).
+
+**Env vars and `.env.example`**
+
+- Always `DJANGO_DEBUG` / `DJANGO_SECRET_KEY` / `DJANGO_ALLOWED_HOSTS` — these names are referenced across many references.
 - When adding an add-on, append every env var its reference reads to `.env.example` so the file stays the canonical list.
-- After inserting the env-driven `DATABASES = {...}` line in Option A, **delete** the original hardcoded `DATABASES` block + `# Database` comment that `startproject` emitted. Bottom wins; leaving both makes `DATABASE_URL` dead code. (Option B writes `base.py` from scratch, so this only applies to Option A.)
-- `tasks.py` must live inside a registered Django app, never at project root and never under `config/`. Both Celery autodiscovery and `django-tasks` only scan `INSTALLED_APPS`. If no app exists yet, create one (`uv run manage.py startapp jobs`) before placing `tasks.py`.
-- Use snippets verbatim. Don't drop lines that look "obvious" or "redundant" (e.g. `DEFAULT_AUTO_FIELD`, gated env defaults, the top-level `RQ = {"JOB_CLASS": ...}`). If a value looks unnecessary, the reviewer caught the same thing in the previous five runs — keep it.
-- `.env.example` comments belong on their own lines, never trailing the value. `django-environ` reads everything after `=` verbatim; `EMAIL_URL=consolemail://    # dev` parses as the literal URL `consolemail://    # dev` and breaks any deploy that copies the file.
+- `.env.example` comments belong on their own lines, never trailing the value. `django-environ` reads everything after `=` verbatim, so `EMAIL_URL=consolemail://    # dev` becomes the literal URL `consolemail://    # dev` and breaks any deploy that copies the file.
+
+**App layout**
+
+- Don't create an app dir named after the project unless asked.
+- `tasks.py` must live inside a registered Django app, not at project root or under `config/`. Both Celery autodiscovery and `django-tasks` only scan `INSTALLED_APPS`. If no app exists, create one (`uv run manage.py startapp jobs`) before placing `tasks.py`.
+
+**After `startproject` / `uv init`**
+
+- Set `requires-python = ">=3.12"` in `pyproject.toml` after `uv init`. Django 6 supports 3.12+; the auto-detected pin from the host interpreter is too tight.
+- After inserting the env-driven `DATABASES = {...}` line in Option A of `references/new-project.md`, **delete** the original hardcoded `DATABASES` block + `# Database` comment that `startproject` emitted. Bottom wins; leaving both makes `DATABASE_URL` dead code. (Option B writes `base.py` from scratch, so this only applies to Option A.)
+
+**Add-on scope**
+
+- Don't add packages the user didn't ask for. `django-extensions` is an explicit add-on question — apply only if the user said yes.
