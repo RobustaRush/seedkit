@@ -43,3 +43,5 @@ jobs:
 
       - run: uv run pytest
 ```
+
+Don't add a `manage.py migrate` step before `pytest`. `pytest-django` builds its own `test_<dbname>` database from migrations on each run — a pre-step migrate touches the service DB, doesn't affect the test DB at all, and pollutes state for any later step that reuses the same connection.

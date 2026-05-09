@@ -13,7 +13,10 @@ uv add django-redis
 In `config/settings.py` (or `config/settings/base.py`):
 
 ```python
-REDIS_URL = env("REDIS_URL", default="redis://127.0.0.1:6379")
+# Bare scheme://host:port form — no trailing slash, no /<db>. Per-purpose
+# DBs are appended below. .rstrip("/") is a defensive guard so a stray
+# trailing slash from a managed platform doesn't produce redis://host//0.
+REDIS_URL = env("REDIS_URL", default="redis://127.0.0.1:6379").rstrip("/")
 
 # /0 cache, /1 Celery broker, /2 Celery results, /3 django-tasks-rq.
 # `cache.clear()` only touches /0 — brokers / queues stay intact.

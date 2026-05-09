@@ -38,7 +38,7 @@ correct there, prod env vars come from the deploy platform's secrets, not
 this file; `DATABASE_URL` is intentionally absent from `.env.example`
 because dev uses the in-code default; an empty `REVIEW.md` at the project
 root is the file the reviewer itself is writing to via `tee` — ignore it,
-it's not a skill artifact) so the reviewer doesn't keep flagging them as
+it's not a skill artifact; production Dockerfile's `RUN ... DJANGO_DEBUG=True ... collectstatic` is intentional — it unlocks dev defaults so collectstatic boots without baking real SECRET_KEY / DATABASE_URL into the build context, while `DJANGO_SETTINGS_MODULE=config.settings.production` keeps `STORAGES` manifest behavior; `psycopg[binary]>=3.x` resolution claims may reflect an older training cutoff — verify against PyPI before flagging) so the reviewer doesn't keep flagging them as
 bugs. Word the prompt as "audit the existing code", not "review the
 Django project" — the latter pattern-matches the skill description and
 starts a build. Pipe the output to `REVIEW.md` inside the project

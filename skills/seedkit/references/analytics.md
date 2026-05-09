@@ -42,6 +42,7 @@ def analytics(request):
     return {
         "ANALYTICS_ID":   settings.ANALYTICS_ID,
         "ANALYTICS_HOST": settings.ANALYTICS_HOST,
+        "DEBUG":          settings.DEBUG,
     }
 ```
 
@@ -53,10 +54,10 @@ Register in `TEMPLATES[0]["OPTIONS"]["context_processors"]`:
 
 ### Template
 
-`templates/_analytics.html` wraps the chosen backend's snippet. The `not debug` gate keeps beacons out of dev:
+`templates/_analytics.html` wraps the chosen backend's snippet. The `not DEBUG` gate keeps beacons out of dev. Uppercase `DEBUG` comes from the custom processor above — not Django's built-in `django.template.context_processors.debug`, which only exposes a lowercase `debug` when the request IP is in `INTERNAL_IPS`.
 
 ```django
-{% if ANALYTICS_ID and not debug %}
+{% if ANALYTICS_ID and not DEBUG %}
   {# backend snippet — see the per-backend reference #}
 {% endif %}
 ```
@@ -74,7 +75,7 @@ Analytics IDs aren't secrets. Two patterns:
 **A. Django serves the SPA shell.** Use the context processor; inject IDs as a window global before the bundle loads:
 
 ```django
-{% if ANALYTICS_ID and not debug %}
+{% if ANALYTICS_ID and not DEBUG %}
 <script>
   window.__ANALYTICS__ = {
     id:   "{{ ANALYTICS_ID }}",

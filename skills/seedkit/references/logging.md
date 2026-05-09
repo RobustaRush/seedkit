@@ -90,9 +90,13 @@ class RequestContextMiddleware:
 ```
 
 ```python
-# Insert after SecurityMiddleware so it runs before anything that logs.
-MIDDLEWARE.insert(1, "config.middleware.logging.RequestContextMiddleware")
+# Insert AFTER AuthenticationMiddleware. request.user only exists once
+# AuthenticationMiddleware has run; binding earlier always sets user_id=None.
+auth_idx = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
+MIDDLEWARE.insert(auth_idx + 1, "config.middleware.logging.RequestContextMiddleware")
 ```
+
+Always-on. `LOGGING` belongs at module scope in `base.py` — never inside an `if DEBUG:` block, or production runs with bare Django defaults (no console handler at the root level).
 
 For Celery tasks:
 

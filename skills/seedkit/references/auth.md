@@ -41,8 +41,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 SITE_ID = 1
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "/admin/"     # starter has no root view — change once the app has one
+LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
@@ -113,7 +113,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 LOGIN_URL = "mailauth:login"
-LOGIN_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "/admin/"     # starter has no root view
 ```
 
 If `references/custom-user.md` is applied, skip `mailauth.contrib.user` and keep the project's `users.User`.
@@ -150,6 +150,8 @@ Sign in
 ```
 
 Add `BASE_DIR / "templates"` to `TEMPLATES[0]["DIRS"]` if missing.
+
+Only the `templates/mailauth/` tree above. Don't create `templates/registration/login*.html` — that's the legacy mailauth ≤ 2.x layout and is ignored by mailauth 3.x.
 
 ### Migrate
 

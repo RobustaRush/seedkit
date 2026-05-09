@@ -7,7 +7,10 @@ Stock Django wires email backend / host / port / user / pass / tls one setting a
 In `config/settings.py` (or `config/settings/base.py`):
 
 ```python
-globals().update(env.email_url("EMAIL_URL", default="consolemail://"))
+# Gated default keeps dev zero-config but fails fast in prod (where DEBUG
+# is unset). Without the gate, a missing EMAIL_URL silently routes prod
+# mail to stdout via consolemail://.
+globals().update(env.email_url("EMAIL_URL", default="consolemail://" if DEBUG else None))
 
 DEFAULT_FROM_EMAIL = env(
     "DEFAULT_FROM_EMAIL",
@@ -15,11 +18,13 @@ DEFAULT_FROM_EMAIL = env(
 )
 SERVER_EMAIL = env("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 
-ADMINS = [("Admin", email) for email in env.list("DJANGO_ADMINS", default=[])]
+ADMINS = [(email, email) for email in env.list("DJANGO_ADMINS", default=[])]
 MANAGERS = ADMINS
 ```
 
 `ADMINS` receive 500-error emails (when `DEBUG=False`) and any `mail_admins()` call. Leave empty in dev — console backend prints to stdout anyway.
+
+If allauth is configured with `ACCOUNT_EMAIL_VERIFICATION = "mandatory"` in production, the gated default is what saves you: console backend would block every signup because the verification link only goes to stdout. Production must set `EMAIL_URL` to a real SMTP URL.
 
 `EMAIL_URL` schemes:
 

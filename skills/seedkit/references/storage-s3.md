@@ -17,13 +17,15 @@ This block **replaces** any `STATIC_URL` / `STATIC_ROOT` / `MEDIA_URL` / `MEDIA_
 `STORAGES` (Django 4.2+) replaces legacy `STATICFILES_STORAGE` / `DEFAULT_FILE_STORAGE`. Don't set the legacy keys alongside it.
 
 ```python
-AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
+# Gated defaults match the foundation pattern: dev/build runs zero-config,
+# prod (DEBUG unset) raises ImproperlyConfigured if any of these is missing.
+AWS_ACCESS_KEY_ID     = env("AWS_ACCESS_KEY_ID",     default="" if DEBUG else None)
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY", default="" if DEBUG else None)
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="" if DEBUG else None)
 AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="us-east-1")
 # Non-AWS providers (MinIO, R2, B2, Spaces): set the endpoint, skip
 # AWS_S3_CUSTOM_DOMAIN so django-storages signs URLs against the endpoint.
-AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default="")
+AWS_S3_ENDPOINT_URL  = env("AWS_S3_ENDPOINT_URL",  default="")
 AWS_S3_CUSTOM_DOMAIN = env("AWS_S3_CUSTOM_DOMAIN", default="")
 
 STORAGES = {
@@ -37,11 +39,12 @@ STORAGES = {
     },
 }
 
-# Hardcode URLs only when CDN domain is set; otherwise django-storages
-# signs against the endpoint (correct for MinIO etc.).
-if AWS_S3_CUSTOM_DOMAIN:
-    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+# Always declare URLs so templates / admin can reference them. When
+# AWS_S3_CUSTOM_DOMAIN is set, point at the CDN; otherwise django-storages
+# signs against the endpoint (correct for MinIO, R2, B2, Spaces) and the
+# /static//media defaults remain valid placeholders.
+STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/" if AWS_S3_CUSTOM_DOMAIN else "/static/"
+MEDIA_URL  = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"  if AWS_S3_CUSTOM_DOMAIN else "/media/"
 ```
 
 ## .env / .env.prod

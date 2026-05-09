@@ -12,12 +12,13 @@ uv add django-tasks-rq django-rq
 
 ## INSTALLED_APPS
 
-`django.tasks` is built in. `django_tasks_rq` is just a backend class. Only `django_rq` registers as an app:
+`django.tasks` is built in. `django_rq` and `django_tasks_rq` are both apps and both register:
 
 ```python
 INSTALLED_APPS = [
     ...
     "django_rq",
+    "django_tasks_rq",
 ]
 ```
 
@@ -33,9 +34,13 @@ TASKS = {
 
 # django-rq reads RQ_QUEUES separately from TASKS. URL form so host/port
 # come from REDIS_URL. /3 keeps it isolated from cache (/0) and Celery
-# broker / results (/1, /2).
+# broker / results (/1, /2). JOB_CLASS lifts the django-tasks-rq Job into
+# every queue so workers don't need a --job-class flag.
 RQ_QUEUES = {
-    "default": {"URL": f"{REDIS_URL}/3"},
+    "default": {
+        "URL": f"{REDIS_URL}/3",
+        "JOB_CLASS": "django_tasks_rq.Job",
+    },
 }
 ```
 
@@ -44,6 +49,8 @@ RQ_QUEUES = {
 ```sh
 uv run manage.py rqworker default
 ```
+
+The `JOB_CLASS` in `RQ_QUEUES` is enough — `rqworker` reads it per queue. No `--job-class` flag needed.
 
 ## Local — docker-compose.yml
 

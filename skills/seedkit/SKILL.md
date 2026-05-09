@@ -119,3 +119,6 @@ Use reference snippets as written.
 - Don't reimplement what `django-environ` does (no manual `.split(",")`, no leftover `import os`).
 - After `uv init`, set `requires-python = ">=3.12"` in `pyproject.toml` (Django 6 supports 3.12+; the auto-detected pin from the host interpreter is too tight).
 - When adding an add-on, append every env var its reference reads to `.env.example` so the file stays the canonical list.
+- After inserting the env-driven `DATABASES = {...}` line in Option A, **delete** the original hardcoded `DATABASES` block + `# Database` comment that `startproject` emitted. Bottom wins; leaving both makes `DATABASE_URL` dead code. (Option B writes `base.py` from scratch, so this only applies to Option A.)
+- `tasks.py` must live inside a registered Django app, never at project root and never under `config/`. Both Celery autodiscovery and `django-tasks` only scan `INSTALLED_APPS`. If no app exists yet, create one (`uv run manage.py startapp jobs`) before placing `tasks.py`.
+- Use snippets verbatim. Don't drop lines that look "obvious" or "redundant" (e.g. `DEFAULT_AUTO_FIELD`, gated env defaults, `JOB_CLASS` in `RQ_QUEUES`). If a value looks unnecessary, the reviewer caught the same thing in the previous five runs — keep it.
