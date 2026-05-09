@@ -19,9 +19,9 @@ This block **replaces** any `STATIC_URL` / `STATIC_ROOT` / `MEDIA_URL` / `MEDIA_
 ```python
 # Gated defaults match the foundation pattern: dev/build runs zero-config,
 # prod (DEBUG unset) raises ImproperlyConfigured if any of these is missing.
-AWS_ACCESS_KEY_ID     = env("AWS_ACCESS_KEY_ID",     default="" if DEBUG else None)
-AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY", default="" if DEBUG else None)
-AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="" if DEBUG else None)
+AWS_ACCESS_KEY_ID     = env("AWS_ACCESS_KEY_ID",     default="" if DEBUG else env.NOTSET)
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY", default="" if DEBUG else env.NOTSET)
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="" if DEBUG else env.NOTSET)
 AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="us-east-1")
 # Non-AWS providers (MinIO, R2, B2, Spaces): set the endpoint, skip
 # AWS_S3_CUSTOM_DOMAIN so django-storages signs URLs against the endpoint.

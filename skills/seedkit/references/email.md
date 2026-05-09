@@ -8,19 +8,30 @@ In `config/settings.py` (or `config/settings/base.py`):
 
 ```python
 # Gated default keeps dev zero-config but fails fast in prod (where DEBUG
-# is unset). Without the gate, a missing EMAIL_URL silently routes prod
-# mail to stdout via consolemail://.
-globals().update(env.email_url("EMAIL_URL", default="consolemail://" if DEBUG else None))
+# is unset). Use `env.NOTSET` for the prod branch — `default=None` would
+# pass None into env.email_url() / env(), which then crashes with TypeError
+# on URL parsing or silently propagates as `DEFAULT_FROM_EMAIL = None`.
+# `env.NOTSET` raises ImproperlyConfigured cleanly at startup naming the
+# missing variable.
+globals().update(env.email_url(
+    "EMAIL_URL",
+    default="consolemail://" if DEBUG else env.NOTSET,
+))
 
 DEFAULT_FROM_EMAIL = env(
     "DEFAULT_FROM_EMAIL",
-    default="webmaster@localhost" if DEBUG else None,
+    default="webmaster@localhost" if DEBUG else env.NOTSET,
 )
 SERVER_EMAIL = env("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 
 ADMINS = [(email.split("@")[0], email) for email in env.list("DJANGO_ADMINS", default=[])]
 MANAGERS = ADMINS
 ```
+
+`.env` must exist before the first `manage.py` invocation. Some
+django-environ versions raise `ImproperlyConfigured` on a missing `.env`
+file rather than falling through to the gated defaults — `cp .env.example
+.env` is the safest first step in the README.
 
 `ADMINS` receive 500-error emails (when `DEBUG=False`) and any `mail_admins()` call. Leave empty in dev — console backend prints to stdout anyway.
 
@@ -104,7 +115,7 @@ if not DEBUG:
     EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
 
 ANYMAIL = {
-    "POSTMARK_SERVER_TOKEN": env("POSTMARK_SERVER_TOKEN", default="" if DEBUG else None),
+    "POSTMARK_SERVER_TOKEN": env("POSTMARK_SERVER_TOKEN", default="" if DEBUG else env.NOTSET),
     # Provider-specific keys — see anymail.readthedocs.io for the full list.
     # SES: "AMAZON_SES_CLIENT_PARAMS", or use boto3's standard env vars.
     # SendGrid: "SENDGRID_API_KEY".
@@ -136,7 +147,7 @@ urlpatterns = [
 
 ```python
 # settings — protect against forged webhook calls
-ANYMAIL["WEBHOOK_SECRET"] = env("ANYMAIL_WEBHOOK_SECRET", default="" if DEBUG else None)
+ANYMAIL["WEBHOOK_SECRET"] = env("ANYMAIL_WEBHOOK_SECRET", default="" if DEBUG else env.NOTSET)
 ```
 
 The provider needs configuring with `ANYMAIL_WEBHOOK_SECRET` as HTTP basic auth (`https://<secret>@example.com/anymail/<provider>/tracking/`). Connect signals to react to events:

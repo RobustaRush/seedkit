@@ -21,7 +21,11 @@ In `config/settings.py` (or `config/settings/local.py` for split):
 ```python
 if DEBUG:
     INSTALLED_APPS += ["orbit"]
-    MIDDLEWARE = ["orbit.middleware.OrbitMiddleware"] + MIDDLEWARE
+    # Insert AFTER SecurityMiddleware (index 0) so SSL redirect / HSTS / host
+    # validation still run first. Putting Orbit at index 0 lets it observe
+    # requests that SecurityMiddleware would have rejected — the data is
+    # noisy and the security stack should be honoured even in dev.
+    MIDDLEWARE.insert(1, "orbit.middleware.OrbitMiddleware")
 
     ORBIT_CONFIG = {
         "IGNORE_PATHS": ["/orbit/", "/static/", "/media/"],
@@ -31,7 +35,7 @@ if DEBUG:
     }
 ```
 
-`OrbitMiddleware` must be first.
+`OrbitMiddleware` sits right after `SecurityMiddleware` — high enough to wrap everything else, low enough to respect the security stack.
 
 ## URLs
 
@@ -51,7 +55,9 @@ uv run manage.py migrate
 
 ## Logging (optional)
 
-`django-orbit` is a dev dep, so this `LOGGING` block lives in `config/settings/local.py` only — never `base.py` or `production.py`. Keep a `console` handler alongside `orbit` so `runserver` output isn't swallowed:
+`django-orbit` is a dev dep, so the orbit handler lives in `config/settings/local.py` for the split layout. **Don't gate `LOGGING` itself on `if DEBUG:`** — that locks production out of any logging config and leaves it on Django's bare defaults. Instead, define a baseline `LOGGING` at module scope and **append** the orbit handler in dev:
+
+`base.py` (always loaded):
 
 ```python
 LOGGING = {
@@ -59,13 +65,20 @@ LOGGING = {
     "disable_existing_loggers": False,
     "handlers": {
         "console": {"class": "logging.StreamHandler"},
-        "orbit": {"()": "orbit.handlers.OrbitLogHandler"},
     },
-    "root": {"handlers": ["console", "orbit"], "level": "DEBUG"},
+    "root": {"handlers": ["console"], "level": "INFO"},
 }
 ```
 
-Single-file layout: gate on `if DEBUG:`.
+`local.py` (dev-only — adds the orbit handler on top):
+
+```python
+LOGGING["handlers"]["orbit"] = {"()": "orbit.handlers.OrbitLogHandler"}
+LOGGING["root"]["handlers"].append("orbit")
+LOGGING["root"]["level"] = "DEBUG"
+```
+
+Single-file layout: keep the baseline at module scope, then guard only the orbit-handler append with `if DEBUG:`.
 
 ## MCP — AI assistant integration (optional)
 

@@ -183,6 +183,7 @@ These are accumulated from runs where the model improvised and broke things. Eac
 **Snippet integrity**
 
 - Use snippets verbatim. Don't drop lines that look obvious or redundant (`DEFAULT_AUTO_FIELD`, gated env defaults, top-level `RQ = {"JOB_CLASS": ...}`). The reviewer caught the same drop in five previous runs — keep it.
+- The fail-fast idiom for env vars is `default=<dev-value> if DEBUG else env.NOTSET`. Never write `default=… if DEBUG else None` — `env.db(None)` and `env.email_url(None)` crash with `AttributeError`/`TypeError` on URL parsing, and plain `env(default=None)` silently propagates `None` into Django settings. `env.NOTSET` raises `ImproperlyConfigured` naming the variable.
 - Don't restate values in `local.py` / `production.py` that `base.py` already sets — DRY plus base wins anyway.
 - Don't reimplement `django-environ` (no manual `.split(",")`, no leftover `import os`).
 

@@ -28,7 +28,7 @@ restricted to read-only tools so the reviewer can't trigger the
 seedkit skill and rebuild the project. Tell the reviewer the
 project is a freshly generated *starter / scaffold* with no business
 logic on purpose, and list the intentional design decisions of the
-skill (gated `default=... if DEBUG else None`; `globals().update(env.email_url(...))`;
+skill (gated `default=... if DEBUG else env.NOTSET`; `globals().update(env.email_url(...))`;
 `local.py` deltas-only; WhiteNoise `STORAGES` in `production.py` only;
 `wsgi.py`/`asgi.py` → production, `manage.py` → local; email-only custom
 user with `UserManager`; `ACCOUNT_EMAIL_VERIFICATION` optional in base /

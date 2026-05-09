@@ -48,14 +48,14 @@ env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
-SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else None)
+SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else env.NOTSET)
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])  # DEBUG already accepts localhost / 127.0.0.1 / [::1]
-DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}" if DEBUG else None)}  # 4 slashes = absolute, survives running manage.py from any cwd
+DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}" if DEBUG else env.NOTSET)}  # 4 slashes = absolute, survives running manage.py from any cwd
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 ```
 
-Defaults are gated by `DEBUG`: in production `DJANGO_DEBUG` is unset, the defaults vanish, and missing values raise `ImproperlyConfigured`.
+Defaults are gated by `DEBUG`: in production `DJANGO_DEBUG` is unset and `env.NOTSET` makes `django-environ` raise `ImproperlyConfigured` naming the missing variable. Don't write `default=None` for the prod branch — `env.db(default=None)` parses None as a URL and crashes with a confusing `AttributeError`, and `env(default=None)` returns the literal `None` string which propagates silently into Django settings.
 
 After inserting these lines at the top of `settings.py`, delete the original hardcoded `DATABASES` block that `startproject` generated (the `# Database` comment + the dict). Use a single Edit that replaces the entire block — don't leave it in place or it will shadow the env-driven definition above it.
 
@@ -79,9 +79,9 @@ env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
-SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else None)
+SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else env.NOTSET)
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
-DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}" if DEBUG else None)}  # 4 slashes = absolute, survives running manage.py from any cwd
+DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}" if DEBUG else env.NOTSET)}  # 4 slashes = absolute, survives running manage.py from any cwd
 ```
 
 `local.py` and `production.py` carry **only deltas** from `base.py`. Use them for things that only make sense per-environment: dev tooling (debug-toolbar, query loggers, relaxed CORS) in `local.py`; production hardening (HSTS, secure cookies, manifest static storage) in `production.py`. Never restate values base sets; never redeclare `MIDDLEWARE` / `INSTALLED_APPS` / `DATABASES` / `EMAIL_BACKEND` / `STORAGES`. Mutate inherited lists in place:
