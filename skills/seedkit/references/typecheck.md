@@ -1,6 +1,6 @@
 # Type checking — pyright + django-stubs
 
-Stock Django runs without static types. Pyright (the type checker that powers VS Code's Pylance) plus `django-stubs` adds inferred types to the ORM, querysets, request/response cycle, and common third-party packages. Same `pyrightconfig.json` is read by both CI and the editor.
+Stock Django runs without static types. Pyright (the type checker that powers VS Code's Pylance) plus `django-stubs` adds inferred types to the ORM, querysets, request/response cycle, and common third-party packages. Same `[tool.pyright]` block in `pyproject.toml` is read by both CI and the editor.
 
 Pick pyright over mypy because it's roughly 10× faster on a typical Django project and has stricter inference defaults; the trade is a less mature plugin ecosystem and slightly different rules around descriptors.
 
@@ -9,32 +9,44 @@ Skip this if your project doesn't use type hints — checking untyped code only 
 ## Install
 
 ```sh
-uv add --dev pyright django-stubs
+uv add --dev pyright django-stubs django-stubs-ext
+```
+
+`django-stubs-ext` is the runtime companion that makes generics like `Manager[User]` and `QuerySet[Order]` evaluate at import time. Without it, every typed manager/queryset annotation raises `TypeError` when the module loads. Activate it once at the bottom of `config/settings/base.py` (or `config/settings.py` for single-file):
+
+```python
+import django_stubs_ext
+django_stubs_ext.monkeypatch()
 ```
 
 ## Config
 
-`pyrightconfig.json`:
-
-```json
-{
-  "include": ["."],
-  "exclude": ["**/migrations/**", "**/__pycache__", ".venv", "staticfiles"],
-  "venvPath": ".",
-  "venv": ".venv",
-  "reportMissingImports": "error",
-  "reportGeneralTypeIssues": "warning",
-  "reportOptionalMemberAccess": "warning",
-  "strictListInference": true
-}
-```
-
-`pyproject.toml` — tell `django-stubs` which settings module to load:
+`pyproject.toml`:
 
 ```toml
-[tool.django-stubs]
-django_settings_module = "config.settings.local"   # or "config.settings" for single-file
+[tool.pyright]
+include = ["."]
+exclude = [
+    "**/migrations/**",
+    "**/__pycache__",
+    ".venv",
+    "staticfiles",
+    "media",
+]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.12"               # match `requires-python`
+typeCheckingMode = "basic"           # "standard" once code is typed; "strict" is noisy on Django
+useLibraryCodeForTypes = true        # read source for packages without stubs (allauth, axes, …)
+reportMissingTypeStubs = "none"      # third-party stubs are optional
+reportGeneralTypeIssues = "warning"
+reportOptionalMemberAccess = "warning"
+strictListInference = true
 ```
+
+Don't add a `[tool.django-stubs]` block. That key is read by the **mypy** plugin only — pyright ignores it. Pyright resolves Django types from the static stubs shipped inside the `django-stubs` package; no extra wiring needed.
+
+Don't keep a separate `pyrightconfig.json` alongside this — pyright will read both and the precedence rules are surprising. One source of truth.
 
 ## Run
 
@@ -64,9 +76,24 @@ If `references/pre-commit.md` is applied, add:
       - id: pyright
 ```
 
+## Add-on stub packages
+
+Most third-party packages don't ship stubs. With `useLibraryCodeForTypes = true` (set above) and `reportMissingTypeStubs = "none"` pyright reads source for inference and stays quiet about missing `.pyi` files — no action needed in most cases. Two exceptions worth installing when the matching add-on is selected:
+
+| Add-on selected | Extra dev dep |
+|---|---|
+| Celery (`references/tasks-celery.md`) | `uv add --dev celery-types` |
+| Stripe billing (`references/billing.md`) | none — `stripe` ships PEP 561 types |
+| structlog (`references/logging.md`) | none — `structlog` ships types |
+| sentry-sdk (`references/error-reporting.md`) | none — ships types |
+| django-modern-rest / django-bolt (`references/rest-*.md`) | none — both ship types |
+
+Allauth, axes, django-tasks, django-tailwind-cli, dj-stripe — no stubs, fall back to `useLibraryCodeForTypes`.
+
 ## Pragmatics
 
 - Migrations rarely type-check cleanly — already excluded above.
 - Admin `ModelAdmin` subclasses often need `# type: ignore[attr-defined]` on lines that touch dynamically-added attributes.
 - Use `if TYPE_CHECKING:` to import heavy types (factories, test fixtures) without runtime cost.
-- `django-stubs` covers Django core, auth, contenttypes, sessions; most third-party packages don't ship stubs. Pyright will warn `reportMissingTypeStubs` — leave at `none` until the noise is worth solving.
+- For `request.user` to type as your custom `User` (not `AbstractBaseUser | AnonymousUser`), import `django.contrib.auth.models.AbstractBaseUser` and narrow with `assert request.user.is_authenticated` before access — django-stubs handles the rest.
+- Bump `typeCheckingMode` to `"standard"` once the codebase has real type hints; jump straight to `"strict"` only after that pass is clean.
