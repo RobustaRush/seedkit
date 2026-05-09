@@ -53,6 +53,7 @@ uv run manage.py runserver &
 curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
 curl -sf http://127.0.0.1:8025/ > /dev/null
 # send a test mail via shell, check Mailpit JSON API for receipt
+kill $(jobs -p); wait
 ```
 
 ## Log check

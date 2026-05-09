@@ -75,6 +75,7 @@ test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
 # db-safety
 uv run manage.py lintmigrations
 uv run pytest
+kill $(jobs -p); wait
 ```
 
 ## Check report

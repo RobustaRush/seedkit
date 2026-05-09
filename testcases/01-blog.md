@@ -52,6 +52,7 @@ Run the foundation, the boot check (migrate + createsuperuser), and confirm /adm
 cd 01-minimal-blog
 uv run manage.py runserver &
 curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
+kill $(jobs -p); wait
 ```
 
 ## Check report
