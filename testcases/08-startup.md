@@ -16,7 +16,7 @@ Local dev mode: docker-compose (web + db + redis + minio).
 Docker structure: override (one multi-stage `Dockerfile` with `dev`/`prod` targets, `docker-compose.yml` + `docker-compose.override.yml`).
 Lint with Ruff: yes.
 Test runner: pytest + pytest-django.
-Type check (pyright + django-stubs): no.
+Type check (pyright + django-stubs): yes.
 Pre-commit hooks: no.
 Internationalisation (i18n): no.
 Custom user model: no.
@@ -67,6 +67,7 @@ Run the foundation + boot check locally. Generate `Dockerfile`, `fly.toml`, `.gi
 - `django-mail-auth` installed; `mailauth` in `INSTALLED_APPS`; `MailAuthBackend` in `AUTHENTICATION_BACKENDS`; `accounts/` URL include with `mailauth` namespace; `/accounts/login/` renders an email-only form.
 - `django-axes` installed; `axes` in `INSTALLED_APPS`; `AxesMiddleware` last in `MIDDLEWARE`; `AxesBackend` first in `AUTHENTICATION_BACKENDS`. `AXES_HANDLER = 'axes.handlers.cache.AxesCacheHandler'` set in `production.py` (Redis is required and present). `axes_*` migrations applied.
 - `django-csp` installed; `csp.middleware.CSPMiddleware` in `production.py` `MIDDLEWARE`. `CONTENT_SECURITY_POLICY['DIRECTIVES']['script-src']` includes both `https://www.googletagmanager.com` and `https://www.google-analytics.com`. `connect-src` and `img-src` include `https://www.google-analytics.com`. No `'unsafe-inline'` in `script-src`.
+- Pyright + `django-stubs` + `django-stubs-ext` configured; `[tool.pyright]` block in `pyproject.toml`; `django_stubs_ext.monkeypatch()` called from `config/settings/base.py`; `docker compose exec web uv run pyright` exits 0.
 - `pages` app exposes `liveness` / `readiness`; `urlpatterns` wires `path('healthz', ...)` and `path('readyz', ...)`. `fly.toml` `[checks]` block has at least one entry with `path = "/readyz"` and `interval = "10s"`. `curl /healthz` against the local Compose stack returns 200 `ok`.
 
 ## Run
@@ -83,6 +84,7 @@ test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
 test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
 # Fly.io [checks] block points at /readyz
 grep -E '^\s*path\s*=\s*"/readyz"' fly.toml
+docker compose exec -T web uv run pyright
 # CSP enforced and includes GA4 hosts
 grep -q 'csp.middleware.CSPMiddleware' config/settings/production.py
 grep -q 'googletagmanager.com' config/settings/production.py

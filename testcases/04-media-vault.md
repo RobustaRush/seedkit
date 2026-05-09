@@ -16,7 +16,7 @@ Local dev mode: docker-compose (full stack: web + db + redis).
 Docker structure: simple (separate `Dockerfile.dev`, single `docker-compose.yml`).
 Lint with Ruff: yes.
 Test runner: manage.py test (stock Django).
-Type check (pyright + django-stubs): no.
+Type check (pyright + django-stubs): yes.
 Pre-commit hooks: no.
 Internationalisation (i18n): no.
 Custom user model: no.
@@ -48,6 +48,7 @@ Generate `docker-compose.yml` with services `web`, `db`, `redis`, `worker`, `min
 - `minio` exposes a bucket; uploaded media land there (verify via `mc` or admin UI).
 - `psycopg[binary]`, `django-tasks`, `django-tasks-rq`, `django-storages[s3]` (or `boto3`) in dependencies.
 - Ruff config present; `docker compose exec web uv run ruff check .` exits 0.
+- Pyright + `django-stubs` + `django-stubs-ext` configured; `[tool.pyright]` block in `pyproject.toml`; `django_stubs_ext.monkeypatch()` called from `config/settings/base.py`; `docker compose exec web uv run pyright` exits 0.
 - Named volumes for `pgdata`, `venv`, `uv-cache`, `minio-data`.
 - `structlog` installed; `LOGGING` configured with both `json` and `console` formatters, `console` chosen when `DEBUG`; `RequestContextMiddleware` inserted into `MIDDLEWARE`; a request to `/admin/login/` produces a log line carrying `request_id`.
 - `django-modern-rest[msgspec,openapi]` in dependencies; `dmr` is **not** in `INSTALLED_APPS`. `api/` Django app exists with `controllers.py`, `schemas.py`, `urls.py`. `MediaController(Controller[MsgspecSerializer])` defines `post()` typed with `Body[MediaCreate]` returning `MediaOut`. Router mounted under `/api/`. `POST /api/media/` with a valid JSON body returns 200 + parsed body echoed; an invalid body (missing `size`) returns a 422-class error from dmr's validator.
@@ -75,6 +76,7 @@ curl -sf -X POST http://127.0.0.1:8000/api/media/ \
 # Healthchecks
 test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
 test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
+docker compose exec -T web uv run pyright
 # Devcontainer file present and machine-readable
 test -f .devcontainer/devcontainer.json
 python3 -c "import json; d=json.load(open('.devcontainer/devcontainer.json')); assert d['service']=='web'; assert '../docker-compose.yml' in d['dockerComposeFile']"

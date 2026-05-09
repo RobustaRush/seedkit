@@ -16,7 +16,7 @@ Local dev mode: docker-compose (full stack: web + db + redis).
 Docker structure: simple (separate `Dockerfile.dev` for dev, single-stage production `Dockerfile`).
 Lint with Ruff: yes.
 Test runner: pytest + pytest-django.
-Type check (pyright + django-stubs): no.
+Type check (pyright + django-stubs): yes.
 Pre-commit hooks: yes.
 Internationalisation (i18n): no.
 Custom user model: yes (custom `users.User` extending `AbstractUser`).
@@ -66,6 +66,7 @@ Run the foundation + boot check locally. Generate `Dockerfile`, `docker-compose.
 - `allauth-2fa` installed; `allauth_2fa` in `INSTALLED_APPS`; `allauth_2fa.middleware.AllauthTwoFactorMiddleware` in `MIDDLEWARE`; `accounts/` URL include also mounts `allauth_2fa.urls`. `ACCOUNT_LOGIN_BY_2FA_REQUIRED = True` in `production.py` only (dev login still works without enrolment).
 - `django-csp` installed; `csp.middleware.CSPMiddleware` in `MIDDLEWARE` of `production.py` only (NOT base.py / local.py). `CONTENT_SECURITY_POLICY` defines `default-src 'self'`, `frame-ancestors 'none'`, `base-uri 'self'`, `form-action 'self'`. The directive set does NOT include `'unsafe-inline'` for `script-src`. (Admin renders, so `style-src` may include `'unsafe-inline'` — that's the documented concession.)
 - `django-dbbackup` installed; `dbbackup` in `INSTALLED_APPS` of `production.py`; `DBBACKUP_STORAGE` points at `storages.backends.s3boto3.S3Boto3Storage`; `DBBACKUP_BUCKET` (or equivalent) is in `.env.example`. A cron entry for `manage.py dbbackup --clean` exists in deploy artefacts (`docker-compose.prod.yml`, sidecar systemd unit, or a `crontab` file shipped with the deploy).
+- Pyright + `django-stubs` + `django-stubs-ext` configured; `[tool.pyright]` block in `pyproject.toml`; `django_stubs_ext.monkeypatch()` called from `config/settings/base.py`; `docker compose exec web uv run pyright` exits 0.
 - `pages` app exposes `liveness` and `readiness`; `path('healthz', ...)` and `path('readyz', ...)` (no trailing slash) in `urlpatterns`. `Caddyfile` upstream block uses `health_uri /readyz`. `curl http://127.0.0.1:8000/healthz` returns 200 `ok` against the local Compose stack.
 
 ## Run
@@ -82,6 +83,7 @@ test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
 test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
 # Caddyfile probes the readyz path
 grep -q '/readyz' Caddyfile
+docker compose exec -T web uv run pyright
 # CSP enforced in production settings
 grep -q 'csp.middleware.CSPMiddleware' config/settings/production.py
 docker build -t 07-vps-saas:test .
