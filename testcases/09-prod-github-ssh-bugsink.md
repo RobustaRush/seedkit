@@ -14,6 +14,7 @@ Settings layout: split.
 Database: PostgreSQL.
 Local dev mode: docker-compose (web + db + redis).
 Lint with Ruff: yes.
+Test runner: pytest + pytest-django.
 Custom user model: no.
 Auth add-on: none.
 Structured logging: yes (`structlog`, JSON in prod / pretty in dev, request-scoped `request_id`).

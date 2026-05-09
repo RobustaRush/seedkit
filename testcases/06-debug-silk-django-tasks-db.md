@@ -14,6 +14,7 @@ Settings layout: split.
 Database: PostgreSQL.
 Local dev mode: uv on host. Postgres location: on the host (use `createdb silk_db`).
 Lint with Ruff: yes.
+Test runner: manage.py test (stock Django).
 Custom user model: no.
 Auth add-on: none.
 Structured logging: no.

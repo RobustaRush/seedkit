@@ -76,6 +76,14 @@ Then open <http://localhost:8000/admin/>.
 
 ## Production
 
+**Add the production server before building the image:**
+
+```sh
+uv add gunicorn
+```
+
+The Dockerfile's `CMD` calls `gunicorn` directly. Without this step it's not in `pyproject.toml` / `uv.lock` and the image build skips it; the container then exits with `gunicorn: not found`.
+
 **Match the `python3.X` image tag to `requires-python` in `pyproject.toml`** — `uv sync --frozen` refuses to install on a mismatch.
 
 **Ask the user**: does image size matter? Multi-stage saves ~150 MB at the cost of a more complex Dockerfile. Default to single-stage.

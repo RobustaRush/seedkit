@@ -14,6 +14,7 @@ Settings layout: split (`config/settings/base.py`, `local.py`, `production.py`).
 Database: PostgreSQL.
 Local dev mode: uv on host. Postgres location: on the host (use `createdb` for the project DB).
 Lint with Ruff: yes.
+Test runner: pytest + pytest-django.
 Custom user model: yes (custom `users.User` extending `AbstractUser`).
 Auth add-on: `django-allauth` (email login, mandatory email verification, no social providers).
 Structured logging: no.

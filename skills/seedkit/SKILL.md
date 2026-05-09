@@ -19,6 +19,7 @@ uv --version
 - `references/custom-user.md` — custom `AUTH_USER_MODEL` (set before first migrate)
 - `references/docker.md` — local docker-compose dev + production image
 - `references/lint.md` — Ruff (Django-aware rules, optional pre-commit)
+- `references/pytest.md` — pytest + pytest-django (replaces `manage.py test`); default no
 
 ### Add-ons
 
@@ -62,6 +63,7 @@ For any question involving a third-party package, brief 1–2 sentences on *what
    - SQLite + Docker — warn the file lives in a container volume.
 5. Custom user model: yes / no. Decide now (see `references/custom-user.md`).
 6. Lint with Ruff: yes / no.
+7. Test runner: pytest + pytest-django, or stock `manage.py test`? **Default no** (stock). Apply `references/pytest.md` only if user picks pytest.
 
 Never bundle questions.
 

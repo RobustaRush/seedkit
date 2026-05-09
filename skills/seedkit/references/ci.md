@@ -1,5 +1,7 @@
 # GitHub Actions — Tests
 
+The workflow below runs `uv run pytest`. If pytest wasn't picked at foundation time, swap `uv run pytest` for `uv run manage.py test` (the workflow itself stays the same). Test runner setup — `pytest`, `pytest-django`, `pytest.ini` — lives in `references/pytest.md`.
+
 ## .github/workflows/test.yml
 
 ```yaml
@@ -41,7 +43,7 @@ jobs:
 
       - run: uv sync --frozen
 
-      - run: uv run pytest
+      - run: uv run pytest        # or `uv run manage.py test` if pytest wasn't chosen
 ```
 
-Don't add a `manage.py migrate` step before `pytest`. `pytest-django` builds its own `test_<dbname>` database from migrations on each run — a pre-step migrate touches the service DB, doesn't affect the test DB at all, and pollutes state for any later step that reuses the same connection.
+Don't add a `manage.py migrate` step before tests. `pytest-django` and Django's own test runner each build a `test_<dbname>` database from migrations on every run — a pre-step migrate touches the service DB, doesn't affect the test DB at all, and pollutes state for any later step that reuses the same connection.

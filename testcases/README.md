@@ -38,7 +38,7 @@ correct there, prod env vars come from the deploy platform's secrets, not
 this file; `DATABASE_URL` is intentionally absent from `.env.example`
 because dev uses the in-code default; an empty `REVIEW.md` at the project
 root is the file the reviewer itself is writing to via `tee` — ignore it,
-it's not a skill artifact; production Dockerfile's `RUN ... DJANGO_DEBUG=True ... collectstatic` is intentional — it unlocks dev defaults so collectstatic boots without baking real SECRET_KEY / DATABASE_URL into the build context, while `DJANGO_SETTINGS_MODULE=config.settings.production` keeps `STORAGES` manifest behavior; `psycopg[binary]>=3.x` resolution claims may reflect an older training cutoff — verify against PyPI before flagging) so the reviewer doesn't keep flagging them as
+it's not a skill artifact; production Dockerfile's `RUN ... DJANGO_DEBUG=True ... collectstatic` is intentional — it unlocks dev defaults so collectstatic boots without baking real SECRET_KEY / DATABASE_URL into the build context, while `DJANGO_SETTINGS_MODULE=config.settings.production` keeps `STORAGES` manifest behavior; `psycopg[binary]>=3.x` resolution claims may reflect an older training cutoff — the skill itself uses bare `'psycopg[binary]'` without a version pin (see `references/database.md`), so any specific-version complaint is agent improvisation, not a skill bug) so the reviewer doesn't keep flagging them as
 bugs. Word the prompt as "audit the existing code", not "review the
 Django project" — the latter pattern-matches the skill description and
 starts a build. Pipe the output to `REVIEW.md` inside the project
@@ -74,6 +74,7 @@ Coverage rules. Use these to regenerate the suite when the skill changes.
    - Postgres location (only when `postgres` + `uv-host`): `host` / `docker-db-only`
    - Custom user model (`AUTH_USER_MODEL`): `yes` / `no`
    - Lint (Ruff): `yes` / `no`
+   - Test runner: `pytest` / `manage.py test` (default)
 
    **Add-ons** (each at least once across the suite, but not in the minimal case)
    - Auth: `django-allauth` / `django-mail-auth` / `none`

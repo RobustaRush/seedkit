@@ -22,7 +22,7 @@ brew install uv
 ```sh
 uv init {project_name}
 uv add django
-uv add --dev pytest ruff
+uv add --dev pytest ruff   # examples; lint/pytest are optional foundation choices
 uv remove django
 uv sync
 uv run manage.py runserver

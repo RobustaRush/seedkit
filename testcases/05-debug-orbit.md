@@ -14,6 +14,7 @@ Settings layout: single file.
 Database: SQLite.
 Local dev mode: uv on host.
 Lint with Ruff: yes.
+Test runner: manage.py test (stock Django).
 Custom user model: no.
 Auth add-on: none.
 Structured logging: no.

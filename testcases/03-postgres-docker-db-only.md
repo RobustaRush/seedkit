@@ -14,6 +14,7 @@ Settings layout: single file.
 Database: PostgreSQL.
 Local dev mode: uv on host. Postgres location: run only Postgres in Docker, Django runs on the host (publish 5432 to localhost).
 Lint with Ruff: no.
+Test runner: manage.py test (stock Django).
 Custom user model: no.
 Auth add-on: `django-mail-auth` (passwordless magic-link).
 Structured logging: no.

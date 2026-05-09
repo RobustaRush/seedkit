@@ -110,6 +110,22 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 ```
 
+## Root URL
+
+`startproject`'s `config/urls.py` only routes `/admin/`, so `/` 404s. Add a redirect so the starter is usable out of the box; replace once the project has a real home view.
+
+```python
+# config/urls.py
+from django.contrib import admin
+from django.urls import path
+from django.views.generic import RedirectView
+
+urlpatterns = [
+    path("", RedirectView.as_view(url="/admin/", permanent=False)),
+    path("admin/", admin.site.urls),
+]
+```
+
 ## .env.example and .env
 
 Commit `.env.example` with every env var settings reads:
@@ -166,7 +182,7 @@ uv add --dev poethepoet
 [tool.poe.tasks]
 dev     = "python manage.py runserver"
 migrate = "python manage.py migrate"
-test    = "pytest"
+test    = "python manage.py test"     # or "pytest" if `references/pytest.md` was applied
 lint    = "ruff check ."
 ```
 
