@@ -100,7 +100,7 @@ grep -q 'STRIPE_WEBHOOK_SECRET' .env.example
 grep -rq 'stripe_customer_id' users/
 grep -rq 'csrf_exempt' billing/
 grep -rq 'construct_event' billing/
-kill $(jobs -p); wait
+kill $(jobs -p) 2>/dev/null; pkill -f 'manage.py' 2>/dev/null; wait
 ```
 
 ## Check report
