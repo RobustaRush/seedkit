@@ -1,5 +1,7 @@
 # New Django Project
 
+Docs: <https://django-environ.readthedocs.io/> · <https://docs.djangoproject.com/en/stable/intro/tutorial01/>
+
 Bootstrap with uv on the host. Docker (`references/docker.md`) only
 changes how the project runs — its `.venv` rebuilds from the
 `pyproject.toml` / `uv.lock` written here.

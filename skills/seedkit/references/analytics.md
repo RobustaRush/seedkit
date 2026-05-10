@@ -1,5 +1,7 @@
 # Analytics
 
+Docs: <https://www.goatcounter.com/help/start> · <https://umami.is/docs> · <https://shynet.r1ke.io/> · <https://developers.google.com/analytics/devguides/collection/ga4>
+
 Privacy-respecting site analytics. Pick one backend at setup time — only that snippet ships in templates. Empty `ANALYTICS_ID` disables tracking (e.g. in dev).
 
 | Backend | Hosting | Cookies | Consent banner |

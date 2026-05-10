@@ -1,5 +1,7 @@
 # Authentication
 
+Docs: <https://docs.allauth.org/> · <https://django-mail-auth.readthedocs.io/>
+
 Stock Django ships barebones login/logout views and a `User` model. Pick one add-on:
 
 - **`django-allauth`** — full account flows: signup, email verification, password reset, optional social providers (Google / GitHub), 2FA. The most-used auth library in the Django ecosystem.

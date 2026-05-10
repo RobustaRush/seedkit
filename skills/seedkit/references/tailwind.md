@@ -1,5 +1,7 @@
 # Frontend — django-tailwind-cli
 
+Docs: <https://django-tailwind-cli.readthedocs.io/> · <https://daisyui.com/>
+
 Tailwind CSS via the prebuilt standalone CLI. **No Node.js, no npm, no webpack.** The package downloads a single binary at first run and rebuilds CSS via a Django management command. Inspired by the Phoenix tailwind integration.
 
 Requires Django 4.2+ and Python 3.10+.

@@ -1,5 +1,7 @@
 # Database
 
+Docs: <https://django-environ.readthedocs.io/en/latest/types.html#environ-env-db-url> · <https://docs.djangoproject.com/en/stable/ref/databases/> · <https://litestream.io/>
+
 `django-environ` parses `DATABASE_URL`. No extra config beyond `DATABASES = {"default": env.db("DATABASE_URL")}`.
 
 ## SQLite

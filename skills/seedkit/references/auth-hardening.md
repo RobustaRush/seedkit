@@ -1,5 +1,7 @@
 # Auth hardening — django-axes + 2FA
 
+Docs: <https://django-axes.readthedocs.io/> · <https://docs.allauth.org/en/latest/mfa/introduction.html> · <https://django-otp-official.readthedocs.io/>
+
 Two follow-up questions to Auth. Fire **only when** `auth ≠ none` (without an auth flow there's nothing to harden).
 
 - `axes`: brute-force / lockout protection. Default **yes** when auth is selected.

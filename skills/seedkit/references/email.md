@@ -1,5 +1,7 @@
 # Email
 
+Docs: <https://django-environ.readthedocs.io/en/latest/types.html#environ-env-email-url> · <https://anymail.dev/> · <https://mailpit.axllent.org/> · <https://docs.djangoproject.com/en/stable/topics/email/>
+
 Stock Django wires email backend / host / port / user / pass / tls one setting at a time. `django-environ`'s `email_url` parser collapses that into a single `EMAIL_URL` env var (`consolemail://`, `smtp+tls://user:pass@host:port`, …). Same shape as `DATABASE_URL`; swap providers without touching code.
 
 ## Settings
@@ -171,35 +173,7 @@ Set `EMAIL_URL` and `DEFAULT_FROM_EMAIL` as platform env vars.
 - **Fly.io**: `fly secrets set EMAIL_URL=... DEFAULT_FROM_EMAIL=...`
 - **Railway / Render**: project-variables UI.
 
-## Sending
-
-```python
-from django.core.mail import send_mail
-
-send_mail(
-    subject="Welcome",
-    message="Thanks for signing up.",
-    from_email=None,  # uses DEFAULT_FROM_EMAIL
-    recipient_list=["user@example.com"],
-)
-```
-
 Application mail uses `DEFAULT_FROM_EMAIL`; error reports to `ADMINS` use `SERVER_EMAIL`.
-
-For multi-recipient broadcasts (newsletters, daily digests) **never** pass the full address list as `recipient_list=` — every recipient sees every other recipient's address in the `To:` header. Loop and send one message per user, or build an `EmailMessage` with `bcc=` set:
-
-```python
-for email in addresses:
-    send_mail("Daily digest", body, None, [email])     # one per user
-
-# or, single-shot via BCC:
-EmailMessage(
-    subject="Daily digest",
-    body=body,
-    to=["no-reply@example.com"],
-    bcc=addresses,
-).send()
-```
 
 ---
 
@@ -237,55 +211,6 @@ EMAIL_URL=smtp://mailpit:1025
 ```
 
 Open <http://localhost:8025> in either case to view captured emails.
-
----
-
-## HTML email templates (short)
-
-Auth flows (allauth, mail-auth, password resets) and ad-hoc transactional mail send better-looking HTML than plain text. Stock Django gives you the wiring (`EmailMultiAlternatives`); the templates are project work.
-
-### Layout
-
-```
-templates/email/
-  base.html        # shared shell — header, footer, brand colours
-  base.txt         # plain-text shell (mandatory companion to every HTML email)
-  password_reset.html
-  password_reset.txt
-  account_confirmation.html
-  account_confirmation.txt
-```
-
-Always ship a `.txt` companion. Spam filters score HTML-only mail aggressively; `EmailMultiAlternatives` requires a plain-text body anyway.
-
-### Send
-
-```python
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
-
-def send_password_reset(user, reset_url):
-    ctx = {"user": user, "reset_url": reset_url}
-    msg = EmailMultiAlternatives(
-        subject="Reset your password",
-        body=render_to_string("email/password_reset.txt", ctx),
-        to=[user.email],
-    )
-    msg.attach_alternative(render_to_string("email/password_reset.html", ctx), "text/html")
-    msg.send()
-```
-
-### Allauth override
-
-`django-allauth` looks up its templates by name first in the project, then falls back to its own. Drop the override into `templates/account/email/`:
-
-```
-templates/account/email/
-  email_confirmation_message.html   # allauth-specific name
-  email_confirmation_message.txt
-  password_reset_key_message.html
-  password_reset_key_message.txt
-```
 
 ### Pitfalls
 

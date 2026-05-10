@@ -1,5 +1,7 @@
 # Content Security Policy — django-csp
 
+Docs: <https://django-csp.readthedocs.io/>
+
 Layer **on top of** `references/security.md`. Django's security settings cover headers like HSTS, X-Frame-Options, secure cookies; CSP is a separate header that browsers enforce against script / style / image sources. Production-only — too strict for `runserver` without careful tuning.
 
 Apply only when the user said yes to security AND chose to harden CSP.

@@ -1,5 +1,7 @@
 # Django Tasks — Redis Queue backend
 
+Docs: <https://github.com/RealOrangeOne/django-tasks-rq> · <https://python-rq.org/>
+
 Requires Redis (`references/redis.md`).
 
 `django-rq` provides the `rqworker` management command + admin. `django-tasks-rq` is the adapter from `django.tasks` to RQ.

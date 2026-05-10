@@ -1,5 +1,7 @@
 # Django Tasks — Periodic (django-crontask)
 
+Docs: <https://github.com/RealOrangeOne/django-cron-tasks>
+
 Add this only if the user needs scheduled tasks. Works alongside either Database or Redis Queue backend.
 
 ## Install

@@ -1,5 +1,7 @@
 # Storage — S3
 
+Docs: <https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html> · <https://min.io/docs/minio/linux/index.html>
+
 Static and media in an S3-compatible bucket. Works on every deploy target including managed platforms with ephemeral filesystems.
 
 Compatible providers: AWS S3, DigitalOcean Spaces, Cloudflare R2, Backblaze B2, MinIO.

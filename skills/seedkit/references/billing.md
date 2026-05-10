@@ -1,5 +1,7 @@
 # Billing — Stripe
 
+Docs: <https://docs.stripe.com/api?lang=python> · <https://dj-stripe.dev/>
+
 Two options. Ask the user which one.
 
 - **`stripe` (raw SDK)** — the official Stripe Python client, no Django ORM sync. You store the Stripe customer ID on the User model and call the Stripe API directly. Stripe-hosted Checkout and the Customer Portal handle the subscription UI so you write almost no billing UI yourself. Pick for simple cases: one-time payments, or subscriptions where Stripe manages the plan-switching / cancellation UI.

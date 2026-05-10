@@ -1,5 +1,7 @@
 # GitHub Actions — Tests
 
+Docs: <https://docs.github.com/en/actions> · <https://github.com/astral-sh/setup-uv>
+
 The workflow below runs `uv run pytest`. If pytest wasn't picked at foundation time, swap `uv run pytest` for `uv run manage.py test` (the workflow itself stays the same). Test runner setup — `pytest`, `pytest-django`, `pytest.ini` — lives in `references/pytest.md`.
 
 ## .github/workflows/test.yml

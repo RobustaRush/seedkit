@@ -1,5 +1,7 @@
 # CORS — django-cors-headers
 
+Docs: <https://github.com/adamchainz/django-cors-headers>
+
 Browsers block cross-origin requests by default. `django-cors-headers` adds the response headers Django needs to allow them when the frontend lives on a different origin (separate SPA, third-party widget, mobile app talking to the API).
 
 Skip if Django serves both API and templates from the same origin — same-origin requests don't need CORS.

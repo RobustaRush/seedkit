@@ -1,5 +1,7 @@
 # django-bolt
 
+Docs: <https://django-bolt.readthedocs.io/>
+
 Rust-powered API framework for Django. Runs its own HTTP server (Actix Web + PyO3 + msgspec), invoked through `manage.py runbolt`. Targets high-RPS JSON APIs while keeping access to Django ORM, admin, and packages.
 
 Pre-1.0 — README explicitly says "under active development". Pin a version.

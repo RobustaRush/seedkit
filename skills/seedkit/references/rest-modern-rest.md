@@ -1,5 +1,7 @@
 # django-modern-rest
 
+Docs: <https://django-modern-rest.readthedocs.io/>
+
 Typed REST framework for Django. Sits inside the normal request/response cycle — no new runtime. Sync or async handlers; pluggable schema libs (pydantic, msgspec, attrs, dataclasses, TypedDict).
 
 Requires `django>=4.2`, Python 3.11+.

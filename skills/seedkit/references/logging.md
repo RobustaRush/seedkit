@@ -1,5 +1,7 @@
 # Logging — structured (structlog)
 
+Docs: <https://www.structlog.org/>
+
 Pretty console in dev, JSON lines in prod. Foreign loggers (Django, Celery, urllib3) render identically because both renderers are stdlib `logging` formatters wrapped by `ProcessorFormatter`. Per-request `request_id` / `user_id` flow via `contextvars`.
 
 ## Install
@@ -134,37 +136,6 @@ def _clear_task(**_):
 ## Sentry / GlitchTip / Bugsink
 
 If `error-reporting.md` is in use, sentry-sdk's `LoggingIntegration` already routes `WARNING+` to breadcrumbs and `ERROR+` to events. Override per-logger via `LoggingIntegration(level=…, event_level=…)`.
-
-## Use
-
-```python
-import structlog
-
-log = structlog.get_logger(__name__)
-
-log.info("user_signed_up", user_id=user.id, plan="free")
-log.warning("payment_retry", invoice_id=inv.id, attempt=3)
-
-log = log.bind(order_id=order.id)
-log.info("order_paid")
-log.info("invoice_sent")
-
-try:
-    do_thing()
-except ValueError:
-    log.exception("thing_failed", thing_id=thing.id)
-```
-
-## Tests
-
-```python
-from structlog.testing import capture_logs
-
-def test_signup_logs_event():
-    with capture_logs() as cap:
-        client.post("/signup/", {...})
-    assert any(e["event"] == "user_signed_up" for e in cap)
-```
 
 ## Pitfalls
 

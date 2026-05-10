@@ -1,5 +1,7 @@
 # Database backups
 
+Docs: <https://django-dbbackup.readthedocs.io/>
+
 Production-only. Apply only when `deploy = vps`.
 
 Managed platforms (`deploy-managed.md` — Fly.io, Railway, Render) provide their own snapshot / point-in-time-recovery story; using `django-dbbackup` on top is duplication that fights the platform's native tooling. For VPS deploys, there's nothing built-in — you have to ship a backup story or hope.

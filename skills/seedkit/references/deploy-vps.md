@@ -1,5 +1,7 @@
 # Deploy — VPS with Docker + Caddy
 
+Docs: <https://caddyserver.com/docs/> · <https://docs.docker.com/compose/>
+
 ## deploy/docker-compose.prod.yml
 
 ```yaml

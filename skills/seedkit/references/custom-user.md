@@ -1,5 +1,7 @@
 # Custom User Model
 
+Docs: <https://docs.djangoproject.com/en/stable/topics/auth/customizing/#substituting-a-custom-user-model>
+
 Set `AUTH_USER_MODEL` **before the first `migrate`**. Adding it later requires data migrations and breaks foreign keys to `auth.User`.
 
 An empty subclass suffices — extending it later (extra fields, email-as-username) doesn't require schema changes to existing rows.

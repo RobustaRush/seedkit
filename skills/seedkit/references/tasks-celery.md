@@ -1,5 +1,7 @@
 # Celery
 
+Docs: <https://docs.celeryq.dev/> · <https://docs.celeryq.dev/en/stable/django/first-steps-with-django.html>
+
 Django has no background-task system. Celery is the established Python distributed queue: workers process jobs off a broker (Redis here), with retries, rate limits, schedules (Beat), priority queues, chained workflows. Use it for non-trivial background work — emails, image processing, periodic syncs.
 
 Requires Redis (`references/redis.md`).
@@ -49,22 +51,7 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True  # silence Celery 5+ deprecatio
 
 ## Define a task
 
-Tasks must live in a registered Django app — `app.autodiscover_tasks()` only scans `INSTALLED_APPS`. **Not in `config/`** (it isn't in `INSTALLED_APPS`). If no domain app exists, `uv run django-admin startapp <name>` first.
-
-```python
-# <app>/tasks.py
-from celery import shared_task
-
-@shared_task
-def send_welcome_email(user_id: int) -> None:
-    ...
-```
-
-## Enqueue
-
-```python
-send_welcome_email.delay(user.id)
-```
+Scaffold an empty `<app>/tasks.py` inside a registered Django app — `app.autodiscover_tasks()` only scans `INSTALLED_APPS`, **not** `config/`. If no domain app exists, `uv run django-admin startapp <name>` first. Use `from celery import shared_task` and the `@shared_task` decorator on each function.
 
 ## Local — docker-compose.yml
 

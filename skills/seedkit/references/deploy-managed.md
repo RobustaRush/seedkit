@@ -1,5 +1,7 @@
 # Deploy — Managed (Fly.io / Railway / Render)
 
+Docs: <https://fly.io/docs/django/> · <https://docs.railway.com/> · <https://render.com/docs>
+
 ## Fly.io
 
 ### fly.toml

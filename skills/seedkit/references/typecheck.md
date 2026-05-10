@@ -1,5 +1,7 @@
 # Type checking — pyright + django-stubs
 
+Docs: <https://microsoft.github.io/pyright/> · <https://github.com/typeddjango/django-stubs>
+
 Stock Django runs without static types. Pyright (the type checker that powers VS Code's Pylance) plus `django-stubs` adds inferred types to the ORM, querysets, request/response cycle, and common third-party packages. Same `[tool.pyright]` block in `pyproject.toml` is read by both CI and the editor.
 
 Pick pyright over mypy because it's roughly 10× faster on a typical Django project and has stricter inference defaults; the trade is a less mature plugin ecosystem and slightly different rules around descriptors.

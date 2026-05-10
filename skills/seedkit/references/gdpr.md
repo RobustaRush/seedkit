@@ -1,5 +1,7 @@
 # GDPR / privacy
 
+Docs: <https://docs.sentry.io/platforms/python/data-management/sensitive-data/>
+
 Concrete settings for projects with EU users or regulated data.
 
 ## Sentry SDK — strip PII

@@ -1,5 +1,7 @@
 # Storage — WhiteNoise + Local Media
 
+Docs: <https://whitenoise.evans.io/>
+
 WhiteNoise serves **static files only**. User-uploaded media goes elsewhere:
 
 - **VPS**: Caddy serves media from a Docker volume.

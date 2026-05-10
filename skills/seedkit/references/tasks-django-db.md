@@ -1,5 +1,7 @@
 # Django Tasks — Database backend
 
+Docs: <https://github.com/RealOrangeOne/django-tasks-database>
+
 `django-tasks-db` stores tasks in your existing DB. No broker, no extra service.
 
 ## Install

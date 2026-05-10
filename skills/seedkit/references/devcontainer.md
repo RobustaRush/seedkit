@@ -1,5 +1,7 @@
 # Devcontainer
 
+Docs: <https://containers.dev/> · <https://code.visualstudio.com/docs/devcontainers/containers>
+
 Optional foundation-level add-on. Adds `.devcontainer/devcontainer.json` so VS Code / Codespaces / JetBrains Gateway open the project in a pre-configured container with `uv`, the right Python, and (if Docker dev mode was chosen) the project's compose stack already running.
 
 Skip this when the user works in a plain shell — there's nothing else to set up.

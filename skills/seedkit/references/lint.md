@@ -1,5 +1,7 @@
 # Linting — Ruff
 
+Docs: <https://docs.astral.sh/ruff/> · <https://docs.astral.sh/ruff/rules/#flake8-django-dj>
+
 Replaces flake8, isort, pyupgrade, and most of pylint. The `DJ` ruleset covers Django-specific issues.
 
 ## Install

@@ -1,5 +1,7 @@
 # Docker
 
+Docs: <https://docs.astral.sh/uv/guides/integration/docker/> · <https://docs.docker.com/compose/>
+
 The skill asks the user up-front (Foundation step 4) which structure to use:
 
 - **`simple`** — separate `Dockerfile.dev` + separate production `Dockerfile`, single `docker-compose.yml`. Easier to read, two files can drift. **Default.**

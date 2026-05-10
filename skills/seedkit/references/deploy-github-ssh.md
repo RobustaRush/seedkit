@@ -1,5 +1,7 @@
 # Deploy — GitHub Actions via SSH
 
+Docs: <https://docs.github.com/en/actions> · <https://github.com/appleboy/ssh-action>
+
 This pattern is built on top of `references/deploy-vps.md`. Read that first
 — this file only adds the GitHub Actions wrapper. In particular, it inherits
 `docker-compose.prod.yml`, the Caddy reverse proxy, and the `/healthz`

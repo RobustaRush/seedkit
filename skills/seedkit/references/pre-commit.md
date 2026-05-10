@@ -1,5 +1,7 @@
 # Pre-commit hooks
 
+Docs: <https://pre-commit.com/>
+
 Run lint / format / type checks on `git commit` so broken code never reaches the remote. `pre-commit` is a Python tool; hooks themselves can be from any language.
 
 Apply `references/lint.md` first — most of the value here is wiring Ruff into the commit flow.

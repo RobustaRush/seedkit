@@ -1,5 +1,7 @@
 # Error reporting
 
+Docs: <https://docs.sentry.io/platforms/python/integrations/django/> · <https://www.bugsink.com/docs/> · <https://glitchtip.com/documentation>
+
 Sentry-protocol error tracker. Three backends share one SDK setup — only `SENTRY_DSN` differs.
 
 ## Install

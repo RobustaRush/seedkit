@@ -1,5 +1,7 @@
 # uv
 
+Docs: <https://docs.astral.sh/uv/>
+
 ## Install
 
 **macOS / Linux**
