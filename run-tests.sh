@@ -76,8 +76,50 @@ fi
 } > "$SUMMARY"
 
 cleanup_workspace() {
-    # Remove everything in workspace EXCEPT the logs directory.
-    find "$WORKSPACE" -mindepth 1 -maxdepth 1 ! -name 'logs' -exec rm -rf {} +
+    # Remove everything in workspace EXCEPT the logs directory and the
+    # top-level README (regenerated at the end of every run).
+    find "$WORKSPACE" -mindepth 1 -maxdepth 1 ! -name 'logs' ! -name 'README.md' -exec rm -rf {} +
+}
+
+# Extract the fenced block under "## Prompt" from a testcase file.
+# Used to prepend the original /seedkit invocation to the generated
+# project's README so each example is self-explanatory.
+extract_prompt_block() {
+    awk '
+        /^## Prompt[[:space:]]*$/ { in_prompt = 1; next }
+        in_prompt && /^```/        { fence_count++; if (fence_count == 2) exit; next }
+        in_prompt && fence_count == 1 { print }
+    ' "$1"
+}
+
+# Prepend the prompt block to the generated project's README.md so the
+# example carries the exact answers that produced it.
+prepend_prompt_to_readme() {
+    local project_dir=$1
+    local tc=$2
+    local readme="$project_dir/README.md"
+    [[ -d "$project_dir" ]] || return 0
+
+    local prompt
+    prompt=$(extract_prompt_block "$tc")
+    [[ -n "$prompt" ]] || return 0
+
+    local existing=""
+    [[ -f "$readme" ]] && existing=$(cat "$readme")
+
+    {
+        echo "## Prompt"
+        echo
+        echo '```'
+        echo "$prompt"
+        echo '```'
+        echo
+        if [[ -n "$existing" ]]; then
+            echo "---"
+            echo
+            echo "$existing"
+        fi
+    } > "$readme"
 }
 
 # Portable setsid: macOS has no setsid by default. Python's os.setsid + execvp
@@ -177,6 +219,12 @@ for tc in "${FILES[@]}"; do
     review=$(find "$WORKSPACE" -mindepth 2 -name 'REVIEW.md' -not -path "*/logs/*" -newer "$marker" 2>/dev/null | head -1)
     rm -f "$marker"
 
+    # Prepend the testcase's `/seedkit` prompt to the generated README so
+    # each example carries the exact answers that produced it.
+    if [[ -n "$review" ]]; then
+        prepend_prompt_to_readme "$(dirname "$review")" "$tc"
+    fi
+
     {
         echo "## $name"
         echo
@@ -198,5 +246,48 @@ for tc in "${FILES[@]}"; do
     } >> "$SUMMARY"
 done
 
+# Top-level README for the examples collection. Suitable for committing to
+# `seedkit-examples` (the sibling submodule of the parent repo) so the
+# GitHub landing page describes what's there.
+{
+    echo "# seedkit-examples"
+    echo
+    echo "Reference Django projects scaffolded by the [seedkit](https://github.com/RobustaRush/seedkit) skill, paired with the prompts that produced them."
+    echo
+    echo "Each subdirectory below is a fresh project generated end-to-end by \`claude -p\` running the matching testcase from \`seedkit/testcases/\`. The first section of every project's \`README.md\` is the verbatim \`/seedkit\` prompt — answers to every Foundation / add-on / production question — so the exact configuration is reproducible."
+    echo
+    echo "## Projects"
+    echo
+    for sub in "$WORKSPACE"/*/; do
+        sub_name=$(basename "$sub")
+        [[ "$sub_name" == "logs" ]] && continue
+        # Skip empty leftover dirs.
+        [[ -f "$sub/README.md" ]] || continue
+        # Pull the first non-empty line after "## Prompt" → "## " header
+        # if the project's README has a stack summary; fall back to slug.
+        purpose=$(awk '
+            /^Purpose: / { sub(/^Purpose: */, ""); print; exit }
+        ' "$sub/README.md" 2>/dev/null)
+        if [[ -n "$purpose" ]]; then
+            echo "- [\`$sub_name/\`]($sub_name/) — $purpose"
+        else
+            echo "- [\`$sub_name/\`]($sub_name/)"
+        fi
+    done
+    echo
+    echo "## Reproducing"
+    echo
+    echo "From the parent repo:"
+    echo
+    echo '```sh'
+    echo "cd seedkit"
+    echo "./run-tests.sh                  # all cases"
+    echo "./run-tests.sh 02 07            # specific cases"
+    echo '```'
+    echo
+    echo "Generated under \`seedkit/workspace/\`. Copy or rsync into this directory to refresh the published examples."
+} > "$WORKSPACE/README.md"
+
 echo
 echo "Summary: $SUMMARY"
+echo "Index:   $WORKSPACE/README.md"
