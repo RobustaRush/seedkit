@@ -69,8 +69,11 @@ structlog.configure(
 
 ```python
 # config/middleware/logging.py
+import time
 import uuid
 import structlog
+
+log = structlog.get_logger("django.request")
 
 # Skip user-id binding for paths that must not block on the DB. Reading
 # `request.user.id` triggers AuthenticationMiddleware's lazy lookup, so
@@ -89,10 +92,19 @@ class RequestContextMiddleware:
         if not request.path.startswith(_NO_USER_PATHS):
             ctx["user_id"] = getattr(getattr(request, "user", None), "id", None)
         structlog.contextvars.bind_contextvars(**ctx)
+        start = time.monotonic()
         try:
-            return self.get_response(request)
+            response = self.get_response(request)
         finally:
+            log.info(
+                "request",
+                method=request.method,
+                path=request.path,
+                status=getattr(locals().get("response"), "status_code", 0),
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
             structlog.contextvars.clear_contextvars()
+        return response
 ```
 
 ```python

@@ -9,8 +9,10 @@ Requires `django>=4.2`, Python 3.11+.
 `msgspec` is the recommended schema engine (fastest JSON path). Add it as the default:
 
 ```sh
-uv add 'django-modern-rest[msgspec,openapi]'
+uv add 'django-modern-rest[msgspec,openapi]' pyjwt
 ```
+
+`pyjwt` is a transitive dependency that isn't pinned through the extras chain — pin it explicitly so a fresh `uv sync` resolves cleanly.
 
 If the user wants pydantic schemas instead, swap `msgspec` → `pydantic`. Both extras can co-exist.
 
