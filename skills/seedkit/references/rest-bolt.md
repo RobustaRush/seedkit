@@ -12,7 +12,16 @@ Pre-1.0 — README explicitly says "under active development". Pin a version.
 uv add django-bolt
 ```
 
-The wheel includes a precompiled Rust extension. `pip install` (uv pulls the wheel) does not require a Rust toolchain on the install host.
+The wheel includes a precompiled Rust extension. uv pulls the wheel on x86_64 / arm64 macOS and x86_64 Linux without a toolchain. **No aarch64-linux wheel** is published — Docker builds on Apple Silicon (linux/arm64 platform) compile from source. The builder stage of the prod Dockerfile must use the full uv image plus build tools — see `references/docker.md` "Full uv (escape hatch)" tier:
+
+```dockerfile
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+The slim runtime stage stays on `python:3.12-slim-bookworm` — only the build needs the toolchain.
 
 ## settings.py / base.py
 

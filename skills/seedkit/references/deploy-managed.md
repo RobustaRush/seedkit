@@ -48,6 +48,17 @@ primary_region = "iad"
     handlers = ["tls", "http"]
 ```
 
+### Per-process env (multi-process apps)
+
+`[env]` applies to every process in `[processes]`. To set a different `DJANGO_SETTINGS_MODULE` (or any other var) for one process — e.g. when `references/rest-bolt.md` is in scope and the `bolt` process needs `config.settings.bolt` — inline the var on the command line; Fly's command runner is a plain shell:
+
+```toml
+[processes]
+  web    = "gunicorn config.wsgi --bind 0.0.0.0:8000"
+  worker = "celery -A config worker -l info"
+  bolt   = "env DJANGO_SETTINGS_MODULE=config.settings.bolt python manage.py runbolt --port 8002"
+```
+
 ### Commands
 
 ```sh
