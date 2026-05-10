@@ -106,7 +106,14 @@ TEMPLATES = []
 ROOT_URLCONF = 'config.urls_bolt'  # API-only URLConf, no admin / accounts
 ```
 
-`config/urls_bolt.py` is the API-only URLConf — no `admin.site.urls`, no `accounts/`, only the routes bolt actually serves. Keep `config/urls.py` as the full URLConf for `runserver` / `gunicorn`.
+`config/urls_bolt.py` is the API-only URLConf. `runbolt` discovers routes from the `BoltAPI()` instances directly — `BoltAPI` has no `.urls` attribute to mount, so the URLConf stays empty:
+
+```python
+# config/urls_bolt.py
+urlpatterns: list = []
+```
+
+Keep `config/urls.py` as the full URLConf for `runserver` / `gunicorn`.
 
 Run bolt against the slim settings; leave the full stack on the regular settings:
 

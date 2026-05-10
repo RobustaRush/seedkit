@@ -94,11 +94,12 @@ docker compose exec -e DJANGO_SETTINGS_MODULE=config.settings.bolt web \
     assert 'django.contrib.admin' not in settings.INSTALLED_APPS, settings.INSTALLED_APPS; \
     assert settings.ROOT_URLCONF == 'config.urls_bolt', settings.ROOT_URLCONF; \
     assert settings.TEMPLATES == [], settings.TEMPLATES"
-# Boot runbolt in the background and curl the user endpoint (uses superuser id=1)
+# Boot runbolt in the background (port 8001 must be published in docker-compose.yml)
+# and curl from the host — the slim runtime image has no curl binary.
 docker compose exec -d -e DJANGO_SETTINGS_MODULE=config.settings.bolt web \
-  uv run manage.py runbolt --dev
+  uv run manage.py runbolt --dev --port 8001
 sleep 2
-docker compose exec web sh -c 'curl -sf http://127.0.0.1:8001/users/1' || true
+curl -sf http://127.0.0.1:8001/users/1 || true
 docker build -t 08-fly-app:test .
 docker images 08-fly-app:test
 ```
