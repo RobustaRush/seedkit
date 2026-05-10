@@ -364,30 +364,14 @@ Requires pytest + pytest-django (see `references/pytest.md`). Skip if the projec
 uv add --dev django-test-migrations
 ```
 
-#### Usage
+The `migrator` pytest fixture ships with the package — no `conftest.py` wiring needed. Test patterns live in [the upstream docs](https://django-test-migrations.readthedocs.io/).
 
-If `startapp` already created `myapp/tests.py`, convert it to a package:
+If `startapp` already created `myapp/tests.py` and you later need a `tests/` package, convert it without losing existing tests:
 
 ```sh
 mkdir myapp/tests
 git mv myapp/tests.py myapp/tests/test_initial.py
 touch myapp/tests/__init__.py
 ```
-
-```python
-# myapp/tests/test_migrations.py — sample, write when you have a real migration to test
-def test_migration_forward_and_back(migrator):
-    old_state = migrator.apply_initial_migration(("myapp", "0001_initial"))
-    new_state = migrator.apply_tested_migration(("myapp", "0002_add_status"))
-
-    MyModel = new_state.apps.get_model("myapp", "MyModel")
-    assert MyModel.objects.filter(status="active").count() == 0
-
-    # Roll back by re-applying the earlier migration. `migrator.reset()`
-    # only rebuilds the in-memory graph — it does not undo applied state.
-    migrator.apply_initial_migration(("myapp", "0001_initial"))
-```
-
-The `migrator` fixture is provided by `django-test-migrations`; no extra `conftest.py` needed.
 
 Write a migration test whenever a `RunPython` operation transforms data or when the migration is irreversible by design (document with `reverse_code=migrations.RunPython.noop` and a comment explaining why).
