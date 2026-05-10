@@ -30,7 +30,7 @@ DJANGO_SETTINGS_MODULE=config.settings.production   # the rqworker / db_worker
                                                     # with NO security hardening.
 DJANGO_SECRET_KEY=
 DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=example.com
+DJANGO_ALLOWED_HOSTS=example.com,localhost,127.0.0.1   # localhost/127.0.0.1 for the in-container healthcheck
 DJANGO_CSRF_TRUSTED_ORIGINS=https://example.com
 DJANGO_BEHIND_PROXY=True            # Caddy terminates TLS; required for
                                     # SECURE_SSL_REDIRECT to work right.
@@ -78,6 +78,7 @@ jobs:
         with:
           push: true
           tags: ghcr.io/${{ github.repository }}:latest
+          target: prod                              # only when references/docker.md `override` (multi-stage) layout is used
 
       # Pin third-party deploy actions to a SHA, not a major tag — this step
       # runs arbitrary shell on prod. Replace <SHA> with a recent commit.
@@ -94,21 +95,26 @@ jobs:
             # NOT pick it up from `env_file:` (that only sets container env).
             # Without an explicit export, the image line resolves to
             # `ghcr.io/:latest` and `compose pull` aborts.
+            # `--env-file deploy/.env.prod` is required on every compose call
+            # because compose's auto `.env` discovery only looks in the same
+            # dir as the compose file — `deploy/.env.prod` lives there but the
+            # filename isn't the one auto-loaded. Without the flag, every
+            # `${VAR}` in compose.prod.yml resolves to empty.
             export GITHUB_REPOSITORY="${{ github.repository }}"
             # Authenticate the *server's* docker against ghcr.io. Without
             # this, `compose pull` against a private package silently fails
             # and `up -d` keeps running the previous image.
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker compose -f deploy/docker-compose.prod.yml pull
-            docker compose -f deploy/docker-compose.prod.yml run --rm web uv run manage.py migrate
-            docker compose -f deploy/docker-compose.prod.yml up -d
+            docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml pull
+            docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml run --rm web uv run manage.py migrate
+            docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml up -d
             # Wait for the container healthcheck (defined in deploy-vps.md)
             # to flip to "healthy" — don't sleep-and-curl on plain HTTP if
             # SECURE_SSL_REDIRECT is on, that returns 301 and `curl` without
             # `-L` reads success regardless of the upstream actually being up.
             for i in $(seq 1 30); do
               status=$(docker inspect -f '{{ '{{' }}.State.Health.Status{{ '}}' }}' \
-                $(docker compose -f deploy/docker-compose.prod.yml ps -q web) 2>/dev/null || echo starting)
+                $(docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml ps -q web) 2>/dev/null || echo starting)
               [ "$status" = "healthy" ] && exit 0
               sleep 2
             done
