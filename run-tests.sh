@@ -256,6 +256,10 @@ for tc in "${FILES[@]}"; do
         if [[ -n "$boot_section" ]]; then
             printf 'After scaffolding completes, run these runtime smoke checks. Auto-fix any failure (the goal is a project that boots and the smoke pipeline returns clean):\n\n'
             printf '%s\n\n' "$boot_section"
+            printf 'Wait-for-services rules — observed pitfalls that have hung past runs:\n'
+            printf -- '- Use `docker compose up -d --wait` (or `--wait-timeout 60`) when the smoke depends on services being up. It blocks on the compose-side healthchecks and exits non-zero on failure. Don'\''t hand-roll a polling loop.\n'
+            printf -- '- Never pipe `docker compose ps --format json` into `json.load` — Compose v2.6+ emits newline-delimited JSON, not an array. `json.load` reads the whole stream and raises, your loop stays at exit 1, and the bash tool livelocks.\n'
+            printf -- '- If a service has no healthcheck declared, add one in `docker-compose.yml` rather than polling externally.\n\n'
         fi
         printf 'At the end, summarise: What worked out of the box / What broke / Fixes applied / Suggested skill changes.\n'
     } | run_phase "BUILD" "$MODEL" "$WORKSPACE" "$log" ""
