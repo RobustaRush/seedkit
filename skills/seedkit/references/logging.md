@@ -73,7 +73,7 @@ import time
 import uuid
 import structlog
 
-log = structlog.get_logger("django.request")
+log = structlog.get_logger("request")  # not "django.request" — that logger is filtered to WARNING above
 
 # Skip user-id binding for paths that must not block on the DB. Reading
 # `request.user.id` triggers AuthenticationMiddleware's lazy lookup, so

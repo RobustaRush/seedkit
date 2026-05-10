@@ -196,10 +196,11 @@ Each rule has a *why* so you can judge edge cases.
 - Don't create an app dir named after the project unless asked.
 - `tasks.py` must live inside a registered Django app, not at project root or under `config/`. Both Celery autodiscovery and `django-tasks` only scan `INSTALLED_APPS`. If no app exists, create one (`uv run manage.py startapp jobs`) before placing `tasks.py`.
 
-**After `startproject` / `uv init`**
+**After `startproject` / `uv init` / `startapp`**
 
 - Set `requires-python = ">=3.12"` in `pyproject.toml` after `uv init`. Django 6 supports 3.12+; the auto-detected pin from the host interpreter is too tight.
 - After inserting the env-driven `DATABASES = {...}` line in Option A of `references/new-project.md`, **delete** the original hardcoded `DATABASES` block + `# Database` comment that `startproject` emitted. Bottom wins; leaving both makes `DATABASE_URL` dead code. (Option B writes `base.py` from scratch, so this only applies to Option A.)
+- After `startapp <name>`, if Ruff is enabled, run `uv run ruff check --fix .` — `startapp` ships `admin.py` / `views.py` / `tests.py` with stub imports that fail `F401`.
 
 **Add-on scope**
 
