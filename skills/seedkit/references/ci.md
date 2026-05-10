@@ -38,6 +38,7 @@ jobs:
       EMAIL_URL: consolemail://
       DEFAULT_FROM_EMAIL: test@example.com
       SERVER_EMAIL: test@example.com
+      REDIS_URL: redis://localhost:6379       # only when redis / celery / django-tasks-rq is wired
 
     steps:
       - uses: actions/checkout@v4

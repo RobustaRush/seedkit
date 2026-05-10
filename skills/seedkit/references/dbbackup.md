@@ -13,8 +13,10 @@ We use `django-dbbackup` over a hand-rolled `pg_dump` cron because it gives:
 ## Install
 
 ```sh
-uv add django-dbbackup
+uv add django-dbbackup 'django-storages[s3]'
 ```
+
+`django-storages[s3]` ships the `S3Boto3Storage` backend `DBBACKUP_STORAGE` points at. Skip if `references/storage-s3.md` is already in scope — it adds the same dep.
 
 ## `production.py` only
 
