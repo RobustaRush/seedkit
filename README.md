@@ -55,6 +55,8 @@ Then, in whatever empty directory you'd like to populate:
 
 Please [open an issue](https://github.com/RobustaRush/seedkit/issues/new) before sending a pull request — even a one-liner. The skill is opinionated and a quick chat usually saves both sides from a wasted PR.
 
+Heads-up: every skill change usually goes through several `run-tests` → review → fix loops to confirm the agent actually behaves the way the diff intends. Each loop runs all nine testcases end-to-end and takes 1.5–2 hours of wall time. Plan accordingly when proposing larger edits.
+
 ## License
 
 [MIT](./LICENSE) — © 2026 Mikhail Podgurskiy.
