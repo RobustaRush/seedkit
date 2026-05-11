@@ -50,7 +50,6 @@ Then, in whatever empty directory you'd like to populate:
 - Smart additions: `/seedkit add [feature]` safely appends code without overwriting.
 - No unused boilerplate.
 - Sane defaults out of the box.
-- Low token footprint.
 
 ## Contributing
 
