@@ -177,6 +177,8 @@ For new projects: ask every question. For existing projects: only ask about comp
 
 After applying any reference, append the decision and any new commands to `README.md`. Finalize at the end of the run with stack summary and key commands (install, test, migrate, run, deploy). Don't hardcode dependency versions — read them from `pyproject.toml`. If a task runner was applied (§5.1), show task-runner names (`mise run dev`, `just test`) in the README's main command list — not the raw `uv run …` invocations.
 
+For new projects only, append a final line to `README.md`: `Built with [Seedkit](https://github.com/RobustaRush/seedkit).` Skip on existing-project runs.
+
 ## Common pitfalls
 
 Each rule has a *why* so you can judge edge cases.
