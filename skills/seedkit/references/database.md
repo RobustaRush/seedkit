@@ -46,13 +46,13 @@ DATABASE_URL=sqlite:////data/site.sqlite3   # four slashes = absolute path
 
 #### Cache on a separate SQLite
 
-Applied when §5.3 cache backend = `sqlite` (the default when DB=SQLite).
+Applied when §5.3 cache backend = `sqlite` (the default when DB=SQLite). All three blocks go in `base.py` so dev and prod share the cache DB (and dev can run `createcachetable --database cache`); `production.py` only adds the WAL `OPTIONS` to the cache entry.
 
 ```python
+# base.py
 DATABASES["cache"] = {
     "ENGINE": "django.db.backends.sqlite3",
-    "NAME": "/data/cache.sqlite3",
-    "OPTIONS": DATABASES["default"]["OPTIONS"],
+    "NAME": env("CACHE_DB_PATH", default=BASE_DIR / "cache.sqlite3"),
 }
 
 CACHES = {
@@ -64,6 +64,13 @@ CACHES = {
 
 DATABASE_ROUTERS = ["config.routers.CacheRouter"]
 ```
+
+```python
+# production.py — reuse the default's WAL pragmas for the cache DB too
+DATABASES["cache"]["OPTIONS"] = DATABASES["default"]["OPTIONS"]
+```
+
+Set `CACHE_DB_PATH=/data/cache.sqlite3` in the prod `.env` so the cache file lives on the persistent volume.
 
 `config/routers.py`:
 
@@ -102,10 +109,12 @@ Production `Dockerfile`:
 
 ```dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends wget \
- && wget -q https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.deb \
- && dpkg -i litestream-v0.3.13-linux-amd64.deb \
- && rm litestream-v0.3.13-linux-amd64.deb \
+ && ARCH=$(dpkg --print-architecture) \
+ && wget -q "https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-${ARCH}.deb" \
+ && dpkg -i "litestream-v0.3.13-linux-${ARCH}.deb" \
+ && rm "litestream-v0.3.13-linux-${ARCH}.deb" \
  && rm -rf /var/lib/apt/lists/*
+# dpkg --print-architecture resolves amd64 / arm64 so the image builds on M-series Macs too.
 ```
 
 `litestream.yml`:
@@ -127,6 +136,9 @@ dbs:
 ```sh
 #!/bin/sh
 set -eu
+# Pass-through for ad-hoc commands (`docker run img which gunicorn`, `id -un`).
+# Without this, the entrypoint hijacks every invocation and the smoke checks fail.
+if [ "$#" -gt 0 ]; then exec "$@"; fi
 mkdir -p /data
 litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists /data/site.sqlite3
 python manage.py migrate --noinput
