@@ -54,10 +54,11 @@ api/
 
 ```python
 import msgspec
-from django.contrib.auth import get_user_model
+# Import the concrete model — `get_user_model()` returns a generic type
+# that hides `.id` / `.username` from pyright.
+from django.contrib.auth.models import User
 from django_bolt import BoltAPI
 
-User = get_user_model()
 api = BoltAPI()
 
 
@@ -69,8 +70,10 @@ class UserSchema(msgspec.Struct):
 @api.get('/users/{user_id}')
 async def get_user(user_id: int) -> UserSchema:
     user = await User.objects.aget(id=user_id)
-    return UserSchema(id=user.id, username=user.username)
+    return UserSchema(id=user.pk, username=user.username)
 ```
+
+If the project has a custom user model, import it from `users.models` instead.
 
 Schemas must be `msgspec.Struct` — django-bolt is bound to msgspec and does not accept pydantic.
 
