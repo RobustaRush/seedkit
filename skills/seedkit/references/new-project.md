@@ -183,18 +183,4 @@ works before continuing.
 
 ## Scripts (optional)
 
-Only if the user asks for task shortcuts:
-
-```sh
-uv add --dev poethepoet
-```
-
-```toml
-[tool.poe.tasks]
-dev     = "python manage.py runserver"
-migrate = "python manage.py migrate"
-test    = "python manage.py test"     # or "pytest" if `references/pytest.md` was applied
-lint    = "ruff check ."
-```
-
-Run with `uv run poe <name>`.
+See `references/dev-tasks.md` to wire short task names (`dev`, `migrate`, `test`, `lint`) onto the long `uv run …` commands above.

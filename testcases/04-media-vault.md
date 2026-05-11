@@ -22,6 +22,7 @@ Internationalisation (i18n): no.
 Custom user model: no.
 Auth add-on: none.
 Structured logging: yes (`structlog`, JSON in prod / pretty in dev, request-scoped `request_id`).
+Task runner: none.
 Add-ons:
   - redis
   - storage: S3-compatible (use MinIO in local Compose; configure via env)

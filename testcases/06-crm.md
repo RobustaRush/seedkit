@@ -21,6 +21,7 @@ Internationalisation (i18n): no.
 Custom user model: no.
 Auth add-on: none.
 Structured logging: no.
+Task runner: none.
 Add-ons:
   - debug: django-silk (profiling + `@silk_profile`)
   - tasks: Django Tasks with the Database backend (`django-tasks-db`)

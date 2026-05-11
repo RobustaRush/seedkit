@@ -21,6 +21,7 @@ Internationalisation (i18n): no.
 Custom user model: no.
 Auth add-on: none.
 Structured logging: no.
+Task runner: none.
 Add-ons:
   - debug: django-orbit (observability dashboard + MCP)
   - email: console backend in local, plus Mailpit running in Docker for richer inspection

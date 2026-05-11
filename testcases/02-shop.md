@@ -21,6 +21,7 @@ Internationalisation (i18n): no.
 Custom user model: yes (custom `users.User` extending `AbstractUser`).
 Auth add-on: `django-allauth` (email login, mandatory email verification, no social providers).
 Structured logging: no.
+Task runner: mise.
 Add-ons:
   - storage: WhiteNoise for static files (no media volume yet)
   - email: SMTP (console backend in local, SMTP in production)
@@ -57,6 +58,8 @@ test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
 curl -sf http://127.0.0.1:8000/robots.txt | grep -q 'User-agent: \*'
 uv run ruff check .
 uv run pyright
+# Task runner sanity — mise.toml present.
+test -f mise.toml
 kill $(jobs -p) 2>/dev/null; pkill -f 'manage.py' 2>/dev/null; wait
 dropdb shop_db
 ```
@@ -72,6 +75,7 @@ Verify these structural facts:
 - `manage.py` defaults `DJANGO_SETTINGS_MODULE` to `config.settings.local`; `wsgi.py` to `config.settings.production`.
 - `pyproject.toml` runtime deps include `psycopg[binary]`, `django-tailwind-cli`, `django-allauth`, `django-axes`, `stripe`, `whitenoise`. Dev deps include `ruff`, `pytest`, `pytest-django`, `pyright`, `django-stubs`, `django-stubs-ext`.
 - `pyproject.toml` has a `[tool.ruff]` block and a `[tool.pyright]` block.
+- `mise.toml` present at project root with `[tools]` and at least one `[tasks.*]` block.
 
 **Settings**
 - `config/settings/base.py` uses `env.NOTSET` for the prod branch of `SECRET_KEY` and `DATABASES`.

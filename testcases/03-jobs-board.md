@@ -21,6 +21,7 @@ Internationalisation (i18n): yes.
 Custom user model: no.
 Auth add-on: `django-mail-auth` (passwordless magic-link).
 Structured logging: no.
+Task runner: just.
 Add-ons:
   - redis (for Celery)
   - tasks: Celery, with periodic tasks (Celery Beat)
@@ -53,6 +54,8 @@ test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
 test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
 # Confirm Celery autodiscovers without holding a worker open. `import_default_modules`
 # forces eager loading — plain `celery_app.tasks` only lists built-in `celery.*` entries.
+# Task runner sanity — justfile present.
+test -f justfile
 uv run python -c "from config import celery_app; celery_app.loader.import_default_modules(); print(sorted(t for t in celery_app.tasks if not t.startswith('celery.')))"
 # docker logs must not contain fatal errors:
 ! docker compose logs db redis 2>&1 | grep -iE 'fatal|panic|traceback'
@@ -87,6 +90,9 @@ Verify these structural facts:
 - `INSTALLED_APPS` lists `mailauth.contrib.admin` BEFORE `django.contrib.admin`, plus `mailauth`. `AUTHENTICATION_BACKENDS` includes `mailauth.backends.MailAuthBackend`.
 - `config/urls.py` includes `mailauth.urls` under `accounts/` with the `mailauth` namespace. `/accounts/login/` route resolves.
 - Templates under `templates/registration/` exist for the magic-link UI.
+
+**Task runner**
+- `justfile` present at project root with at least one target defined.
 
 **Health checks**
 - `pages/views.py` (or equivalent) defines `liveness` and `readiness`. `urlpatterns` wires `path('healthz', ...)` and `path('readyz', ...)` (no trailing slash).

@@ -12,7 +12,7 @@ uv add sentry-sdk
 
 ## Settings
 
-In `config/settings.py` (or `config/settings/base.py` for split settings):
+Wire in `config/settings/production.py` (or single-file: gate on `not DEBUG`). Not `base.py` — a local/test run with `SENTRY_DSN` set would otherwise ship telemetry.
 
 ```python
 SENTRY_DSN = env("SENTRY_DSN", default="")
@@ -28,7 +28,7 @@ if SENTRY_DSN:
     )
 ```
 
-Empty DSN → SDK is a no-op. PII / scrubbing — see `references/gdpr.md`.
+PII / scrubbing — see `references/gdpr.md`.
 
 ## .env
 

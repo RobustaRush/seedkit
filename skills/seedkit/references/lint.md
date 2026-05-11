@@ -56,20 +56,9 @@ uv run ruff format .
 uv run ruff check . --fix
 ```
 
-## Poe tasks
+## Task runner
 
-```toml
-[tool.poe.tasks]
-lint = "ruff check ."
-fmt  = "ruff format ."
-fix  = "ruff check . --fix"
-```
-
-```sh
-uv run poe lint
-uv run poe fmt
-uv run poe fix
-```
+If a runner is configured (see `references/dev-tasks.md`), expose `lint` / `fmt` / `fix` tasks that wrap the three `ruff` commands above.
 
 ## Optional — pre-commit hook
 

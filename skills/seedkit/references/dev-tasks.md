@@ -1,0 +1,116 @@
+# Dev task runner
+
+One short name per workflow step so the README can show `mise run dev` instead of `uv run manage.py runserver`, `just test` instead of `uv run pytest`, etc.
+
+## Pick the runner
+
+Ask the user. Default: **mise** (recommended). If unsure what's installed, detect with `command -v mise just make poe` and offer the first hit.
+
+| Runner | File written | Install |
+| --- | --- | --- |
+| mise | `mise.toml` | `curl https://mise.run \| sh` |
+| just | `justfile` | `brew install just` |
+| make | `Makefile` | ships with most systems |
+| poe | `[tool.poe.tasks]` in `pyproject.toml` | `uv add --dev poethepoet` |
+| none | — | skip the whole reference |
+
+Mise is the recommended pick because it also pins the Python toolchain (`[tools] python = "3.12"`), so the project gets one tool instead of `pyenv` + `just`.
+
+## Task list
+
+Generate one task per command the README would otherwise spell out. Include only the tasks for add-ons the project actually applied.
+
+| Task | Command |
+| --- | --- |
+| `install` | `uv sync` |
+| `dev` | `uv run manage.py runserver` |
+| `migrate` | `uv run manage.py migrate` |
+| `makemigrations` | `uv run manage.py makemigrations` |
+| `shell` | `uv run manage.py shell` |
+| `superuser` | `uv run manage.py createsuperuser` |
+| `test` | `uv run pytest` *(or `uv run manage.py test`)* |
+| `lint` | `uv run ruff check .` *(ruff = yes)* |
+| `fmt` | `uv run ruff format .` *(ruff = yes)* |
+| `typecheck` | `uv run pyright` *(pyright = yes)* |
+| `collectstatic` | `uv run manage.py collectstatic --noinput` |
+| `worker` | `uv run celery -A config worker -l info` *(celery)* or `uv run manage.py db_worker` *(django-tasks)* |
+| `tailwind` | `uv run manage.py tailwind runserver` *(tailwind)* |
+
+## mise.toml
+
+```toml
+[tools]
+python = "3.12"
+
+[tasks.install]
+run = "uv sync"
+
+[tasks.dev]
+run = "uv run manage.py runserver"
+
+[tasks.migrate]
+run = "uv run manage.py migrate"
+
+[tasks.test]
+run = "uv run pytest"
+```
+
+Run with `mise run dev`. First-time setup: `mise trust && mise install`.
+
+## justfile
+
+```just
+install:
+    uv sync
+
+dev:
+    uv run manage.py runserver
+
+migrate:
+    uv run manage.py migrate
+
+test:
+    uv run pytest
+```
+
+Run with `just dev`. `just --list` enumerates tasks.
+
+## Makefile
+
+Indent with **tabs**, not spaces. Every target is `.PHONY` because none produce a file matching the target name.
+
+```make
+.PHONY: install dev migrate test
+
+install:
+	uv sync
+
+dev:
+	uv run manage.py runserver
+
+migrate:
+	uv run manage.py migrate
+
+test:
+	uv run pytest
+```
+
+## poethepoet
+
+```sh
+uv add --dev poethepoet
+```
+
+```toml
+[tool.poe.tasks]
+install = "uv sync"
+dev     = "manage.py runserver"
+migrate = "manage.py migrate"
+test    = "pytest"
+```
+
+Poe strips `uv run` because it executes inside the venv. Run with `uv run poe dev`.
+
+## README
+
+Replace the `uv run …` block in the README with the chosen runner's commands. Keep one fallback line at the bottom for users who don't want to install the runner — point them at `uv run manage.py <cmd>`.

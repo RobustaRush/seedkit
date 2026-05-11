@@ -22,6 +22,7 @@ Internationalisation (i18n): no.
 Custom user model: yes (custom `users.User` extending `AbstractUser`).
 Auth add-on: `django-allauth` (email login + mandatory verification).
 Structured logging: yes (`structlog`, JSON in prod / pretty in dev, request-scoped `request_id`).
+Task runner: none.
 Add-ons:
   - redis
   - tasks: Celery (no Beat)

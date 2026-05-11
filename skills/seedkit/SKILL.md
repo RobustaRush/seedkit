@@ -33,6 +33,7 @@ For every question that involves a third-party package: 1–2 sentences from the
 - `references/pre-commit.md` — pre-commit hook config wiring lint / format / typecheck
 - `references/devcontainer.md` — `.devcontainer/devcontainer.json` for VS Code / Codespaces / JetBrains Gateway
 - `references/dev-tools.md` — debug toolbar (orbit / silk), `django-extensions`, db-safety (zeal / migration-linter / test-migrations)
+- `references/dev-tasks.md` — task runner (mise / just / make / poe) — short names for the long `uv run …` commands the README would otherwise list
 - `references/logging.md` — `structlog` JSON-in-prod / pretty-in-dev
 
 ### Auth & Accounts
@@ -127,6 +128,7 @@ For new projects: ask every question. For existing projects: only ask about comp
 7. DB safety: any of `django-zeal` / `django-migration-linter` / `django-test-migrations`. **Default none.** Skip `django-test-migrations` if pytest = no.
 8. `django-extensions`: yes / no. **Default no.**
 9. Structured logging via `structlog`: yes / no. **Default no.**
+10. Task runner: `mise` / `just` / `make` / `poe` / `none`. **Default mise** (recommended). Detect what's installed with `command -v` and offer the first hit; mention the others. See `references/dev-tasks.md`.
 
 #### 5.2 Auth & Accounts
 
@@ -172,7 +174,7 @@ For new projects: ask every question. For existing projects: only ask about comp
 
 ### 7. README
 
-After applying any reference, append the decision and any new commands to `README.md`. Finalize at the end of the run with stack summary and key commands (install, test, migrate, run, deploy). Don't hardcode dependency versions — read them from `pyproject.toml`.
+After applying any reference, append the decision and any new commands to `README.md`. Finalize at the end of the run with stack summary and key commands (install, test, migrate, run, deploy). Don't hardcode dependency versions — read them from `pyproject.toml`. If a task runner was applied (§5.1), show task-runner names (`mise run dev`, `just test`) in the README's main command list — not the raw `uv run …` invocations.
 
 ## Common pitfalls
 
