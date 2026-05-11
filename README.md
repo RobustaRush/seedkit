@@ -1,7 +1,19 @@
-# seedkit
-
-> Project scaffolding should be a conversation you can resume, not a stamp pressed once into wet clay. This is an experiment in whether a Markdown skill, plus a competent AI agent, can do that better than a `cookiecutter` template.
-
+# Robusta Seedkit
+  
+  An agent skill to start new Django projects or enhance old ones
+  
+  ```
+  **/seedkit** SaaS landing + waitlist, GDPR-friendly stack (mail, analytics, error reporting), VPS deploy
+  ```
+  
+  ```
+  **/seedkit** add proper auth — magic link, lockout on brute force, optional 2FA
+  ```
+  
+  ```
+  /seedkit look at our repo and tell us what's worth adding next
+  ```
+  
 ## The problem
 
 Setting up a real Django project — the kind that survives contact with users, lawyers, and the occasional auditor — is harder than it has any right to be. You have to pick a database; a way to run it locally without committing it to git by accident; a static-file story (which is also a deployment story, whether you wanted one or not); email, because eventually somebody will need a password reset; a task queue, because eventually somebody will need a slow thing to happen later; logging, because eventually it will all stop working in a way you cannot reproduce; analytics that don't anger the GDPR; error reporting that doesn't anger your wallet; and finally deployment, which is a whole second job.
