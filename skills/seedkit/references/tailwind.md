@@ -130,9 +130,7 @@ curl -fsSL -o assets/css/daisyui-theme.mjs \
     https://github.com/saadeghi/daisyui/releases/latest/download/daisyui-theme.mjs
 ```
 
-Commit both files — they're vendored assets, not build artefacts.
-
-Don't gitignore these — reproducible builds depend on the exact bundle that was committed.
+Commit both files — they're vendored assets, not build artefacts. Reproducible builds depend on the exact bundle that was committed.
 
 ### 2. Point the CLI at a custom source CSS
 
@@ -172,7 +170,7 @@ DaisyUI ships light/dark via `data-theme`. Set the default in `templates/base.ht
 <html lang="en" data-theme="light">
 ```
 
-For server-driven theme switching (user preference column), pass the value into the template context. Don't flip themes purely in JS — first paint flashes.
+For server-driven theme switching (user preference column), pass the value into the template context — first paint matches the user's saved theme without a JS flash.
 
 ### Smoke test
 
@@ -187,7 +185,7 @@ A working integration: rendered button has DaisyUI's primary-colour background, 
 
 ### Pitfalls
 
-- Don't mix DaisyUI component classes with one-off Tailwind utility overrides on the same element until you've confirmed specificity. DaisyUI rules are not always lower-specificity than utilities.
+- DaisyUI component-class specificity isn't always lower than utility classes. Confirm before mixing them on the same element.
 - Bundle adds ~10–30 KB gzipped depending on enabled themes. Worth knowing for landing pages.
 - DaisyUI defines its own `prose` / `card` — only enable `@tailwindcss/typography` if there's a real conflict.
 - When you bump the pinned daisyUI version, re-run both `curl` commands and commit `daisyui.mjs` + `daisyui-theme.mjs` together. Mismatched bundles break theme tokens.

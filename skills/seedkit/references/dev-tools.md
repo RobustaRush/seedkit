@@ -70,7 +70,7 @@ uv run manage.py migrate
 
 #### Logging (optional)
 
-`django-orbit` is a dev dep, so the orbit handler lives in `config/settings/local.py` for the split layout. **Don't gate `LOGGING` itself on `if DEBUG:`** — that locks production out of any logging config and leaves it on Django's bare defaults. Instead, define a baseline `LOGGING` at module scope and **append** the orbit handler in dev:
+`django-orbit` is a dev dep, so the orbit handler lives in `config/settings/local.py` for the split layout. Keep `LOGGING` itself at module scope in `base.py` — gating the whole dict on `if DEBUG:` leaves production on Django's bare defaults. The `local.py` `if DEBUG:` block only **appends** the orbit handler:
 
 `base.py` (always loaded):
 
@@ -231,7 +231,7 @@ from .base import INSTALLED_APPS
 INSTALLED_APPS += ["django_extensions"]
 ```
 
-Don't add to `base.py` — production images would import a dev-only dep at boot and crash.
+`base.py` runs in production too; importing a dev-only dep there crashes the boot.
 
 For single-settings layouts, gate it on `DEBUG`:
 
@@ -254,7 +254,7 @@ The commands worth knowing about:
 
 - `runserver_plus`'s in-browser traceback can execute arbitrary Python from the URL bar. Never expose it on a network anyone else can reach. `DEBUG=True` plus `runserver_plus` plus `0.0.0.0` is a remote-code-execution invitation.
 - `graph_models` needs `graphviz` installed at the OS level (`brew install graphviz` / `apt install graphviz`). Document that or skip the command.
-- Don't reference `django_extensions` in template tags / model code. The whole package needs to remain a strip-out-able dev tool.
+- Keep `django_extensions` strip-out-able — confine usage to local shells and management commands, not template tags or model imports.
 
 ## Database safety
 

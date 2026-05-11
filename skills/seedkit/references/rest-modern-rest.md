@@ -18,7 +18,7 @@ uv add 'django-modern-rest[msgspec,openapi]' pyjwt
 
 If the user wants pydantic schemas instead, swap `msgspec` → `pydantic`. Both extras can co-exist.
 
-There is no `INSTALLED_APPS` entry to add — the package is library-only and ships no Django app, models, or migrations. Don't invent one.
+There is no `INSTALLED_APPS` entry to add — the package is library-only and ships no Django app, models, or migrations.
 
 ## Layout
 
