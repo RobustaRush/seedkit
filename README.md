@@ -51,16 +51,16 @@ Then, in whatever empty directory you'd like to populate:
 - No unused boilerplate.
 - Sane defaults out of the box.
 
-## Contributing
-
-- Please [open an issue](https://github.com/RobustaRush/seedkit/issues/new) first. Discuss proposed changes — even one-liners — before submitting a pull request to avoid wasted effort.
-- Expect long test cycles. Validating agent behavior requires multiple test-review-fix iterations. Each cycle runs all nine end-to-end test cases and takes 1.5–2 hours.
-
 ## Project Status
 
 This is a fresh project under active development. While the skill is verified against the nine core scenarios in [seedkit-examples](https://github.com/RobustaRush/seedkit-examples), we are still mapping out how the agent handles completely custom stacks.
 
 If you run into issues, strange behavior, or have ideas for new integrations, please open an issue. Feedback is welcome.
+
+## Contributing
+
+- Please [open an issue](https://github.com/RobustaRush/seedkit/issues/new) first. Discuss proposed changes — even one-liners — before submitting a pull request to avoid wasted effort.
+- Expect long test cycles. Validating agent behavior requires multiple test-review-fix iterations. Each cycle runs all nine end-to-end test cases and takes 1.5–2 hours.
 
 ## License
 
