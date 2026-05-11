@@ -74,7 +74,7 @@ Verify these structural facts:
 
 **Foundation**
 - Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production,test}.py`, `Dockerfile`, `docker-compose.yml`, `docker-compose.override.yml`, `deploy/docker-compose.prod.yml`, `deploy/.env.prod.example`, `.github/workflows/{test.yml,deploy.yml}`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`.
-- `pyproject.toml` runtime deps include `psycopg[binary]`, `django-tasks-rq`, `django-rq`, `django-csp`, `django-dbbackup`, `django-storages[s3]` (or `boto3`), `sentry-sdk`, `structlog`, `gunicorn`. (`django.tasks` is built into Django 6 — no separate `django-tasks` package.) Dev deps include `pytest`, `pytest-django`, `ruff`.
+- `pyproject.toml` runtime deps include `psycopg[binary]`, `django-tasks-rq`, `django-rq`, `django-csp`, `django-dbbackup`, `django-storages[s3]` (or `boto3`), `sentry-sdk`, `structlog`, `django-structlog`, `gunicorn`. (`django.tasks` is built into Django 6 — no separate `django-tasks` package.) Dev deps include `pytest`, `pytest-django`, `ruff`.
 - `pyproject.toml` does NOT list `django-axes`, `django-allauth`, `django-mail-auth`, or anymail/email packages — auth = none, email = none.
 
 **Settings**
@@ -90,7 +90,7 @@ Verify these structural facts:
 - `docker-compose.yml` (or override) defines a `worker` service running `manage.py rqworker default`.
 
 **Logging + Sentry/Bugsink**
-- `structlog` configured in `base.py`. `LOGGING` at module scope. `RequestContextMiddleware` in `MIDDLEWARE` after `AuthenticationMiddleware`, emits one log line per request.
+- `structlog` configured in `base.py`. `LOGGING` at module scope. `django_structlog.middlewares.RequestMiddleware` in `MIDDLEWARE` directly after `AuthenticationMiddleware`. `django_structlog` in `INSTALLED_APPS`.
 - `sentry_sdk.init(...)` called from `production.py` only with `before_send` PII scrubber, `send_default_pii=False`. DSN read from env.
 
 **Analytics + GDPR**

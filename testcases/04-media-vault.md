@@ -76,7 +76,7 @@ Verify these structural facts:
 **Foundation**
 - Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production}.py`, `Dockerfile.dev`, `docker-compose.yml`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`.
 - `docker-compose.yml` defines services `web`, `db`, `redis`, `worker`, `minio`. Named volumes for `pgdata`, `venv` (or `web-venv`), and `minio-data`.
-- `pyproject.toml` runtime deps include `psycopg[binary]`, `django-tasks`, `django-tasks-rq`, `django-storages[s3]` (or `boto3`), `django-cors-headers`, `django-modern-rest[msgspec,openapi]`, `pyjwt`, `structlog`. Dev deps include `ruff`, `pyright`, `django-stubs`, `django-stubs-ext`.
+- `pyproject.toml` runtime deps include `psycopg[binary]`, `django-tasks`, `django-tasks-rq`, `django-storages[s3]` (or `boto3`), `django-cors-headers`, `django-modern-rest[msgspec,openapi]`, `pyjwt`, `structlog`, `django-structlog`. Dev deps include `ruff`, `pyright`, `django-stubs`, `django-stubs-ext`.
 
 **Settings**
 - `config/settings/base.py` uses `env.NOTSET` for the prod branch of `SECRET_KEY` and `DATABASES`.
@@ -89,7 +89,7 @@ Verify these structural facts:
 - `api/` app with `controllers.py`, `schemas.py`, `urls.py`. `MediaController` typed with `Body[MediaCreate]` and a return type. Router mounted at `/api/` in `config/urls.py`.
 
 **Logging**
-- `config/middleware/logging.py` defines `RequestContextMiddleware` that binds `request_id` via `structlog.contextvars` and emits one log line per request. The middleware is in `MIDDLEWARE` after `AuthenticationMiddleware`.
+- `django_structlog.middlewares.RequestMiddleware` in `MIDDLEWARE` directly after `AuthenticationMiddleware`. `django_structlog` in `INSTALLED_APPS`. `pyproject.toml` runtime deps include `django-structlog`.
 
 **Tasks**
 - `INSTALLED_APPS` includes `django_rq` and `django_tasks_rq`. `RQ_QUEUES` defined; `RQ = {"JOB_CLASS": "django_tasks_rq.Job"}` at module scope (not inside `RQ_QUEUES`).

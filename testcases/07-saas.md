@@ -79,7 +79,7 @@ Verify these structural facts:
 
 **Foundation**
 - Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production,test}.py`, `config/routers.py`, `Dockerfile`, `Dockerfile.dev`, `docker-compose.yml`, `docker-compose.prod.yml`, `Caddyfile`, `litestream.yml`, `entrypoint.sh`, `.github/workflows/test.yml`, `.pre-commit-config.yaml`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`.
-- `pyproject.toml` runtime deps include `django-environ`, `django-tasks`, `django-tasks-db`, `whitenoise`, `django-allauth[mfa]`, `django-axes`, `django-csp`, `sentry-sdk`, `structlog`, `gunicorn`. **No** `psycopg`, `celery`, `redis`, `django-dbbackup`. Dev deps include `pytest`, `pytest-django`, `pyright`, `django-stubs`, `django-stubs-ext`, `ruff`, `pre-commit`.
+- `pyproject.toml` runtime deps include `django-environ`, `django-tasks`, `django-tasks-db`, `whitenoise`, `django-allauth[mfa]`, `django-axes`, `django-csp`, `sentry-sdk`, `structlog`, `django-structlog`, `gunicorn`. **No** `psycopg`, `celery`, `redis`, `django-dbbackup`. Dev deps include `pytest`, `pytest-django`, `pyright`, `django-stubs`, `django-stubs-ext`, `ruff`, `pre-commit`.
 
 **Settings split + SQLite mini-prod**
 - `manage.py` defaults `DJANGO_SETTINGS_MODULE` to `config.settings.local`; `wsgi.py`/`asgi.py` to `config.settings.production`.
@@ -97,7 +97,7 @@ Verify these structural facts:
 - `accounts/` URL include in `config/urls.py` mounts both `allauth.urls` and `allauth.mfa.urls`. `MFA_SUPPORTED_TYPES` and `MFA_TOTP_ISSUER` defined. `ACCOUNT_REAUTHENTICATION_REQUIRED = True` in `production.py` only.
 
 **Logging + Sentry + tasks**
-- `structlog` configured in `base.py`. `LOGGING` at module scope. `RequestContextMiddleware` in `MIDDLEWARE` after `AuthenticationMiddleware`, emits one log line per request.
+- `structlog` configured in `base.py`. `LOGGING` at module scope. `django_structlog.middlewares.RequestMiddleware` in `MIDDLEWARE` directly after `AuthenticationMiddleware`. `django_structlog` in `INSTALLED_APPS`.
 - `sentry_sdk.init(...)` called from `production.py` only; DSN read from env via the gated default.
 - A registered Django app has `apps.py` with `ready()` importing `tasks`, and a `tasks.py` defining at least one `@task` (from `django_tasks`). `INSTALLED_APPS` includes `django_tasks` and `django_tasks_db`. `TASKS = {"default": {"BACKEND": "django_tasks_db.DatabaseBackend"}}` (or equivalent) in `base.py` or `production.py`.
 

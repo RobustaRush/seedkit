@@ -1,13 +1,13 @@
-# Logging — structured (structlog)
+# Logging — structured (structlog + django-structlog)
 
-Docs: <https://www.structlog.org/>
+Docs: <https://www.structlog.org/> · <https://django-structlog.readthedocs.io/>
 
-Pretty console in dev, JSON lines in prod. Foreign loggers (Django, Celery, urllib3) render identically because both renderers are stdlib `logging` formatters wrapped by `ProcessorFormatter`. Per-request `request_id` / `user_id` flow via `contextvars`.
+Pretty console in dev, JSON lines in prod. Foreign loggers (Django, Celery, urllib3) render identically because both renderers are stdlib `logging` formatters wrapped by `ProcessorFormatter`. `django-structlog` ships the request middleware and Celery signal handlers — per-request `request_id`, `correlation_id`, `user_id` and per-task `task_id`/`task_name` flow via `contextvars` without project code.
 
 ## Install
 
 ```sh
-uv add structlog
+uv add structlog django-structlog
 ```
 
 ## Settings
@@ -69,68 +69,24 @@ structlog.configure(
 
 ## Per-request context
 
-```python
-# config/middleware/logging.py
-import time
-import uuid
-import structlog
-
-log = structlog.get_logger("request")  # not "django.request" — that logger is filtered to WARNING above
-
-# Skip user-id binding for paths that must not block on the DB. Reading
-# `request.user.id` triggers AuthenticationMiddleware's lazy lookup, so
-# /healthz and /readyz would otherwise become contingent on auth-DB
-# health — defeating the point of a liveness probe.
-_NO_USER_PATHS = ("/healthz", "/readyz")
-
-
-class RequestContextMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        structlog.contextvars.clear_contextvars()
-        ctx = {"request_id": request.headers.get("X-Request-ID") or uuid.uuid4().hex}
-        if not request.path.startswith(_NO_USER_PATHS):
-            ctx["user_id"] = getattr(getattr(request, "user", None), "id", None)
-        structlog.contextvars.bind_contextvars(**ctx)
-        start = time.monotonic()
-        try:
-            response = self.get_response(request)
-        finally:
-            log.info(
-                "request",
-                method=request.method,
-                path=request.path,
-                status=getattr(locals().get("response"), "status_code", 0),
-                duration_ms=int((time.monotonic() - start) * 1000),
-            )
-            structlog.contextvars.clear_contextvars()
-        return response
-```
+Add `django_structlog` to `INSTALLED_APPS` and insert its middleware **after** `AuthenticationMiddleware` (`request.user` must exist before the middleware binds `user_id`):
 
 ```python
-# Insert AFTER AuthenticationMiddleware. request.user only exists once
-# AuthenticationMiddleware has run; binding earlier always sets user_id=None.
 auth_idx = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
-MIDDLEWARE.insert(auth_idx + 1, "config.middleware.logging.RequestContextMiddleware")
+MIDDLEWARE.insert(auth_idx + 1, "django_structlog.middlewares.RequestMiddleware")
 ```
 
 Always-on. `LOGGING` belongs at module scope in `base.py` — never inside an `if DEBUG:` block, or production runs with bare Django defaults (no console handler at the root level).
 
-For Celery tasks:
+For Celery, add `django_structlog.celery.steps.DjangoStructLogInitStep` to the app's boot steps — it binds `task_id` / `task_name` and propagates the parent request's `correlation_id`:
 
 ```python
-from celery.signals import task_prerun, task_postrun
-import structlog
+# config/celery.py
+from celery import Celery
+from django_structlog.celery.steps import DjangoStructLogInitStep
 
-@task_prerun.connect
-def _bind_task(task_id=None, task=None, **_):
-    structlog.contextvars.bind_contextvars(task_id=task_id, task_name=task.name)
-
-@task_postrun.connect
-def _clear_task(**_):
-    structlog.contextvars.clear_contextvars()
+app = Celery("config")
+app.steps["worker"].add(DjangoStructLogInitStep)
 ```
 
 ## Sentry / GlitchTip / Bugsink
