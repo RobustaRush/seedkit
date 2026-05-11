@@ -11,6 +11,9 @@ changes how the project runs — its `.venv` rebuilds from the
 ```sh
 uv init --bare {project_slug}     # --bare: no main.py / README.md / .python-version
 cd {project_slug}
+# Override uv's host-interpreter-derived pin BEFORE the first `uv add` so
+# resolution targets Django 6's actual floor, not the host's 3.14.
+sed -i.bak -E 's/^requires-python = .*/requires-python = ">=3.12"/' pyproject.toml && rm pyproject.toml.bak
 uv add 'django>=6.0,<7.0' django-environ
 uv run django-admin startproject config .
 ```
