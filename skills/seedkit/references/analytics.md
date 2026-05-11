@@ -60,6 +60,8 @@ Register in `TEMPLATES[0]["OPTIONS"]["context_processors"]`:
 
 ```django
 {% if ANALYTICS_ID and not DEBUG %}
+  {# GA4 only needs ANALYTICS_ID; self-hosted backends also gate on ANALYTICS_HOST: #}
+  {# {% if ANALYTICS_ID and ANALYTICS_HOST and not DEBUG %} #}
   {# backend snippet — see below #}
 {% endif %}
 ```
