@@ -1,15 +1,15 @@
 # Robusta Seedkit 🌱
-  
-An agent skill to start new Django projects or enhance old ones
-  
+
+An agent skill to start new Django projects or extend existing ones.
+
 ```
 /seedkit SaaS landing + waitlist, GDPR-friendly stack (mail, analytics, error reporting), VPS deploy
- ```
-  
+```
+
 ```
 /seedkit add proper auth — magic link, lockout on brute force, optional 2FA
 ```
-  
+
 ```
 /seedkit look at our repo and tell us what's worth adding next
 ```
@@ -53,7 +53,7 @@ Then, in whatever empty directory you'd like to populate:
 
 ## License
 
-MIT (per `.claude-plugin/plugin.json`). A `LICENSE` file will turn up eventually. Probably.
+[MIT](./LICENSE) — © 2026 Mikhail Podgurskiy.
 
 <br>
 
