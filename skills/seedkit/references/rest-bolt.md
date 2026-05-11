@@ -67,7 +67,7 @@ class UserSchema(msgspec.Struct):
 @api.get('/users/{user_id}')
 async def get_user(user_id: int) -> UserSchema:
     user = await User.objects.aget(id=user_id)
-    return {'id': user.id, 'username': user.username}
+    return UserSchema(id=user.id, username=user.username)
 ```
 
 Schemas must be `msgspec.Struct` — django-bolt is bound to msgspec and does not accept pydantic.

@@ -108,8 +108,8 @@ Verify these structural facts:
 - GDPR scaffolding present: `data_export` / `data_delete` views or management commands.
 
 **Deploy artefacts**
-- `Dockerfile` is multi-stage: `builder` on `ghcr.io/astral-sh/uv:python3.12-bookworm-slim`, runtime on `python:3.12-slim-bookworm`. Build-push GitHub workflow uses `target: prod`.
-- `fly.toml` has `[processes]` with `web`, `worker`, `bolt`. The `bolt` process sets `DJANGO_SETTINGS_MODULE=config.settings.bolt`. `[env]` documents required `DJANGO_ALLOWED_HOSTS`, `DJANGO_BEHIND_PROXY=True`, etc. `[[checks]]` (or service health) hits `/readyz`.
+- `Dockerfile` is multi-stage: `builder` on the full `ghcr.io/astral-sh/uv:python3.12-bookworm` image with `build-essential` installed (django-bolt has no aarch64-linux wheel; the Rust extension compiles from source). Runtime on `python:3.12-slim-bookworm`. Build-push GitHub workflow uses `target: prod`.
+- `fly.toml` has `[processes]` with `web`, `worker`, `bolt`. The `bolt` process sets `DJANGO_SETTINGS_MODULE=config.settings.bolt`. `[env]` sets `PORT` and `DJANGO_BEHIND_PROXY=True`. `DJANGO_ALLOWED_HOSTS` / `DJANGO_SECRET_KEY` / `DATABASE_URL` go via `fly secrets set` per `deploy-managed.md` — do not hardcode in `[env]`. `[[checks]]` (or service health) hits `/readyz`.
 - `[checks]` / `[services.checks]` block in `fly.toml` references `/readyz`.
 
 **Health**
