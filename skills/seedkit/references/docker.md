@@ -126,6 +126,7 @@ docker compose up -d
 - **`uv sync` hardlink warnings** — `UV_LINK_MODE=copy` (set in Dockerfile.dev) silences them.
 - **Source edits not picked up** — confirm the bind-mount is `.:/app`, not a copy. `docker compose exec web ls /app` should show host changes immediately.
 - **`Ignoring existing virtual environment linked to non-existent Python interpreter`** — means a host `.venv` slipped into the image build (missing `.dockerignore` entry) or the anonymous volume above isn't declared. Add `.venv` to `.dockerignore`, ensure the compose service has `- /app/.venv`, then `docker compose build --no-cache web`.
+- **`web` healthcheck with `curl`** — the `uv:python3.12-bookworm-slim` image has no `curl`. `docker compose up -d --wait` doesn't need a `web` healthcheck (it waits on `running` for services without one); if you do add one, use the urllib form from `references/deploy-vps.md`.
 
 ### Override — multi-stage Dockerfile + compose override
 
