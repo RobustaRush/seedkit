@@ -83,6 +83,7 @@ Coverage rules. Use these to regenerate the suite when the skill changes.
    **Add-ons** (each at least once across the suite, but not in the minimal case)
    - Auth: `django-allauth` / `django-mail-auth` / `none`
    - Debug: `django-orbit` / `django-silk` / `none`
+   - Cache backend: `sqlite` / `redis` / `locmem` / `none` (sqlite appears in case 07)
    - Redis: `yes` / `no`
    - Storage: `whitenoise` / `s3` / `none`
    - Tasks: `celery` / `django-tasks-db` / `django-tasks-rq` / `none`

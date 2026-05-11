@@ -94,7 +94,22 @@ volumes:
   pgdata:
 ```
 
-Drop the `db` service (and `depends_on`) for SQLite.
+For SQLite, drop the `db` service and `depends_on`, and mount a named volume on `web` so the DB file survives container recreation:
+
+```yaml
+services:
+  web:
+    # ...
+    volumes:
+      - .:/app
+      - /app/.venv
+      - sqlite_data:/data
+
+volumes:
+  sqlite_data:
+```
+
+`.env`: `DATABASE_URL=sqlite:////data/site.sqlite3` (four slashes = absolute path).
 
 The `/app/.venv` line declares an anonymous volume at that path so the source bind-mount above can't overlay a host `.venv` on top of the image's. `.dockerignore` should also list `.venv` — belt and braces.
 
@@ -220,7 +235,20 @@ services:
 
 `docker compose up` in dev merges both files automatically. CI / production runs `docker compose -f docker-compose.yml up` (no override) to get the prod build.
 
-Drop the `db` service everywhere for SQLite.
+For SQLite, drop the `db` service from both files (and `depends_on` on `web`), and add a named volume on `web` in `docker-compose.yml`:
+
+```yaml
+services:
+  web:
+    # ...
+    volumes:
+      - sqlite_data:/data
+
+volumes:
+  sqlite_data:
+```
+
+`.env`: `DATABASE_URL=sqlite:////data/site.sqlite3`.
 
 #### Boot check
 

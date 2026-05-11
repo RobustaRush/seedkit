@@ -94,7 +94,6 @@ List the groups above, one sentence each. For existing projects: first follow `r
 4. Local dev mode: uv on host or docker-compose.
    - Postgres + uv-on-host → host Postgres or Postgres-only in Docker.
    - docker-compose → full stack.
-   - SQLite + Docker — warn the file lives in a container volume.
    - If docker-compose: ask Docker structure — `simple` (default; separate `Dockerfile.dev`) or `override` (one multi-stage `Dockerfile` + auto-loaded `docker-compose.override.yml`; recommend for serious projects). See `references/docker.md`.
 5. Custom user model: yes / no — decide now (see `references/custom-user.md`).
 
@@ -102,17 +101,18 @@ Never bundle questions beyond the explicit pair in step 1.
 
 ### 3. Apply the foundation (new projects only)
 
-Generate files from the matching references. `.env` `DATABASE_URL` must match DB + dev mode. If custom user = yes, apply `references/custom-user.md` **before** the boot check.
+Generate files from the matching references. `.env` `DATABASE_URL` must match DB + dev mode. If custom user = yes, apply `references/custom-user.md` **before** the boot check. If DB=SQLite, also apply the `production.py` block from `references/database.md` (WAL + IMMEDIATE PRAGMAs) — settings tuning, not a user-facing question.
 
-### 4. Boot check — mandatory, new projects only
+### 4. Foundation smoke — agent-driven, new projects only
 
-Ask the user to run, in the chosen mode:
+Run these yourself; do not ask the user. The goal is to catch foundation bugs before piling on add-ons, without making the user type `uv run …` commands that §5.1 may replace minutes later.
 
-- `migrate`
-- `createsuperuser` (interactive — the user runs it themselves)
-- `collectstatic --noinput` only if a static-files add-on was applied
+- `migrate` in the chosen dev mode (host `uv run manage.py migrate`, or `docker compose exec web …`).
+- Start `runserver` (or the docker stack) in the background.
+- `curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null` — expects 200.
+- Stop the server.
 
-Wait for the user to confirm `/admin/` login works before continuing.
+If `migrate` or the curl fails, fix the foundation before proceeding to §5. `createsuperuser` and the browser login move to §7 — they need a stable task runner name and a real browser, neither of which exists yet.
 
 ### 5. Add-ons — one group at a time, one question at a time
 
@@ -139,12 +139,12 @@ For new projects: ask every question. For existing projects: only ask about comp
 
 #### 5.3 Data & Storage
 
-1. Redis cache: yes / no. **Default no.**
+1. Cache backend: `sqlite` / `redis` / `locmem` / `none`. **Default `sqlite` when DB=SQLite, else `locmem`.** `sqlite` wires a separate `cache.sqlite3` + `CacheRouter` + `DatabaseCache` (see `references/database.md`); `redis` adds `django-redis`; `locmem` is the per-process in-memory backend.
 2. Static + media storage: `whitenoise` / `s3` / `none`. **Default none** — required before production but not for first boot.
 
 #### 5.4 Background & Email
 
-1. Background tasks: `celery` / `django-tasks-db` / `django-tasks-rq` / `none`. **Default none.**
+1. Background tasks: `celery` / `django-tasks-db` / `django-tasks-rq` / `none`. **Default `django-tasks-db` when DB=SQLite, else `none`.**
 2. Email backend: `console` / `smtp` / `mailpit` / `anymail` / `none`. **Always ask** — every project sends mail eventually (password resets, error reports, allauth verification).
 
 #### 5.5 Frontend & Site Basics
@@ -171,9 +171,19 @@ For new projects: ask every question. For existing projects: only ask about comp
 4. GDPR helpers: yes / no. **Default no.**
 5. CI on GitHub Actions: yes / no. **Default no.**
 6. Deploy target: `vps` / `managed` / `github-ssh` / `none`. **Default none.**
-   - If `vps`: database backups via `django-dbbackup`? **Default yes.** Managed platforms have native backups, so skip for `managed` / `github-ssh`.
+   - If `vps` or `github-ssh`: database backups via `django-dbbackup`? **Default yes.** Both deploy to self-managed hosts. Skip for `managed` — those platforms ship native backups. Also skip when DB=SQLite + deploy=`vps` if Litestream is already wired (see `references/database.md`) — Litestream replicates every WAL frame, so dbbackup snapshots are redundant.
 
-### 7. README
+### 7. Final smoke — user-driven, new projects only
+
+After §6, ask the user to run, using the task-runner names from §5.1 if one was applied (else `uv run manage.py …`):
+
+- `createsuperuser` (interactive — the user runs it themselves).
+- `collectstatic --noinput` only if a static-files add-on was applied.
+- Open `/admin/` in a browser and sign in with the new superuser.
+
+Wait for the user to confirm the browser login works before §8.
+
+### 8. README
 
 After applying any reference, append the decision and any new commands to `README.md`. Finalize at the end of the run with stack summary and key commands (install, test, migrate, run, deploy). Don't hardcode dependency versions — read them from `pyproject.toml`. If a task runner was applied (§5.1), show task-runner names (`mise run dev`, `just test`) in the README's main command list — not the raw `uv run …` invocations.
 

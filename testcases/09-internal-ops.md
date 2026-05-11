@@ -44,6 +44,7 @@ Production setup:
   - GDPR: PII scrubbing in error reports, retention defaults, user data export/delete
   - CI: GitHub Actions test workflow
   - deploy: GitHub Actions deploy via SSH (rsync + remote `docker compose pull && up -d`)
+  - database backups via `django-dbbackup`: yes (self-managed host — no native backup service)
   - production Dockerfile: single-stage (small enough; multi-stage not needed)
 
 Run the foundation + boot check locally. Generate `Dockerfile`, `docker-compose.prod.yml`, `.github/workflows/test.yml`, `.github/workflows/deploy.yml`. Do not actually deploy — verify all artifacts are present, `docker build .` succeeds, and the deploy workflow references `secrets.SSH_HOST`, `secrets.SSH_USER`, `secrets.SSH_KEY`.
@@ -73,14 +74,15 @@ Verify these structural facts:
 
 **Foundation**
 - Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production,test}.py`, `Dockerfile`, `docker-compose.yml`, `docker-compose.override.yml`, `deploy/docker-compose.prod.yml`, `deploy/.env.prod.example`, `.github/workflows/{test.yml,deploy.yml}`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`.
-- `pyproject.toml` runtime deps include `psycopg[binary]`, `django-tasks-rq`, `django-rq`, `django-csp`, `sentry-sdk`, `structlog`, `gunicorn`. (`django.tasks` is built into Django 6 — no separate `django-tasks` package.) Dev deps include `pytest`, `pytest-django`, `ruff`.
-- `pyproject.toml` does NOT list `django-axes`, `django-dbbackup`, `django-allauth`, `django-mail-auth`, or anymail/email packages — auth = none, deploy = github-ssh, email = none.
+- `pyproject.toml` runtime deps include `psycopg[binary]`, `django-tasks-rq`, `django-rq`, `django-csp`, `django-dbbackup`, `django-storages[s3]` (or `boto3`), `sentry-sdk`, `structlog`, `gunicorn`. (`django.tasks` is built into Django 6 — no separate `django-tasks` package.) Dev deps include `pytest`, `pytest-django`, `ruff`.
+- `pyproject.toml` does NOT list `django-axes`, `django-allauth`, `django-mail-auth`, or anymail/email packages — auth = none, email = none.
 
 **Settings**
 - `config/settings/base.py` uses `env.NOTSET` for the prod branch of `SECRET_KEY` and `DATABASES`.
 - Security settings (`SECURE_SSL_REDIRECT`, HSTS, `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, `CSRF_TRUSTED_ORIGINS`, `SECURE_REDIRECT_EXEMPT = [r"^healthz$", r"^readyz$"]`) live in `production.py` only.
 - `csp.middleware.CSPMiddleware` and `CONTENT_SECURITY_POLICY` in `production.py` only. `script-src` includes the Umami host (resolved from env at runtime). No `'unsafe-inline'` in `script-src`.
-- `INSTALLED_APPS` in `base.py` does NOT contain `axes`, `dbbackup`, `allauth`.
+- `INSTALLED_APPS` in `base.py` does NOT contain `axes`, `allauth`. `dbbackup` is added only inside the `if not DEBUG:` block in `production.py`.
+- `production.py` `if not DEBUG:` block adds `dbbackup` to `INSTALLED_APPS`, sets `DBBACKUP_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"` and `DBBACKUP_STORAGE_OPTIONS` reading bucket/key/secret from env. `DBBACKUP_BUCKET` listed in `.env.example`.
 
 **Tasks**
 - `INSTALLED_APPS` includes `django_rq` and `django_tasks_rq`. `RQ_QUEUES` defined; top-level `RQ = {"JOB_CLASS": "django_tasks_rq.Job"}`.

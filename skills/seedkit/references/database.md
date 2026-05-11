@@ -16,11 +16,11 @@ Three-slash URLs (`sqlite:///db.sqlite3`) are CWD-relative — running `manage.p
 
 No extra dependency. Add `db.sqlite3` to `.gitignore`.
 
-### SQLite in production (optional — single-host, low/medium-traffic)
+### SQLite production defaults (applied automatically)
 
-Modern SQLite + WAL handles real production load on a single VPS — one local file, no separate DB / cache / queue server. Trade-off: single host (no horizontal scaling), brief deploy blip without external replication. **Requires Django 5.1+** for the `transaction_mode` and `init_command` `OPTIONS` keys.
+When DB=SQLite, the skill writes these into `production.py` at Foundation §3 without asking — they're settings, not a package choice. The cache and tasks questions later in §5 also default to the SQLite-only path (`cache.sqlite3` + `django-tasks-db`). Trade-off: single host (no horizontal scaling), brief deploy blip without external replication. **Requires Django 5.1+** for the `transaction_mode` and `init_command` `OPTIONS` keys.
 
-Override in `production.py` so dev keeps zero-config defaults:
+`production.py`:
 
 ```python
 DATABASES["default"]["OPTIONS"] = {
@@ -45,6 +45,8 @@ DATABASE_URL=sqlite:////data/site.sqlite3   # four slashes = absolute path
 ```
 
 #### Cache on a separate SQLite
+
+Applied when §5.3 cache backend = `sqlite` (the default when DB=SQLite).
 
 ```python
 DATABASES["cache"] = {
