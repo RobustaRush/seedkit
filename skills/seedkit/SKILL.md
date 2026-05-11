@@ -1,6 +1,6 @@
 ---
 name: seedkit
-version: 26.20.1
+version: 26.20.2
 description: Bootstrap a new Django project, or add components — auth (allauth, magic-link, axes, 2FA), payments (Stripe, dj-stripe), REST (django-modern-rest, django-bolt), Celery / django-tasks, async views & WebSockets (ASGI, uvicorn worker, django-channels, channels-redis), Tailwind+DaisyUI, S3 storage, structlog, healthchecks, Docker, CI, deploy (VPS / Fly / GitHub-SSH), dbbackup, Sentry/Bugsink — to an existing Django codebase. Use whenever the user wants to scaffold Django, integrate a Django package, set up async / WebSockets, set up production deploys, wire CI/CD, or extend an existing Django project.
 ---
 
@@ -14,6 +14,8 @@ Two paths:
 Before either path, run `uv --version` to confirm uv is installed.
 
 For every question that involves a third-party package: 1–2 sentences from the reference's intro on what it adds beyond stock Django, then ask. `none` (or `no`) is always a valid answer.
+
+**Use answers already given.** Before asking any question, scan the user's initial request (and anything they've said since) for the answer. If it's there — explicit ("use PostgreSQL", "with Celery", "no auth") or unambiguous from context — take it as given, note the decision in one line, and move on. Don't re-ask to confirm. Only ask when the answer is genuinely missing or ambiguous.
 
 ## Reference files
 

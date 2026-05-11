@@ -2,6 +2,11 @@
 
 Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One section per day; all of a day's commits collapse into one block. Trim to ≤ 200 lines; git keeps the rest.
 
+## 26.20.2 — 2026-05-12
+
+### Changed
+- SKILL.md now tells the agent to scan the user's initial request for answers already given and treat them as decided — don't re-ask to confirm. Only ask when the answer is genuinely missing or ambiguous.
+
 ## 26.20.1 — 2026-05-11
 
 ### Changed
