@@ -25,7 +25,7 @@ Structured logging: yes (`structlog`, JSON in prod / pretty in dev, request-scop
 Task runner: none.
 Add-ons:
   - redis
-  - tasks: Django Tasks with the Redis Queue backend (`django-tasks-rq`)
+  - tasks: Django Tasks with the Redis Queue backend (`django-tasks-rq`). Also `uv run manage.py startapp jobs`, register `jobs` in `INSTALLED_APPS`, wire `jobs/apps.py` `ready()` to import `tasks`, and add a sample `@task` to `jobs/tasks.py`.
   - analytics: Umami (self-hosted, env-driven website ID and host)
   - email: none (deliberately skip `references/email.md`; this project does not send transactional mail and the test verifies the skip path).
   - CORS: no.

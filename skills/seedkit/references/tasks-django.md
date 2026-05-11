@@ -26,4 +26,4 @@ class MyappConfig(AppConfig):
         from . import tasks  # noqa: F401  — register @task functions
 ```
 
-Scaffold an empty `<app>/tasks.py` ready for `@task`-decorated functions.
+When the project already has a domain app, add `<app>/tasks.py` with `@task`-decorated functions. On a fresh project with no app yet, the worker boots and idles — the user creates an app and adds `tasks.py` when they have real work.

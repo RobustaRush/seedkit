@@ -24,7 +24,7 @@ Structured logging: no.
 Task runner: none.
 Add-ons:
   - debug: django-silk (profiling + `@silk_profile`)
-  - tasks: Django Tasks with the Database backend (`django-tasks-db`)
+  - tasks: Django Tasks with the Database backend (`django-tasks-db`). Also `uv run manage.py startapp jobs`, register `jobs` in `INSTALLED_APPS`, wire `jobs/apps.py` `ready()` to import `tasks`, and add a sample `@task` to `jobs/tasks.py`.
   - analytics: GoatCounter (self-hosted snippet, env-driven site code)
   - email: console backend in local (`EMAIL_URL=consolemail://`).
   - CORS: no.

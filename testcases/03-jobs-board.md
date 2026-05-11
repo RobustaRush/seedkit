@@ -24,7 +24,7 @@ Structured logging: no.
 Task runner: just.
 Add-ons:
   - redis (for Celery)
-  - tasks: Celery, with periodic tasks (Celery Beat)
+  - tasks: Celery, with periodic tasks (Celery Beat). Also `uv run manage.py startapp jobs`, register `jobs` in `INSTALLED_APPS`, and add a sample `@shared_task` to `jobs/tasks.py` referenced from `CELERY_BEAT_SCHEDULE`.
   - email: console backend in local (`EMAIL_URL=consolemail://`).
   - CORS: no.
   - REST API: none.

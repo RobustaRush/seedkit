@@ -209,7 +209,7 @@ Each rule has a *why* so you can judge edge cases.
 **App layout**
 
 - Don't create an app dir named after the project unless asked.
-- `tasks.py` must live inside a registered Django app, not at project root or under `config/`. Both Celery autodiscovery and `django-tasks` only scan `INSTALLED_APPS`. If no app exists, create one (`uv run manage.py startapp jobs`) before placing `tasks.py`.
+- `tasks.py` must live inside a registered Django app, not at project root or under `config/`. Both Celery autodiscovery and `django-tasks` only scan `INSTALLED_APPS`. When a fresh project has no app yet, **don't auto-create one** — wire the task settings / services / Dockerfile so the worker boots and idles, then tell the user where to drop `@task` functions once they create a domain app. Auto-creating `jobs/` dictates app layout the user may not want.
 
 **After `startproject` / `uv init` / `startapp`**
 

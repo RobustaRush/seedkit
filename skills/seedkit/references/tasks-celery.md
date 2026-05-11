@@ -51,7 +51,7 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True  # silence Celery 5+ deprecatio
 
 ## Define a task
 
-Scaffold an empty `<app>/tasks.py` inside a registered Django app — `app.autodiscover_tasks()` only scans `INSTALLED_APPS`, **not** `config/`. If no domain app exists, `uv run django-admin startapp <name>` first. Use `from celery import shared_task` and the `@shared_task` decorator on each function.
+Add `@shared_task` functions to `<app>/tasks.py` inside a registered Django app — `app.autodiscover_tasks()` only scans `INSTALLED_APPS`, **not** `config/`. Use `from celery import shared_task` on each function. If the project has no domain app yet, the worker boots and idles; the user creates an app and adds `tasks.py` when they have real work to schedule.
 
 ## Local — docker-compose.yml
 
