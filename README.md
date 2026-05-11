@@ -53,7 +53,7 @@ Then, in whatever empty directory you'd like to populate:
 
 ## Project Status
 
-This is a fresh project under active development. While the skill is verified against the nine core scenarios in [seedkit-examples](https://github.com/RobustaRush/seedkit-examples), we are still mapping out how the agent handles completely custom stacks.
+This is a fresh project under active development. While the skill is verified against the nine core scenarios in [seedkit-examples](https://github.com/RobustaRush/seedkit-examples), we are still mapping out how the agent behaves outside that set.
 
 If you run into issues, strange behavior, or have ideas for new integrations, please open an issue. Feedback is welcome.
 
