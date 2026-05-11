@@ -17,7 +17,7 @@ uv add django-csp
 Append the middleware — don't re-declare `MIDDLEWARE`. Re-declaration drops anything `base.py` inserted (e.g. WhiteNoise after `SecurityMiddleware`):
 
 ```python
-MIDDLEWARE = MIDDLEWARE + ["csp.middleware.CSPMiddleware"]
+MIDDLEWARE = [*MIDDLEWARE, "csp.middleware.CSPMiddleware"]
 
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
