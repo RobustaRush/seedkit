@@ -22,6 +22,7 @@ For every question that involves a third-party package: 1–2 sentences from the
 - `references/uv.md` — uv installation and commands
 - `references/new-project.md` — Two Scoops layout, django-environ, uv
 - `references/database.md` — SQLite vs PostgreSQL (host or Docker)
+- `references/async.md` — WSGI / ASGI / ASGI+channels request handling (gunicorn worker class, server choice)
 - `references/custom-user.md` — custom `AUTH_USER_MODEL` (set before first migrate)
 - `references/docker.md` — local docker-compose dev + production image
 - `references/existing-project.md` — inventory workflow when extending an existing repo
@@ -53,6 +54,10 @@ For every question that involves a third-party package: 1–2 sentences from the
 - `references/tasks-celery.md` — Celery + Redis
 - `references/tasks-django.md` — Django Tasks dispatcher (`-db.md` / `-rq.md` / `-cron.md`)
 - `references/email.md` — console / SMTP / Mailpit / anymail
+
+### Real-time
+
+- `references/realtime.md` — `django-channels` routing, sample consumer, `channels-redis` layer, separate ASGI worker, Caddy WS proxy
 
 ### Frontend & Site Basics
 
@@ -91,11 +96,12 @@ List the groups above, one sentence each. For existing projects: first follow `r
 1. Project name + one-line purpose (the explicit two-answer pair).
 2. Settings layout: single `settings.py` or split `base/local/production`.
 3. Database: SQLite or PostgreSQL.
-4. Local dev mode: uv on host or docker-compose.
+4. Request handling: `wsgi` / `asgi` / `asgi+channels`. **Default `wsgi`.** Decide now — Dockerfile `CMD`, server choice, and the `manage.py`/`wsgi.py`/`asgi.py` settings defaults all hinge on this; switching later means rewriting deploy artefacts. See `references/async.md` (and `references/realtime.md` for the channels mode).
+5. Local dev mode: uv on host or docker-compose.
    - Postgres + uv-on-host → host Postgres or Postgres-only in Docker.
    - docker-compose → full stack.
    - If docker-compose: ask Docker structure — `simple` (default; separate `Dockerfile.dev`) or `override` (one multi-stage `Dockerfile` + auto-loaded `docker-compose.override.yml`; recommend for serious projects). See `references/docker.md`.
-5. Custom user model: yes / no — decide now (see `references/custom-user.md`).
+6. Custom user model: yes / no — decide now (see `references/custom-user.md`).
 
 Never bundle questions beyond the explicit pair in step 1.
 
@@ -161,6 +167,12 @@ For new projects: ask every question. For existing projects: only ask about comp
 1. REST API: `django-modern-rest` / `django-bolt` / `none`. **Default none.**
 2. Billing: `stripe` (raw SDK) / `dj-stripe` / `none`. **Default none.**
 3. Analytics: `goatcounter` / `umami` / `shynet` / `ga4` / `none`. **Default none.**
+
+#### 5.7 Real-time
+
+Only ask when Foundation §2.4 = `asgi+channels`. Otherwise skip the whole group.
+
+1. Channel layer: `channels-redis` / `InMemoryChannelLayer`. **Default `channels-redis`.** In-memory is dev-only — it doesn't span processes, so any horizontal scale or separate ASGI worker process breaks broadcast.
 
 ### 6. Production & Deploy — one question at a time
 

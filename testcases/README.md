@@ -70,6 +70,7 @@ Coverage rules. Use these to regenerate the suite when the skill changes.
    **Foundation**
    - Settings layout: `single` / `split`
    - Database: `sqlite` / `postgres`
+   - Request handling: `wsgi` / `asgi` / `asgi+channels`
    - Local dev mode: `uv-host` / `docker-compose`
    - Postgres location (only when `postgres` + `uv-host`): `host` / `docker-db-only`
    - Custom user model (`AUTH_USER_MODEL`): `yes` / `no`
