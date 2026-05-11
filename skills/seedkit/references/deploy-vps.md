@@ -60,7 +60,7 @@ volumes:
 ## deploy/Caddyfile
 
 ```
-example.com {
+example.com {     # replace with the real domain — Caddy fails to issue TLS for example.com
     reverse_proxy web:8000 {
         # Probe `/healthz` (process up) — NOT `/readyz` (DB+deps).
         # A transient DB blip on /readyz flips the upstream to "down" and
@@ -78,7 +78,7 @@ The Caddyfile only proxies. WhiteNoise inside the `web` container handles `/stat
 If the project also serves user-uploaded media via a shared volume (i.e. media on the VPS host, not S3 — see `references/storage-whitenoise.md`), serve it through Caddy:
 
 ```
-example.com {
+example.com {     # replace with the real domain
     handle /media/* {
         uri strip_prefix /media   # without this, file_server resolves /srv/media/media/<file>
         root * /srv/media

@@ -201,6 +201,8 @@ Wait for the user to confirm the browser login works before §8.
 
 After applying any reference, append the decision and any new commands to `README.md`. Finalize at the end of the run with stack summary and key commands (install, test, migrate, run, deploy). Don't hardcode dependency versions — read them from `pyproject.toml`. If a task runner was applied (§5.1), show task-runner names (`mise run dev`, `just test`) in the README's main command list — not the raw `uv run …` invocations.
 
+If a deploy target was applied (§6.6), copy the deploy command block from the matching `references/deploy-*.md` verbatim into a `## Deploy` section in `README.md`. The block includes the one-shot `manage.py migrate` step that runs before `docker compose up -d` — without it, the first `up -d --build` hits an empty database and every page 500s.
+
 For new projects only, append a final line to `README.md`: `Built with [Seedkit](https://github.com/RobustaRush/seedkit).` Skip on existing-project runs.
 
 ## Common pitfalls
