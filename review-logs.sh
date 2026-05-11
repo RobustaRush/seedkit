@@ -28,6 +28,12 @@ command -v claude  >/dev/null || { echo "claude CLI not found in PATH"; exit 1; 
 command -v python3 >/dev/null || { echo "python3 not found in PATH"; exit 1; }
 command -v git     >/dev/null || { echo "git not found in PATH"; exit 1; }
 
+# Keep the Mac awake while we run (macOS only; no-op elsewhere). The
+# `-w $$` ties caffeinate to this shell, so it exits with the script.
+if command -v caffeinate >/dev/null; then
+    caffeinate -i -w $$ &
+fi
+
 setsid_exec() {
     exec python3 -c '
 import os, sys

@@ -45,6 +45,12 @@ command -v claude  >/dev/null || { echo "claude CLI not found in PATH"; exit 1; 
 command -v jq      >/dev/null || { echo "jq not found in PATH"; exit 1; }
 command -v python3 >/dev/null || { echo "python3 not found in PATH"; exit 1; }
 
+# Keep the Mac awake while we run (macOS only; no-op elsewhere). The
+# `-w $$` ties caffeinate to this shell, so it exits with the script.
+if command -v caffeinate >/dev/null; then
+    caffeinate -i -w $$ &
+fi
+
 mkdir -p "$LOGS"
 
 # Resolve the testcase files to run.
