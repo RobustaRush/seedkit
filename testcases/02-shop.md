@@ -147,7 +147,7 @@ Verify these structural facts:
 **Settings**
 - `config/settings/base.py` uses `env.NOTSET` for the prod branch of `SECRET_KEY` and `DATABASES`.
 - `whitenoise.middleware.WhiteNoiseMiddleware` is present in `config/settings/production.py`'s `MIDDLEWARE` and absent from `base.py`.
-- `EMAIL_BACKEND` resolves to `django.core.mail.backends.console.EmailBackend` in `local.py` only; production reads SMTP settings from env.
+- `base.py` calls `globals().update(env.email_url("EMAIL_URL", default="consolemail://" if DEBUG else env.NOTSET))` so local resolves to the console backend and prod reads SMTP from env.
 - `_stripe.api_key = STRIPE_SECRET_KEY` is set at module scope in `base.py`.
 
 **Custom user + auth**
@@ -173,7 +173,7 @@ Verify these structural facts:
 - `deploy/docker-compose.prod.yml` defines a `web` healthcheck using `python -c 'import urllib.request...'` (not curl) and a `db` healthcheck using `pg_isready`.
 
 **Pages + billing**
-- `pages/` app with `IndexView(TemplateView)` wired at `/`. `liveness` and `readiness` views, `path('healthz', ...)` and `path('readyz', ...)` (no trailing slash), `robots_txt` view at `path('robots.txt', ...)`.
+- `pages/` app with `IndexView(TemplateView)` wired at `/`. `liveness`, `readiness`, `robots_txt` views live in `config/views.py` (per `healthcheck.md` / `robots.md`); `config/urls.py` wires `path('healthz', ...)`, `path('readyz', ...)` (no trailing slash), and `path('robots.txt', ...)`.
 - `billing/` app with `create_checkout_session`, `customer_portal`, `stripe_webhook` views. Webhook decorated with `@csrf_exempt` AND `@require_POST`. Webhook calls `stripe.Webhook.construct_event(request.body, sig_header, settings.STRIPE_WEBHOOK_SECRET)`.
 - `STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` listed in `.env.example`. `billing/` URLs included in `config/urls.py`.
 
