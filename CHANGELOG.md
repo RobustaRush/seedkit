@@ -4,6 +4,10 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 
 ## 26.20.2 — 2026-05-12
 
+### Fixed
+- `deploy-github-ssh.md` deploy script uses plain `'{{.State.Health.Status}}'` instead of the Liquid-style `{{ '{{' }}.State.Health.Status{{ '}}' }}` escape — GitHub Actions only evaluates `${{ ... }}` expressions, so single-quoted `{{ ... }}` inside a `script:` block passes through unchanged. The escape was unnecessary and harder to read.
+- `ci.md` `services:` now includes an opt-in `redis:` block alongside `postgres:` for projects using `cache` / `celery` / `django-tasks-rq`. The `REDIS_URL` env was already there, but the matching service wasn't.
+
 ### Changed
 - `docker.md` BuildKit cache mount (`--mount=type=cache,target=/root/.cache/uv`) is now standard on every `RUN uv sync`, with `# syntax=docker/dockerfile:1` at the top of each Dockerfile. Was framed as "optional, speeds up CI"; it's actually load-bearing whenever a multi-stage build re-runs `uv sync` on Rust/C-backed packages without a manylinux/aarch64 wheel (e.g. `django-bolt` on linux/arm64) — without the cache mount the wheel recompiles in each stage.
 - `typecheck.md` Pragmatics: documents that `get_user_model()` returns the generic `_UserModel` stub, with the `TYPE_CHECKING` import + annotation pattern as the idiomatic fix (instead of `getattr`).

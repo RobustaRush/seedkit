@@ -116,7 +116,7 @@ jobs:
             # SECURE_SSL_REDIRECT is on, that returns 301 and `curl` without
             # `-L` reads success regardless of the upstream actually being up.
             for i in $(seq 1 30); do
-              status=$(docker inspect -f '{{ '{{' }}.State.Health.Status{{ '}}' }}' \
+              status=$(docker inspect -f '{{.State.Health.Status}}' \
                 $(docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml ps -q web) 2>/dev/null || echo starting)
               [ "$status" = "healthy" ] && exit 0
               sleep 2

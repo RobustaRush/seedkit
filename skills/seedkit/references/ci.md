@@ -29,6 +29,16 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
+      # Add this block only when redis is wired (cache / celery / django-tasks-rq).
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
 
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
