@@ -39,7 +39,7 @@ LOGS="$WORKSPACE/logs"
 BUILD_CLI="${BUILD_CLI:-claude}"
 case "$BUILD_CLI" in
     claude) DEFAULT_BUILD_MODEL="claude-sonnet-4-6" ;;
-    gemini) DEFAULT_BUILD_MODEL="gemini-2.5-pro" ;;
+    gemini) DEFAULT_BUILD_MODEL="gemini-2.5-flash" ;;
     *) echo "BUILD_CLI must be 'claude' or 'gemini' (got: $BUILD_CLI)" >&2; exit 1 ;;
 esac
 MODEL="${MODEL:-$DEFAULT_BUILD_MODEL}"
@@ -209,6 +209,17 @@ run_phase() {
 
     pushd "$cwd" >/dev/null
 
+    # Gemini-specific prompt rewrites, done out here so the quoting in
+    # the `bash -c` block below stays simple. See the comment above the
+    # gemini branch for the rationale.
+    if [[ "$cli" == "gemini" ]]; then
+        prompt=$(printf '%s' "$prompt" \
+            | sed 's|^/seedkit$|Use the seedkit skill to scaffold the project per the questionnaire below.|')
+        prompt="Shell-tool note: your run_shell_command runs each call synchronously and does not preserve & backgrounding across calls. When the smoke / deploy snippet uses &, jobs -p, or wait, run the whole snippet inside a single \"timeout 60 bash -c '...'\" invocation so it executes in one child shell and self-terminates.
+
+$prompt"
+    fi
+
     PROMPT="$prompt" CASE_LOG="$log_target" CASE_MODEL="$model" \
     CASE_TOOLS="$allowed_tools" CASE_CLI="$cli" \
     setsid_exec bash -c '
@@ -239,13 +250,20 @@ run_phase() {
             gemini)
                 # --skip-trust required for non-interactive headless runs
                 # outside trusted folders. --yolo is the gemini analogue
-                # of claude'\''s --dangerously-skip-permissions.
+                # of claude'\''s --dangerously-skip-permissions. Prompt was
+                # rewritten in the outer shell (slash-command + shell-tool
+                # note) before being placed in $PROMPT.
                 gemini -p "$PROMPT" \
                     --yolo \
                     --skip-trust \
                     --model "$CASE_MODEL" \
                     --output-format stream-json \
-                | jq --unbuffered -j -r '\''select(.type == "message" and .role == "assistant" and .delta == true) | .content'\'' \
+                | jq --unbuffered -j -r '\''
+                    if .type == "message" and .role == "assistant" and (.delta // false) then .content
+                    elif .type == "tool_use" then "\n[tool:\(.tool_name)] \(.parameters.command // .parameters.file_path // (.parameters | tostring))\n"
+                    elif .type == "tool_result" then "[result:\(.status // "?")]\n"
+                    else empty end
+                  '\'' \
                 | tee -a "$CASE_LOG"
                 exit "${PIPESTATUS[0]}"
                 ;;

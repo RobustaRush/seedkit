@@ -22,7 +22,7 @@ brew install uv
 ## Project
 
 ```sh
-uv init {project_name}
+uv init --bare {project_name}   # --bare: no main.py / README.md / .python-version
 uv add django
 uv add --dev pytest ruff   # examples; lint/pytest are optional foundation choices
 uv remove django
