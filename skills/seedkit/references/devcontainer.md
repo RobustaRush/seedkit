@@ -53,6 +53,7 @@ The two flavours share the same `devcontainer.json` shape but with different `im
   "service": "web",
   "workspaceFolder": "/app",
   "shutdownAction": "stopCompose",
+  "forwardPorts": [8000],
   "postAttachCommand": "uv run manage.py migrate",
   "customizations": {
     "vscode": {

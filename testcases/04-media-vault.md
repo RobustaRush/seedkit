@@ -95,7 +95,7 @@ Verify these structural facts:
 
 **Foundation**
 - Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production}.py`, `config/asgi.py`, `config/routing.py`, `Dockerfile.dev`, `docker-compose.yml`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`.
-- `docker-compose.yml` defines services `web`, `db`, `redis`, `worker`, `minio`. Named volumes for `pgdata`, `venv` (or `web-venv`), and `minio-data`. `web` service `command:` (or `Dockerfile.dev` `CMD`) invokes `gunicorn -k uvicorn.workers.UvicornWorker config.asgi:application --bind 0.0.0.0:8000` (or `uvicorn config.asgi:application --reload --host 0.0.0.0` in dev — either is acceptable as long as it's an ASGI server, not `manage.py runserver`).
+- `docker-compose.yml` defines services `web`, `db`, `redis`, `worker`, `minio`. Named volumes for `pgdata` and `minio-data` (the venv slot is an anonymous `/app/.venv` per `references/docker.md`). `web` service `command:` (or `Dockerfile.dev` `CMD`) invokes `gunicorn -k uvicorn.workers.UvicornWorker config.asgi:application --bind 0.0.0.0:8000` (or `uvicorn config.asgi:application --reload --host 0.0.0.0` in dev — either is acceptable as long as it's an ASGI server, not `manage.py runserver`).
 - `pyproject.toml` runtime deps include `psycopg[binary]`, `django-tasks`, `django-tasks-rq`, `django-storages[s3]` (or `boto3`), `django-cors-headers`, `django-modern-rest[msgspec,openapi]`, `channels`, `channels-redis`, `daphne`, `uvicorn`, `gunicorn`, `pyjwt`, `structlog`, `django-structlog`. Dev deps include `ruff`, `pyright`, `django-stubs`, `django-stubs-ext`.
 
 **Settings**

@@ -14,6 +14,7 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 - `realtime.md` install line adds `daphne` (channels doesn't pull it transitively); routing snippet carries `# type: ignore[arg-type]` for `path(..., Consumer.as_asgi())`.
 - `storage-s3.md` adds a MinIO docker-compose snippet with a `curl` healthcheck (`wget` is absent in `minio/minio:latest`) and a note not to gate `web.depends_on` on it.
 - `email.md` Mailpit compose snippet adds a `wget /livez` healthcheck so `docker compose up -d --wait` actually blocks until SMTP is ready.
+- `devcontainer.md` compose flavour gains `forwardPorts: [8000]`; `tasks-django-rq.md` install line adds `django-tasks` so the manifest matches the `from django_tasks import task` import; testcase 04 venv-volume assertion aligns with the anonymous `/app/.venv` shown in `docker.md`.
 
 ## 26.20.1 — 2026-05-11
 
