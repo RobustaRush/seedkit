@@ -68,9 +68,9 @@ if settings.DEBUG:
 uv run manage.py migrate
 ```
 
-#### Logging (optional)
+#### Logging
 
-`django-orbit` is a dev dep, so the orbit handler lives in `config/settings/local.py` for the split layout. Keep `LOGGING` itself at module scope in `base.py` — gating the whole dict on `if DEBUG:` leaves production on Django's bare defaults. The `local.py` `if DEBUG:` block only **appends** the orbit handler:
+Wire the orbit log handler whenever orbit is installed — otherwise the dashboard misses log records. `django-orbit` is a dev dep, so the handler lives in `config/settings/local.py` for the split layout. Keep `LOGGING` itself at module scope in `base.py` — gating the whole dict on `if DEBUG:` leaves production on Django's bare defaults. The `local.py` `if DEBUG:` block only **appends** the orbit handler:
 
 `base.py` (always loaded):
 
