@@ -86,25 +86,32 @@ until [ "$(docker inspect -f '{{.State.Health.Status}}' shop-smoke-db)" = "healt
 # 3. migrate --check against the prod image must fail (no tables yet), then migrate.
 docker run --rm --network shop-smoke \
     -e DJANGO_SETTINGS_MODULE=config.settings.production \
-    -e DJANGO_SECRET_KEY=smoke-secret-not-for-prod \
+    -e DJANGO_SECRET_KEY=smoke-secret-not-for-prod-padding-to-fifty-chars-min \
     -e DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost \
     -e DATABASE_URL=postgres://postgres:postgres@shop-smoke-db:5432/shop_db \
+    -e EMAIL_URL=consolemail:// \
+    -e DEFAULT_FROM_EMAIL=webmaster@localhost \
     shop-prod python manage.py migrate --noinput
 
 # 4. `manage.py check --deploy` against prod settings — no WARNING-level issues.
 docker run --rm --network shop-smoke \
     -e DJANGO_SETTINGS_MODULE=config.settings.production \
-    -e DJANGO_SECRET_KEY=smoke-secret-not-for-prod \
+    -e DJANGO_SECRET_KEY=smoke-secret-not-for-prod-padding-to-fifty-chars-min \
     -e DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost \
     -e DATABASE_URL=postgres://postgres:postgres@shop-smoke-db:5432/shop_db \
+    -e EMAIL_URL=consolemail:// \
+    -e DEFAULT_FROM_EMAIL=webmaster@localhost \
     shop-prod python manage.py check --deploy --fail-level WARNING
 
 # 5. Boot gunicorn from the image. Port 8000 published to host.
 docker run -d --name shop-smoke-web --network shop-smoke -p 8000:8000 \
     -e DJANGO_SETTINGS_MODULE=config.settings.production \
-    -e DJANGO_SECRET_KEY=smoke-secret-not-for-prod \
+    -e DJANGO_SECRET_KEY=smoke-secret-not-for-prod-padding-to-fifty-chars-min \
     -e DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost \
     -e DATABASE_URL=postgres://postgres:postgres@shop-smoke-db:5432/shop_db \
+    -e EMAIL_URL=consolemail:// \
+    -e DEFAULT_FROM_EMAIL=webmaster@localhost \
+    -e DJANGO_SECURE_SSL_REDIRECT=False \
     shop-prod
 # Wait for healthz to return 200.
 for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/healthz >/dev/null && break; sleep 1; done
@@ -151,15 +158,15 @@ Verify these structural facts:
 - `accounts/` URL include in `config/urls.py`. `ACCOUNT_EMAIL_VERIFICATION = "mandatory"` in `production.py`.
 
 **Tailwind + DaisyUI**
-- `INSTALLED_APPS` contains `django_tailwind_cli`. `STATICFILES_DIRS = [BASE_DIR / "assets"]`. `TAILWIND_CLI_VERSION` pinned. `TAILWIND_CLI_SRC_CSS = "assets/css/source.css"` in `base.py`. `TAILWIND_CLI_USE_DAISY_UI` is **not** set.
-- Files present: `assets/css/daisyui.mjs`, `assets/css/daisyui-theme.mjs`, `assets/css/source.css`.
-- `assets/css/source.css` contains `@import "tailwindcss";`, `@source not "./tailwindcss";`, `@source not "./daisyui{,*}.mjs";`, `@plugin "./daisyui.mjs";`.
+- `INSTALLED_APPS` contains `django_tailwind_cli`. `STATICFILES_DIRS = [BASE_DIR / "assets"]`. `TAILWIND_CLI_VERSION` pinned. `TAILWIND_CLI_SRC_CSS = "tailwind-src/css/source.css"` in `base.py`. `TAILWIND_CLI_USE_DAISY_UI` is **not** set.
+- Files present: `tailwind-src/css/daisyui.mjs`, `tailwind-src/css/daisyui-theme.mjs`, `tailwind-src/css/source.css` — sources live outside `STATICFILES_DIRS` (see `tailwind.md`).
+- `tailwind-src/css/source.css` contains `@import "tailwindcss";`, `@source not "./tailwindcss";`, `@source not "./daisyui{,*}.mjs";`, `@plugin "./daisyui.mjs";`.
 - `templates/base.html` loads `{% load tailwind_cli %}`, calls `{% tailwind_css %}` inside `<head>`, and contains `<html data-theme=`.
 - `templates/index.html` extends `base.html` and contains the literals `text-blue-600`, `text-4xl`, and `btn-primary`.
 - `templates/404.html`, `templates/403.html`, `templates/500.html` present. `500.html` does NOT extend `base.html`.
 
 **Production artifacts**
-- Files present at project root: `Dockerfile`, `Dockerfile.dev`, `docker-compose.yml`, `.dockerignore`. Under `deploy/`: `docker-compose.prod.yml`, `Caddyfile`.
+- Files present at project root: `Dockerfile`, `Dockerfile.dev`, `.dockerignore`. Under `deploy/`: `docker-compose.prod.yml`, `Caddyfile`. (No root `docker-compose.yml` — dev mode is `uv on host`.)
 - `Dockerfile` uses `ghcr.io/astral-sh/uv:python3.12-bookworm-slim`, runs `uv sync --frozen --no-dev`, contains a `collectstatic --noinput` step under `DJANGO_SETTINGS_MODULE=config.settings.production`, switches to a non-root `django` user, and ends with `CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000"]`.
 - `pyproject.toml` runtime deps include `gunicorn`.
 - `.dockerignore` lists `.venv`.
