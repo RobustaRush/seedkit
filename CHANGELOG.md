@@ -14,6 +14,8 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 - Testcase boot-check cleanup drops `pkill -f 'manage.py'` — contradicted the `SKILL.md` rule against `pkill -f` and the harness already sweeps the process group.
 
 ### Fixed
+- `database.md` Litestream Dockerfile snippet now bakes `litestream.yml` + `entrypoint.sh` into the image (with `ENTRYPOINT`/`CMD`) instead of leaving the entrypoint's `/etc/litestream.yml` path dangling for a compose bind-mount that silently failed when the config sat at the project root.
+- `ci.md` env block calls out that `DATABASE_URL` must stay set regardless of DB choice and shows the SQLite alternative inline — agents adapting the Postgres snippet were dropping the var entirely and tripping the `DEBUG=False` `env.NOTSET` branch on import.
 - Migration / collectstatic invocations inside containers now use `python manage.py …` consistently across `deploy-vps.md`, `deploy-github-ssh.md`, `storage-s3.md`, `dev-tasks.md`, and `docker.md` "Waiting for Postgres". Previous `uv run` form broke deploys whose runtime stage is `python:3.X-slim-bookworm` (no `uv` binary).
 - `devcontainer.md` interpreter path was `/app/.venv/bin/python`, but the project venv lives at `/opt/venv/bin/python` per `docker.md`. VS Code's Python extension now resolves the right interpreter.
 - `storage-s3.md` "delete this RUN" snippet referenced `/app/.venv/bin/python manage.py collectstatic`, but `docker.md` writes the line as `python manage.py collectstatic`. VPS deploy block also corrected from `docker-compose.prod.yml` to `deploy/docker-compose.prod.yml`.

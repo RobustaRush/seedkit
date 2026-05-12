@@ -41,7 +41,11 @@ jobs:
           --health-retries 5
 
     env:
+      # For SQLite, swap the URL — never drop the var. `base.py` requires
+      # DATABASE_URL once `DJANGO_DEBUG=False`, so the workflow fails import
+      # at the first `manage.py` / `pytest` step without it.
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+      # DATABASE_URL: sqlite:////tmp/ci.sqlite3
       DJANGO_SECRET_KEY: test-key
       DJANGO_DEBUG: "False"
       DJANGO_ALLOWED_HOSTS: "*"

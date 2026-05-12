@@ -119,6 +119,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget \
 # Pre-create /data before `USER django` — the named volume mounts as root:root,
 # so the django user can't write site.sqlite3 / cache.sqlite3 / WAL files otherwise.
 RUN mkdir -p /data && chown django:django /data
+
+# Bake the litestream config and entrypoint into the image at fixed paths.
+# Bind-mounting `./litestream.yml` from `deploy/docker-compose.prod.yml` resolves
+# against the compose-file directory and silently fails when the file lives at
+# the project root.
+COPY litestream.yml /etc/litestream.yml
+COPY --chmod=755 entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD []
 ```
 
 `litestream.yml`:
