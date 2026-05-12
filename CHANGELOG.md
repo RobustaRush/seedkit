@@ -10,6 +10,9 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 - `auth-hardening.md` recommends `AXES_HANDLER = AxesCacheHandler` in `production.py` whenever Redis is in scope, not only "on heavy traffic".
 - `deploy-github-ssh.md` `.env.prod.example` heading now spells the full `deploy/.env.prod.example` path; the prior heading was ambiguous and the file got skipped while the compose file landed under `deploy/`.
 
+### Added
+- `run-tests.sh` learned `BUILD_CLI=gemini` — build phase now runs through `gemini -p --yolo --skip-trust` with a model defaulting to `gemini-2.5-pro`. Review phase still uses `claude -p` (the read-only Bash() allowlist is claude-specific). Skill is linked into the workspace via `gemini skills link --scope workspace --consent` when gemini is selected.
+
 ### Changed
 - `dev-tools.md` orbit logging section no longer marked "optional" — wire the orbit log handler whenever orbit is installed, otherwise the dashboard misses log records.
 - SKILL.md pitfall: run `manage.py startapp <name>` **before** listing the app in `INSTALLED_APPS`. Otherwise `startapp` imports settings and crashes with `ModuleNotFoundError`.

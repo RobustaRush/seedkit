@@ -1,26 +1,30 @@
 #!/usr/bin/env bash
 #
-# Run seedkit testcases through `claude -p` in two isolated phases:
+# Run seedkit testcases in two isolated phases:
 #
 #   1. Build  — the agent receives `## Prompt` + `## Boot check` from the
 #               testcase. It scaffolds the project and runs runtime smokes
 #               (boots the server, hits an endpoint). Auto-fixes are
-#               expected when a smoke fails.
-#   2. Review — a fresh `claude -p` reads the generated tree against the
-#               testcase's `## Review` section. Read-only tools, no skill
-#               access, no awareness of how the build went. File existence
-#               and content assertions live here so the build context can't
+#               expected when a smoke fails. Build CLI is pluggable
+#               (claude or gemini) via $BUILD_CLI.
+#   2. Review — always `claude -p`, regardless of which CLI built it.
+#               Reads the generated tree against the testcase's
+#               `## Review` section. Read-only tools, no skill access, no
+#               awareness of how the build went. File existence and
+#               content assertions live here so the build context can't
 #               game them.
 #
 # Both phases stream into the same per-case log file. There is no separate
 # summary — the per-case logs are the record.
 #
 # Usage:
-#   ./run-tests.sh                          # run all testcases
+#   ./run-tests.sh                          # run all testcases (claude build)
 #   ./run-tests.sh 02 07                    # run specific ones
 #   MODEL=claude-opus-4-7 ./run-tests.sh    # override build model
+#   BUILD_CLI=gemini ./run-tests.sh         # build with gemini, review with claude
+#   BUILD_CLI=gemini MODEL=gemini-2.5-pro ./run-tests.sh
 #
-# Requires: claude CLI, jq, python3.
+# Requires: claude CLI (always), gemini CLI (when BUILD_CLI=gemini), jq, python3.
 
 set -uo pipefail
 
@@ -32,7 +36,13 @@ TESTCASES="$REPO/testcases"
 WORKSPACE="${WORKSPACE:-$REPO/../seedkit-examples}"
 WORKSPACE="$(cd "$WORKSPACE" && pwd)"
 LOGS="$WORKSPACE/logs"
-MODEL="${MODEL:-claude-sonnet-4-6}"
+BUILD_CLI="${BUILD_CLI:-claude}"
+case "$BUILD_CLI" in
+    claude) DEFAULT_BUILD_MODEL="claude-sonnet-4-6" ;;
+    gemini) DEFAULT_BUILD_MODEL="gemini-2.5-pro" ;;
+    *) echo "BUILD_CLI must be 'claude' or 'gemini' (got: $BUILD_CLI)" >&2; exit 1 ;;
+esac
+MODEL="${MODEL:-$DEFAULT_BUILD_MODEL}"
 REVIEW_MODEL="${REVIEW_MODEL:-claude-opus-4-7}"
 # Hard ceiling per phase. The build phase occasionally improvises a bash
 # command that orphans a forking child tree under PID 1; bash's `wait`
@@ -44,6 +54,9 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 command -v claude  >/dev/null || { echo "claude CLI not found in PATH"; exit 1; }
 command -v jq      >/dev/null || { echo "jq not found in PATH"; exit 1; }
 command -v python3 >/dev/null || { echo "python3 not found in PATH"; exit 1; }
+if [[ "$BUILD_CLI" == "gemini" ]]; then
+    command -v gemini >/dev/null || { echo "gemini CLI not found in PATH"; exit 1; }
+fi
 
 # Keep the Mac awake while we run (macOS only; no-op elsewhere). The
 # `-w $$` ties caffeinate to this shell, so it exits with the script.
@@ -163,49 +176,84 @@ link_skill() {
     # Project-scoped skill so claude -p in $WORKSPACE finds it.
     mkdir -p "$WORKSPACE/.claude/skills"
     ln -snf "$REPO/skills/seedkit" "$WORKSPACE/.claude/skills/seedkit"
+
+    # Gemini uses `gemini skills link` rather than a bare symlink — its
+    # discovery mechanism reads the registry, not the directory. Idempotent;
+    # re-linking the same path is a no-op.
+    if [[ "$BUILD_CLI" == "gemini" ]]; then
+        (cd "$WORKSPACE" && gemini skills link "$REPO/skills/seedkit" \
+            --scope workspace --consent >/dev/null 2>&1) || true
+    fi
 }
 
-# Run a single claude -p invocation in its own session, with a watchdog
-# and a post-phase pgrp sweep. Streams text deltas to $log_target,
-# returns claude's exit code. Caller passes the prompt on stdin.
+# Run a single agent invocation in its own session, with a watchdog and
+# a post-phase pgrp sweep. Streams text deltas to $log_target, returns
+# the CLI's exit code. Caller passes the prompt on stdin.
+#
+# $cli selects the build agent: `claude` or `gemini`. Review phase
+# always passes `claude` since the read-only Bash() tool allowlist is
+# claude-specific. Stream-JSON schemas differ between the two — claude
+# emits `.event.delta.type == "text_delta"` envelopes; gemini emits flat
+# `{type:"message", role:"assistant", delta:true, content:"..."}` rows.
 run_phase() {
-    local label=$1 model=$2 cwd=$3 log_target=$4 allowed_tools=$5
+    local label=$1 cli=$2 model=$3 cwd=$4 log_target=$5 allowed_tools=$6
     local prompt
     prompt=$(cat)
 
     # Phase header in the log.
     {
         echo
-        echo "════════ $label ════════"
+        echo "════════ $label ($cli / $model) ════════"
         echo
     } >> "$log_target"
 
     pushd "$cwd" >/dev/null
 
     PROMPT="$prompt" CASE_LOG="$log_target" CASE_MODEL="$model" \
-    CASE_TOOLS="$allowed_tools" \
+    CASE_TOOLS="$allowed_tools" CASE_CLI="$cli" \
     setsid_exec bash -c '
-        if [[ -n "$CASE_TOOLS" ]]; then
-            claude -p "$PROMPT" \
-                --dangerously-skip-permissions \
-                --model="$CASE_MODEL" \
-                --allowedTools "$CASE_TOOLS" \
-                --output-format stream-json \
-                --include-partial-messages \
-                --print \
-                --verbose
-        else
-            claude -p "$PROMPT" \
-                --dangerously-skip-permissions \
-                --model="$CASE_MODEL" \
-                --output-format stream-json \
-                --include-partial-messages \
-                --print \
-                --verbose
-        fi \
-        | jq --unbuffered -j -r '\''select(.event.delta.type? == "text_delta") | .event.delta.text'\'' \
-        | tee -a "$CASE_LOG"
-        exit "${PIPESTATUS[0]}"
+        case "$CASE_CLI" in
+            claude)
+                if [[ -n "$CASE_TOOLS" ]]; then
+                    claude -p "$PROMPT" \
+                        --dangerously-skip-permissions \
+                        --model="$CASE_MODEL" \
+                        --allowedTools "$CASE_TOOLS" \
+                        --output-format stream-json \
+                        --include-partial-messages \
+                        --print \
+                        --verbose
+                else
+                    claude -p "$PROMPT" \
+                        --dangerously-skip-permissions \
+                        --model="$CASE_MODEL" \
+                        --output-format stream-json \
+                        --include-partial-messages \
+                        --print \
+                        --verbose
+                fi \
+                | jq --unbuffered -j -r '\''select(.event.delta.type? == "text_delta") | .event.delta.text'\'' \
+                | tee -a "$CASE_LOG"
+                exit "${PIPESTATUS[0]}"
+                ;;
+            gemini)
+                # --skip-trust required for non-interactive headless runs
+                # outside trusted folders. --yolo is the gemini analogue
+                # of claude'\''s --dangerously-skip-permissions.
+                gemini -p "$PROMPT" \
+                    --yolo \
+                    --skip-trust \
+                    --model "$CASE_MODEL" \
+                    --output-format stream-json \
+                | jq --unbuffered -j -r '\''select(.type == "message" and .role == "assistant" and .delta == true) | .content'\'' \
+                | tee -a "$CASE_LOG"
+                exit "${PIPESTATUS[0]}"
+                ;;
+            *)
+                echo "unknown CLI: $CASE_CLI" >&2
+                exit 2
+                ;;
+        esac
     ' &
     local phase_pid=$! phase_pgid
     phase_pgid=$phase_pid
@@ -280,7 +328,7 @@ for tc in "${FILES[@]}"; do
             printf -- '- Always tear down the smoke containers, network, and volumes at the end (even on failure) — orphaned `postgres:17` containers from a previous run will collide on the next.\n\n'
         fi
         printf 'At the end, summarise: What worked out of the box / What broke / Fixes applied / Suggested skill changes.\n'
-    } | run_phase "BUILD" "$MODEL" "$WORKSPACE" "$log" ""
+    } | run_phase "BUILD" "$BUILD_CLI" "$MODEL" "$WORKSPACE" "$log" ""
     build_rc=$?
 
     # Locate the generated project: any subdir with files newer than the
@@ -300,7 +348,7 @@ for tc in "${FILES[@]}"; do
     review_rc=0
     if [[ -n "$review_section" && -n "$project_dir" ]]; then
         printf '%s\n' "$review_section" \
-            | run_phase "REVIEW" "$REVIEW_MODEL" "$project_dir" "$log" \
+            | run_phase "REVIEW" "claude" "$REVIEW_MODEL" "$project_dir" "$log" \
                 "Read,Grep,Glob,Bash(ls:*),Bash(cat:*),Bash(rg:*),Bash(find:*)"
         review_rc=$?
     fi
