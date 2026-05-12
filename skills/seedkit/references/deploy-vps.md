@@ -11,11 +11,8 @@ services:
     restart: unless-stopped
     env_file: .env.prod
     healthcheck:
-      # Container-level so Caddy `depends_on: condition: service_healthy`
-      # works and `restart: unless-stopped` recycles a hung gunicorn.
-      # Use python+urllib instead of curl — the prod image only installs
-      # postgresql-client; adding curl just for healthchecks bloats the
-      # image and is one more thing to keep in sync.
+      # python+urllib instead of curl — the prod image only installs
+      # postgresql-client and slim has no curl.
       test: ["CMD-SHELL", "python -c 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen(\"http://localhost:8000/healthz\",timeout=2).status==200 else 1)'"]
       interval: 10s
       timeout: 3s
@@ -97,7 +94,7 @@ ssh user@vps
 cd /srv/{project_slug}
 git pull
 docker compose -f deploy/docker-compose.prod.yml pull
-docker compose -f deploy/docker-compose.prod.yml run --rm web uv run manage.py migrate
+docker compose -f deploy/docker-compose.prod.yml run --rm web python manage.py migrate
 docker compose -f deploy/docker-compose.prod.yml up -d
 ```
 

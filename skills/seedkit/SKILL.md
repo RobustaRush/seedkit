@@ -28,7 +28,7 @@ For every question that involves a third-party package: 1–2 sentences from the
 - `references/database.md` — SQLite vs PostgreSQL (host or Docker)
 - `references/async.md` — WSGI / ASGI / ASGI+channels request handling (gunicorn worker class, server choice)
 - `references/custom-user.md` — custom `AUTH_USER_MODEL` (set before first migrate)
-- `references/docker.md` — local docker-compose dev + production image
+- `references/docker.md` — production multi-stage image (uv builder → slim runtime) + optional local services compose
 - `references/existing-project.md` — inventory workflow when extending an existing repo
 
 ### Developer Experience
@@ -101,10 +101,7 @@ List the groups above, one sentence each. For existing projects: first follow `r
 2. Settings layout: single `settings.py` or split `base/local/production`.
 3. Database: SQLite or PostgreSQL.
 4. Request handling: `wsgi` / `asgi` / `asgi+channels`. **Default `wsgi`.** Decide now — Dockerfile `CMD`, server choice, and the `manage.py`/`wsgi.py`/`asgi.py` settings defaults all hinge on this; switching later means rewriting deploy artefacts. See `references/async.md` (and `references/realtime.md` for the channels mode).
-5. Local dev mode: uv on host or docker-compose.
-   - Postgres + uv-on-host → host Postgres or Postgres-only in Docker.
-   - docker-compose → full stack.
-   - If docker-compose: ask Docker structure — `simple` (default; separate `Dockerfile.dev`) or `override` (one multi-stage `Dockerfile` + auto-loaded `docker-compose.override.yml`; recommend for serious projects). See `references/docker.md`.
+5. If Postgres: host Postgres or Postgres-in-Docker (single-service `docker-compose.yml` for the local DB only). SQLite users skip.
 6. Custom user model: yes / no — decide now (see `references/custom-user.md`).
 
 Never bundle questions beyond the explicit pair in step 1.
@@ -117,8 +114,8 @@ Generate files from the matching references. `.env` `DATABASE_URL` must match DB
 
 Run these yourself; do not ask the user. The goal is to catch foundation bugs before piling on add-ons, without making the user type `uv run …` commands that §5.1 may replace minutes later.
 
-- `migrate` in the chosen dev mode (host `uv run manage.py migrate`, or `docker compose exec web …`).
-- Start `runserver --noreload` (or the docker stack) in the background. `--noreload` drops the StatReloader so the listener is ready sooner; a `sleep 2` then `curl` can still race on slow CI, so poll: `for i in 1 2 3 4 5; do curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null && break; sleep 1; done`.
+- `uv run manage.py migrate` (start the local Postgres service first with `docker compose up -d db` when DB=Postgres-in-Docker).
+- Start `uv run manage.py runserver --noreload` in the background. `--noreload` drops the StatReloader so the listener is ready sooner; a `sleep 2` then `curl` can still race on slow CI, so poll: `for i in 1 2 3 4 5; do curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null && break; sleep 1; done`.
 - Stop the server. Use the recorded PID from the background-launch step (`kill "$PID"`); don't use `kill %1` (no job control in non-interactive bash) or `pkill -f manage.py` (matches the parent harness process).
 
 If `migrate` or the curl fails, fix the foundation before proceeding to §5. `createsuperuser` and the browser login move to §7 — they need a stable task runner name and a real browser, neither of which exists yet.
@@ -133,7 +130,7 @@ For new projects: ask every question. For existing projects: only ask about comp
 2. Test runner: pytest or stock `manage.py test`. **Default no** (stock).
 3. Type checking with pyright + django-stubs: yes / no. **Default no.**
 4. Pre-commit hooks: yes / no. **Default no** — recommend yes if lint=yes; wires whichever of lint / format / typecheck were chosen.
-5. Devcontainer: yes / no. **Default no.** Match the dev-mode flavour: uv-on-host or docker-compose. New projects use the answer from §2.4; existing projects detect from `Dockerfile` / `compose*.yml` (see `references/existing-project.md`).
+5. Devcontainer: yes / no. **Default no.** Wraps a Python image with uv pre-installed so VS Code / Codespaces / JetBrains Gateway open the project ready to run.
 6. Debug toolbar: `django-orbit` / `django-silk` / `none`. **Default none.**
 7. DB safety: any of `django-zeal` / `django-migration-linter` / `django-test-migrations`. **Default none.** Skip `django-test-migrations` if pytest = no.
 8. `django-extensions`: yes / no. **Default no.**
@@ -231,10 +228,15 @@ Each rule has a *why* so you can judge edge cases.
 **After `startproject` / `uv init` / `startapp`**
 
 - Set `requires-python = ">=3.12"` in `pyproject.toml` immediately after `uv init`, before the first `uv add`. The host-derived pin (`>=3.14` on recent machines) refuses Django 6.
-- After inserting the env-driven `DATABASES = {...}` line in Option A of `references/new-project.md`, **delete** the original hardcoded `DATABASES` block + `# Database` comment that `startproject` emitted. Bottom wins; leaving both makes `DATABASE_URL` dead code. (Option B writes `base.py` from scratch, so this only applies to Option A.)
+- After inserting the env-driven `DATABASES = {...}` line in `references/new-project.md` (Option A in `settings.py`, Option B in `base.py`), **delete** the original hardcoded `DATABASES` block + `# Database` comment that `startproject` emitted. Bottom wins; leaving both makes `DATABASE_URL` dead code.
 - After `startapp <name>`, if Ruff is enabled, run `uv run ruff check --fix .` — `startapp` ships `admin.py` / `views.py` / `tests.py` with stub imports that fail `F401`.
 - Run `startapp <name>` **before** adding `<name>` to `INSTALLED_APPS`. `manage.py startapp` imports settings; if the app is already listed but the directory doesn't exist, the import fails with `ModuleNotFoundError`.
 - If i18n = no, remove the `USE_I18N = True` line and the `# Internationalization` comment block that `startproject` emits. Harmless to leave, but the reference's settings are single-language by default and the orphan block invites confusion.
+
+**`uv run` vs `python` invocation**
+
+- On the **host** (dev, local commands, smoke checks): `uv run manage.py …`. uv resolves the project venv.
+- **Inside any Docker container** (dev compose `exec`, prod `compose run`, Fly `release_command`, devcontainer `postAttach`): `python manage.py …`. `/opt/venv/bin` is on `PATH`; the multi-stage runtime image (`python:3.X-slim-bookworm`) has no `uv` binary, so `uv run` breaks there.
 
 **Add-on scope**
 

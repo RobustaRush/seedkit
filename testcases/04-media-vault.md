@@ -1,6 +1,6 @@
-# 04 — Full docker-compose stack, ASGI + channels, S3 storage, Django-Tasks (RQ)
+# 04 — ASGI + channels, S3 storage, Django-Tasks (RQ), devcontainer
 
-Covers full Compose dev mode, ASGI + django-channels (WebSockets with channels-redis layer), S3-compatible object storage, and the Django Tasks API with the Redis Queue backend.
+Covers ASGI + django-channels (WebSockets with channels-redis layer), S3-compatible object storage, the Django Tasks API with the Redis Queue backend, and a uv-on-host devcontainer.
 
 ## Prompt
 
@@ -13,8 +13,7 @@ Purpose: media-heavy app where uploads land in S3, processing runs as Redis-queu
 Settings layout: split.
 Database: PostgreSQL.
 Request handling: asgi+channels.
-Local dev mode: docker-compose (full stack: web + db + redis).
-Docker structure: simple (separate `Dockerfile.dev`, single `docker-compose.yml`).
+Postgres location: Postgres-in-Docker (`db` service in `docker-compose.yml`, port `127.0.0.1:5432` published).
 Lint with Ruff: yes.
 Test runner: manage.py test (stock Django).
 Type check (pyright + django-stubs): yes.
@@ -40,18 +39,22 @@ Add-ons:
 
 Production setup: skip.
 
-Generate `docker-compose.yml` with services `web`, `db`, `redis`, `worker`, `minio`. `web` runs `gunicorn -k uvicorn.workers.UvicornWorker config.asgi:application` (uvicorn worker since the foundation picked ASGI; HTTP and WS share the same process in dev). Run the foundation, `docker compose up -d`, migrate, createsuperuser, and confirm both a sample task enqueues and a WebSocket round-trip works.
+Generate `docker-compose.yml` with services `db`, `redis`, `minio` (local services only — Django, the rqworker, and uvicorn run on the host). Run the foundation, `docker compose up -d`, `uv run uvicorn config.asgi:application --reload --host 0.0.0.0` (HTTP + WS share one process in dev — `manage.py runserver` doesn't upgrade WebSockets), `uv run manage.py rqworker default` in a separate terminal, migrate, createsuperuser, and confirm a sample task enqueues and a WebSocket round-trip works.
 ```
 
 ## Boot check
 
 ```sh
 cd 04-media-vault
-docker compose up -d
-docker compose ps
-docker compose exec -T web uv run manage.py migrate
-docker compose exec -T web uv run manage.py createsuperuser --noinput || true
-curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
+docker compose up -d                    # db + redis + minio only
+uv run manage.py migrate
+uv run manage.py createsuperuser --noinput || true
+# Start uvicorn on the host in the background — runserver doesn't upgrade WS.
+uv run uvicorn config.asgi:application --host 0.0.0.0 --port 8000 &
+UVICORN_PID=$!
+uv run manage.py rqworker default &
+WORKER_PID=$!
+for i in 1 2 3 4 5; do curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null && break; sleep 1; done
 curl -sf -X POST http://127.0.0.1:8000/api/media/ \
   -H 'content-type: application/json' \
   -d '{"filename":"a.png","size":42}' > /dev/null
@@ -76,15 +79,10 @@ async def main():
 
 asyncio.run(main())
 "
-docker compose exec -T web uv run ruff check .
+uv run ruff check .
 uv run pyright
-# fail on any traceback / unhandled error in any service:
-! docker compose logs web worker 2>&1 | grep -iE 'traceback|^error|critical|unhandled'
-# worker should print rqworker startup line:
-docker compose logs worker 2>&1 | grep -iE 'rqworker|listening on|default'
-# uvicorn worker should announce itself in web logs:
-docker compose logs web 2>&1 | grep -iE 'uvicorn|uvicornworker|asgi'
-docker compose down -v --rmi local
+kill "$UVICORN_PID" "$WORKER_PID"
+docker compose down -v
 ```
 
 ## Review
@@ -94,8 +92,8 @@ Read-only audit of the project in the current directory. Quote the file path and
 Verify these structural facts:
 
 **Foundation**
-- Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production}.py`, `config/asgi.py`, `config/routing.py`, `Dockerfile.dev`, `docker-compose.yml`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`.
-- `docker-compose.yml` defines services `web`, `db`, `redis`, `worker`, `minio`. Named volumes for `pgdata` and `minio-data` (the venv slot is an anonymous `/app/.venv` per `references/docker.md`). `web` service `command:` (or `Dockerfile.dev` `CMD`) invokes `gunicorn -k uvicorn.workers.UvicornWorker config.asgi:application --bind 0.0.0.0:8000` (or `uvicorn config.asgi:application --reload --host 0.0.0.0` in dev — either is acceptable as long as it's an ASGI server, not `manage.py runserver`).
+- Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production}.py`, `config/asgi.py`, `config/routing.py`, `docker-compose.yml`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`. No `Dockerfile.dev` (dev runs on the host).
+- `docker-compose.yml` defines local services only — `db`, `redis`, `minio`. No `web` and no `worker` service: Django + rqworker + uvicorn run on the host via `uv run …`. Named volumes for `pgdata` and `minio-data`.
 - `pyproject.toml` runtime deps include `psycopg[binary]`, `django-tasks`, `django-tasks-rq`, `django-storages[s3]` (or `boto3`), `django-cors-headers`, `django-modern-rest[msgspec,openapi]`, `channels`, `channels-redis`, `daphne`, `uvicorn`, `gunicorn`, `pyjwt`, `structlog`, `django-structlog`. Dev deps include `ruff`, `pyright`, `django-stubs`, `django-stubs-ext`.
 
 **Settings**
@@ -124,7 +122,7 @@ Verify these structural facts:
 
 **CORS + Devcontainer + Health**
 - `corsheaders` in `INSTALLED_APPS`; `corsheaders.middleware.CorsMiddleware` BEFORE `CommonMiddleware`.
-- `.devcontainer/devcontainer.json` parseable JSON: `"dockerComposeFile": ["../docker-compose.yml"]`, `"service": "web"`, `"workspaceFolder": "/app"`, `"shutdownAction": "stopCompose"`, `forwardPorts` includes `8000`. No secrets / DB passwords inline.
+- `.devcontainer/devcontainer.json` parseable JSON: `"image"` points at a Python devcontainer image (e.g. `mcr.microsoft.com/devcontainers/python:3.12-bookworm`), `"features"` includes the uv feature, `"postCreateCommand"` runs `uv sync --frozen`, `forwardPorts` includes `8000`, `python.defaultInterpreterPath` points at `${containerWorkspaceFolder}/.venv/bin/python`. No secrets / DB passwords inline.
 - `pages/views.py` (or equivalent — `config/views.py` is fine) defines `liveness` and `readiness`; `path('healthz', ...)` and `path('readyz', ...)` in `config/urls.py` (no trailing slash).
 
 Report only issues that (i) prevent the scaffold from booting, (ii) violate one of the structural assertions above, or (iii) are an outright security hole. Skip nitpicks. Do not propose refactors, abstractions, retries, defensive checks, or hardening the prompt did not ask for. If unsure, omit it. Do NOT create, generate, or modify any files. Do NOT invoke any skill. Be brief; top issues first; "No issues found." is a valid report.

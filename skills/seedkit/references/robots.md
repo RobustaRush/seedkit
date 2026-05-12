@@ -4,6 +4,16 @@ Trivial endpoint — no package needed.
 
 Put the view in `config/views.py`. If a suitable app already exists (a `core` app, a landing-page app), put it there instead — don't add a new app just for this view.
 
+## Settings
+
+In `config/settings.py` (or `config/settings/base.py`):
+
+```python
+ROBOTS_DISALLOW_ALL = env.bool("ROBOTS_DISALLOW_ALL", default=False)
+```
+
+Without this line the `.env` toggle below is silently ignored — `settings` never reads the env var.
+
 ## `config/views.py`
 
 ```python
@@ -14,7 +24,7 @@ from django.views.decorators.http import require_GET
 
 @require_GET
 def robots_txt(_request):
-    if settings.DEBUG or getattr(settings, 'ROBOTS_DISALLOW_ALL', False):
+    if settings.DEBUG or settings.ROBOTS_DISALLOW_ALL:
         body = 'User-agent: *\nDisallow: /\n'
     else:
         body = (
@@ -47,5 +57,4 @@ Staging deploys, preview environments, internal tools — set `ROBOTS_DISALLOW_A
 
 ## What this is NOT
 
-- Not a sitemap. If the project needs one, use `django.contrib.sitemaps` separately and point at it via `SITEMAP_URL`.
-- Not a security control. Crawlers that ignore `robots.txt` won't be deterred — `/admin/` is gated by Django's auth, not by this file.
+Not a sitemap (`django.contrib.sitemaps` if needed, point at it via `SITEMAP_URL`) and not a security control — `/admin/` is gated by Django's auth.

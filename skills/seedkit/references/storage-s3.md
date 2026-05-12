@@ -135,7 +135,7 @@ volumes:
   miniodata:
 ```
 
-Don't add `minio: { condition: service_healthy }` to `web.depends_on` — `STORAGES` falls back to FileSystemStorage when the bucket env is empty, so `web` boots independently.
+`STORAGES` falls back to FileSystemStorage when the bucket env is empty, so host Django boots whether or not MinIO is up.
 
 ## Dockerfile — remove build-time collectstatic
 
@@ -144,7 +144,7 @@ The Dockerfile in `references/docker.md` runs `collectstatic` at build. That wor
 ```dockerfile
 # Delete this RUN — collectstatic moves to deploy.
 # RUN DJANGO_SETTINGS_MODULE=config.settings.production DJANGO_DEBUG=True \
-#     /app/.venv/bin/python manage.py collectstatic --noinput
+#     python manage.py collectstatic --noinput
 ```
 
 Run `collectstatic` at deploy with real env vars. Patterns below.
@@ -155,17 +155,19 @@ Run `collectstatic` at deploy with real env vars. Patterns below.
 ssh user@vps
 cd /srv/{project_slug}
 git pull
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml run --rm web uv run manage.py collectstatic --noinput
-docker compose -f docker-compose.prod.yml run --rm web uv run manage.py migrate
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f deploy/docker-compose.prod.yml pull
+docker compose -f deploy/docker-compose.prod.yml run --rm web python manage.py collectstatic --noinput
+docker compose -f deploy/docker-compose.prod.yml run --rm web python manage.py migrate
+docker compose -f deploy/docker-compose.prod.yml up -d
 ```
 
 ## Managed — fly.toml
 
 ```toml
 [deploy]
-  release_command = "uv run manage.py migrate && uv run manage.py collectstatic --noinput"
+  # `python` not `uv run`: the multi-stage runtime image (python:3.X-slim-bookworm)
+  # has no uv binary — only the venv at /opt/venv with /opt/venv/bin on PATH.
+  release_command = "python manage.py migrate && python manage.py collectstatic --noinput"
 ```
 
 ## Managed — Railway / Render
@@ -173,7 +175,7 @@ docker compose -f docker-compose.prod.yml up -d
 Release command:
 
 ```sh
-uv run manage.py migrate && uv run manage.py collectstatic --noinput
+python manage.py migrate && python manage.py collectstatic --noinput
 ```
 
 AWS env vars go in the platform dashboard.

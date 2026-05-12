@@ -81,7 +81,7 @@ jobs:
         with:
           push: true
           tags: ghcr.io/${{ github.repository }}:latest
-          target: prod                              # only when references/docker.md `override` (multi-stage) layout is used
+          target: prod                              # matches the `prod` stage in references/docker.md
 
       # Pin third-party deploy actions to a SHA, not a major tag — this step
       # runs arbitrary shell on prod. Replace <SHA> with a recent commit.
@@ -93,23 +93,16 @@ jobs:
           script: |
             set -euo pipefail
             cd /srv/{project_slug}
-            # Compose interpolates `${GITHUB_REPOSITORY}` from the host's
-            # shell env (or a root `.env` file in the deploy dir) — it does
-            # NOT pick it up from `env_file:` (that only sets container env).
-            # Without an explicit export, the image line resolves to
-            # `ghcr.io/:latest` and `compose pull` aborts.
-            # `--env-file deploy/.env.prod` is required on every compose call
-            # because compose's auto `.env` discovery only looks in the same
-            # dir as the compose file — `deploy/.env.prod` lives there but the
-            # filename isn't the one auto-loaded. Without the flag, every
-            # `${VAR}` in compose.prod.yml resolves to empty.
+            # Compose reads `${GITHUB_REPOSITORY}` from the shell env, not
+            # `env_file:`. Without the export `compose pull` resolves to
+            # `ghcr.io/:latest`. `--env-file deploy/.env.prod` is required
+            # on every compose call — auto-`.env` discovery only loads
+            # `.env`, not `deploy/.env.prod`.
             export GITHUB_REPOSITORY="${{ github.repository }}"
-            # Authenticate the *server's* docker against ghcr.io. Without
-            # this, `compose pull` against a private package silently fails
-            # and `up -d` keeps running the previous image.
+            # Server-side docker login for the private ghcr image.
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml pull
-            docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml run --rm web uv run manage.py migrate
+            docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml run --rm web python manage.py migrate
             docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml up -d
             # Wait for the container healthcheck (defined in deploy-vps.md)
             # to flip to "healthy" — don't sleep-and-curl on plain HTTP if

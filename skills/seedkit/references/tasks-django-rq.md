@@ -43,11 +43,9 @@ RQ_QUEUES = {
     "default": {"URL": f"{REDIS_URL}/3"},
 }
 
-# Job class for the rqworker. Goes in the top-level RQ dict (NOT inside
-# RQ_QUEUES[queue]) — django-rq's get_job_class() reads from settings.RQ
-# only. Without this the worker fetches jobs as rq.job.Job (the upstream
-# default) and every task explodes with `'Task' object is not callable`
-# because django-tasks-rq's overridden _execute() never runs.
+# JOB_CLASS goes in the top-level RQ dict (not RQ_QUEUES[queue]) — django-rq
+# reads it from settings.RQ. Missing this, rqworker falls back to rq.job.Job
+# and every task raises `'Task' object is not callable`.
 RQ = {"JOB_CLASS": "django_tasks_rq.Job"}
 ```
 
@@ -59,24 +57,13 @@ uv run manage.py rqworker default
 
 `settings.RQ["JOB_CLASS"]` is read globally by `rqworker`. No `--job-class` flag needed.
 
-## Local — docker-compose.yml
+## Local — run on the host
 
-```yaml
-services:
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    volumes:
-      - .:/app
-    env_file: .env
-    command: python manage.py rqworker default
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+```sh
+uv run manage.py rqworker default
 ```
+
+Open a second terminal alongside `uv run manage.py runserver`. `docker compose up -d redis` (and `db` if Postgres-in-Docker) must be running.
 
 ## VPS — docker-compose.prod.yml
 

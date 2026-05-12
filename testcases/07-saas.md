@@ -12,8 +12,6 @@ Purpose: production-ready SaaS skeleton deployed to a single VPS via docker-comp
 
 Settings layout: split.
 Database: SQLite.
-Local dev mode: docker-compose (full stack: web only — no db / redis services).
-Docker structure: simple (separate `Dockerfile.dev` for dev, single-stage production `Dockerfile`).
 Lint with Ruff: yes.
 Test runner: pytest + pytest-django.
 Type check (pyright + django-stubs): yes.
@@ -44,7 +42,7 @@ Production setup:
   - CI: GitHub Actions test workflow
   - deploy target: VPS (Docker + Caddy)
   - database backups: Litestream replication to S3-compatible storage (the SQLite production path in `references/database.md`); do not use `django-dbbackup`
-  - production Dockerfile: single-stage; install the Litestream `.deb`, ship `litestream.yml` + `entrypoint.sh` that restores the DB on boot, runs migrations, then execs `litestream replicate -exec "gunicorn ..."`
+  - production Dockerfile: multi-stage (per `references/docker.md`) with the Litestream `.deb` installed in the prod stage; ship `litestream.yml` + `entrypoint.sh` that restores the DB on boot, runs migrations, then execs `litestream replicate -exec "gunicorn ..."`
 Skip GDPR for this case.
 
 Run the foundation + boot check locally. Generate `Dockerfile`, `docker-compose.prod.yml`, `Caddyfile`, `litestream.yml`, `entrypoint.sh`, `.github/workflows/test.yml`. Do not actually push to a remote VPS — just verify all artifacts are present and `docker build .` succeeds.
@@ -54,20 +52,20 @@ Run the foundation + boot check locally. Generate `Dockerfile`, `docker-compose.
 
 ```sh
 cd 07-vps-sqlite-saas
-docker compose up -d
-docker compose exec -T web uv run manage.py migrate
-docker compose exec -T web uv run manage.py createcachetable --database cache
-curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
+uv run manage.py migrate
+uv run manage.py createcachetable --database cache
+uv run manage.py runserver --noreload &
+RUNSERVER_PID=$!
+for i in 1 2 3 4 5; do curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null && break; sleep 1; done
 curl -sf http://127.0.0.1:8000/accounts/login/ > /dev/null
 test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
 test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
+kill "$RUNSERVER_PID"
 uv run pyright
-docker build -t 07-vps-sqlite-saas:test .
+docker build --target prod -t 07-vps-sqlite-saas:test .
 docker run --rm 07-vps-sqlite-saas:test which gunicorn
 docker run --rm 07-vps-sqlite-saas:test which litestream
 docker run --rm 07-vps-sqlite-saas:test id -un | grep -q '^django$'
-! docker compose logs web 2>&1 | grep -iE 'traceback|^error|critical|unhandled'
-docker compose down -v --rmi local
 docker rmi 07-vps-sqlite-saas:test
 ```
 
@@ -78,8 +76,8 @@ Read-only audit of the project in the current directory. Quote the file path and
 Verify these structural facts:
 
 **Foundation**
-- Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production,test}.py`, `config/routers.py`, `Dockerfile`, `Dockerfile.dev`, `docker-compose.yml`, `deploy/docker-compose.prod.yml`, `deploy/Caddyfile`, `litestream.yml`, `entrypoint.sh`, `mise.toml`, `.github/workflows/test.yml`, `.pre-commit-config.yaml`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`.
-- `mise.toml` has `[tasks.deploy-migrate]` running `docker compose -f deploy/docker-compose.prod.yml run --rm web uv run manage.py migrate` and `[tasks.deploy]` with `depends = ["deploy-migrate"]` running `docker compose -f deploy/docker-compose.prod.yml up -d`.
+- Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production,test}.py`, `config/routers.py`, `Dockerfile` (multi-stage), `deploy/docker-compose.prod.yml`, `deploy/Caddyfile`, `litestream.yml`, `entrypoint.sh`, `mise.toml`, `.github/workflows/test.yml`, `.pre-commit-config.yaml`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`. No `Dockerfile.dev`, no root `docker-compose.yml` (dev runs on the host; SQLite needs no local services).
+- `mise.toml` has `[tasks.deploy-migrate]` running `docker compose -f deploy/docker-compose.prod.yml run --rm web python manage.py migrate` and `[tasks.deploy]` with `depends = ["deploy-migrate"]` running `docker compose -f deploy/docker-compose.prod.yml up -d`.
 - `pyproject.toml` runtime deps include `django-environ`, `django-tasks`, `django-tasks-db`, `whitenoise`, `django-allauth[mfa]`, `django-axes`, `django-csp`, `sentry-sdk`, `structlog`, `django-structlog`, `gunicorn`. **No** `psycopg`, `celery`, `redis`, `django-dbbackup`. Dev deps include `pytest`, `pytest-django`, `pyright`, `django-stubs`, `django-stubs-ext`, `ruff`, `pre-commit`.
 
 **Settings split + SQLite mini-prod**
@@ -103,13 +101,12 @@ Verify these structural facts:
 - A registered Django app has `apps.py` with `ready()` importing `tasks`, and a `tasks.py` defining at least one `@task` (from `django_tasks`). `INSTALLED_APPS` includes `django_tasks_db` (Django 6's `django.tasks` is in core — no app entry needed). `TASKS = {"default": {"BACKEND": "django_tasks_db.DatabaseBackend"}}` (or equivalent) in `base.py` or `production.py`.
 
 **Deploy artefacts**
-- `Dockerfile` is single-stage on `ghcr.io/astral-sh/uv:python3.12-bookworm-slim`, with `UV_COMPILE_BYTECODE=1`, `UV_LINK_MODE=copy`, `UV_PROJECT_ENVIRONMENT=/opt/venv`, two-step `uv sync`, `/opt/venv/bin` on PATH, runs as `django` user. Installs the Litestream `.deb` (`wget` + `dpkg -i litestream-v0.3.13-linux-amd64.deb`).
+- `Dockerfile` is multi-stage: `builder` on `ghcr.io/astral-sh/uv:python3.12-bookworm-slim` (with `UV_COMPILE_BYTECODE=1`, `UV_LINK_MODE=copy`, `UV_PROJECT_ENVIRONMENT=/opt/venv`, two-step `uv sync`) and `prod` on `python:3.12-slim-bookworm` (`/opt/venv/bin` on PATH, runs as `django` user, installs the Litestream `.deb` via `wget` + `dpkg -i litestream-v0.3.13-linux-${ARCH}.deb`).
 - `entrypoint.sh` runs `litestream restore -if-db-not-exists -if-replica-exists /data/site.sqlite3`, then `python manage.py migrate --noinput`, then `createcachetable --database cache`, then `exec litestream replicate -exec "gunicorn config.wsgi --bind 0.0.0.0:8000"`. `Dockerfile` `CMD` invokes `entrypoint.sh`.
 - `litestream.yml` declares `dbs: [{path: /data/site.sqlite3, replicas: [{type: s3, ...}]}]` reading bucket/endpoint/keys from env.
 - `Caddyfile` upstream block uses `health_uri /healthz` (liveness, not `/readyz`).
-- `docker-compose.prod.yml` defines a single `web` service with `restart: unless-stopped`, mounts a named `sqlite_data:/data` volume, and a container-level healthcheck (python urllib, no curl). **No** `db`, `redis`, or `celery` services. Top-level `volumes:` declares `sqlite_data`.
-- `docker-compose.yml` (dev) also mounts `sqlite_data:/data` on `web` and declares the volume at the top.
-- `.env` / `.env.example` set `DATABASE_URL=sqlite:////data/site.sqlite3` and list the Litestream S3 env vars (`S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`).
+- `deploy/docker-compose.prod.yml` defines a single `web` service with `restart: unless-stopped`, mounts a named `sqlite_data:/data` volume, and a container-level healthcheck (python urllib, no curl). **No** `db`, `redis`, or `celery` services. Top-level `volumes:` declares `sqlite_data`.
+- `deploy/.env.prod.example` sets `DATABASE_URL=sqlite:////data/site.sqlite3` and lists the Litestream S3 env vars (`S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`). Dev `.env` keeps the SQLite default (`BASE_DIR/db.sqlite3`).
 - `.github/workflows/test.yml` runs `uv run pytest` against SQLite (no `manage.py migrate` step — `pytest-django` builds the test DB from migrations; no Postgres/Redis services in the workflow). Env block ships `EMAIL_URL=consolemail://`, a `DATABASE_URL` pointing at a SQLite file, `DJANGO_SECRET_KEY` placeholder, `DJANGO_DEBUG=False`.
 
 **Health**

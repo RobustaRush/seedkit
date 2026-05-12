@@ -112,9 +112,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json({"text": event["text"], "user": event["user"]})
 ```
 
-## Local — docker-compose
+## Local — host
 
-The web service from `references/docker.md` already serves both HTTP and WS through the same gunicorn+uvicorn worker — no extra service needed in dev. Make sure `redis` is in the compose file (`references/redis.md`).
+`uv run uvicorn config.asgi:application --reload` on the host serves HTTP and WS through the same loop. `manage.py runserver` won't upgrade WebSockets — use uvicorn directly when testing channels. Make sure `redis` from `references/redis.md` is running.
 
 ## Production — separate ASGI worker
 

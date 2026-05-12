@@ -62,7 +62,7 @@ run = "uv run manage.py migrate"
 run = "uv run pytest"
 
 [tasks.deploy-migrate]
-run = "docker compose -f deploy/docker-compose.prod.yml run --rm web uv run manage.py migrate"
+run = "docker compose -f deploy/docker-compose.prod.yml run --rm web python manage.py migrate"
 
 [tasks.deploy]
 depends = ["deploy-migrate"]
@@ -87,7 +87,7 @@ test:
     uv run pytest
 
 deploy-migrate:
-    docker compose -f deploy/docker-compose.prod.yml run --rm web uv run manage.py migrate
+    docker compose -f deploy/docker-compose.prod.yml run --rm web python manage.py migrate
 
 deploy: deploy-migrate
     docker compose -f deploy/docker-compose.prod.yml up -d
@@ -115,7 +115,7 @@ test:
 	uv run pytest
 
 deploy-migrate:
-	docker compose -f deploy/docker-compose.prod.yml run --rm web uv run manage.py migrate
+	docker compose -f deploy/docker-compose.prod.yml run --rm web python manage.py migrate
 
 deploy: deploy-migrate
 	docker compose -f deploy/docker-compose.prod.yml up -d
@@ -133,7 +133,7 @@ install = "uv sync"
 dev     = "manage.py runserver"
 migrate = "manage.py migrate"
 test    = "pytest"
-deploy-migrate = { shell = "docker compose -f deploy/docker-compose.prod.yml run --rm web uv run manage.py migrate" }
+deploy-migrate = { shell = "docker compose -f deploy/docker-compose.prod.yml run --rm web python manage.py migrate" }
 deploy = { sequence = ["deploy-migrate", { shell = "docker compose -f deploy/docker-compose.prod.yml up -d" }] }
 ```
 

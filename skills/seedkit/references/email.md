@@ -207,19 +207,13 @@ services:
 
 ### .env
 
-uv-on-host (Django runs on the host, talks to Mailpit via the published port):
+Django runs on the host and talks to Mailpit via the published port:
 
 ```sh
 EMAIL_URL=smtp://localhost:1025
 ```
 
-docker-compose dev (Django runs in a service that shares the compose network):
-
-```sh
-EMAIL_URL=smtp://mailpit:1025
-```
-
-Open <http://localhost:8025> in either case to view captured emails.
+Open <http://localhost:8025> to view captured emails.
 
 ### Pitfalls
 

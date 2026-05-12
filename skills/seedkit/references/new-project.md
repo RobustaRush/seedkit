@@ -79,6 +79,11 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
 DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}" if DEBUG else env.NOTSET)}  # 4 slashes = absolute, survives running manage.py from any cwd
 ```
 
+After inserting these lines at the top of `base.py`, delete the original
+hardcoded `DATABASES` block + `# Database` comment that `startproject`
+emitted in the file you moved — bottom wins, leaving both makes
+`DATABASE_URL` dead code.
+
 `local.py`, `production.py`, and `test.py` carry **only deltas** from
 `base.py`. `test.py` overrides what tests need cheap and deterministic —
 locmem email + cache, fast password hasher, eager task backend, in-memory
@@ -113,6 +118,10 @@ STORAGES = {
 }
 # Django Tasks: run inline in the request thread so tests see results without a worker.
 TASKS = {"default": {"BACKEND": "django.tasks.backends.immediate.ImmediateBackend"}}
+# Celery: same pattern — eager execution in the calling thread, no worker required.
+# Harmless when Celery isn't installed; the keys are just ignored.
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
 ```
 
 Don't re-instantiate `env = environ.Env()` — it's already imported via

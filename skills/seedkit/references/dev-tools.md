@@ -106,7 +106,7 @@ Single-file layout: keep the baseline at module scope, then guard only the orbit
       "command": "uv",
       "args": ["run", "manage.py", "orbit_mcp"],
       "cwd": "/path/to/project",
-      "env": {"DJANGO_SETTINGS_MODULE": "config.settings"}
+      "env": {"DJANGO_SETTINGS_MODULE": "config.settings.local"}   # single-file layout: "config.settings"
     }
   }
 }

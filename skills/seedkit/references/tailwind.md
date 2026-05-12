@@ -116,7 +116,7 @@ keeps those gated as dev-only.
 
 `tailwind build` produces a minified, purged CSS file at `STATICFILES_DIRS[0] / "css" / "tailwind.css"` (configurable via `TAILWIND_CLI_DIST_CSS`). `collectstatic` then picks it up and WhiteNoise / S3 serves it.
 
-For multi-stage builds (`override` Docker structure), run `tailwind build` in the `prod` stage's `RUN` block alongside `collectstatic`.
+In the multi-stage Dockerfile from `references/docker.md`, run `tailwind build` in the builder stage's `RUN` block alongside `collectstatic`.
 
 ## DaisyUI (optional)
 

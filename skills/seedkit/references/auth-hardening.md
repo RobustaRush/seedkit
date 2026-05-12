@@ -20,16 +20,12 @@ uv add django-axes
 ### `base.py`
 
 ```python
-INSTALLED_APPS = [
-    # ...
-    'axes',
-]
+INSTALLED_APPS += ['axes']
 
-MIDDLEWARE = [
-    # ...
-    # MUST be the last entry — wraps every other middleware's auth attempts.
-    'axes.middleware.AxesMiddleware',
-]
+# AxesMiddleware MUST be the last entry — wraps every other middleware's
+# auth attempts. Append so `production.py` middleware additions don't get
+# dropped by re-declaring the list.
+MIDDLEWARE += ['axes.middleware.AxesMiddleware']
 
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesBackend',

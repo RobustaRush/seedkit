@@ -12,8 +12,7 @@ Purpose: production app deployed to a remote host over SSH from GitHub Actions, 
 
 Settings layout: split.
 Database: PostgreSQL.
-Local dev mode: docker-compose (web + db + redis).
-Docker structure: override (one multi-stage `Dockerfile` with `dev`/`prod` targets, `docker-compose.yml` + `docker-compose.override.yml`).
+Postgres location: Postgres-in-Docker (`db` + `redis` services in `docker-compose.yml`, port `127.0.0.1:5432` published).
 Lint with Ruff: yes.
 Test runner: pytest + pytest-django.
 Type check (pyright + django-stubs): no.
@@ -45,7 +44,7 @@ Production setup:
   - CI: GitHub Actions test workflow
   - deploy: GitHub Actions deploy via SSH (rsync + remote `docker compose pull && up -d`)
   - database backups via `django-dbbackup`: yes (self-managed host — no native backup service)
-  - production Dockerfile: single-stage (small enough; multi-stage not needed)
+  - production Dockerfile: multi-stage (per `references/docker.md`) — uv builder → `python:3.12-slim-bookworm` runtime
 
 Run the foundation + boot check locally. Generate `Dockerfile`, `docker-compose.prod.yml`, `.github/workflows/test.yml`, `.github/workflows/deploy.yml`. Do not actually deploy — verify all artifacts are present, `docker build .` succeeds, and the deploy workflow references `secrets.SSH_HOST`, `secrets.SSH_USER`, `secrets.SSH_KEY`.
 ```
@@ -54,15 +53,18 @@ Run the foundation + boot check locally. Generate `Dockerfile`, `docker-compose.
 
 ```sh
 cd 09-ssh-deploy
-docker compose up -d
-docker compose exec -T web uv run manage.py migrate
-curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
+docker compose up -d                    # db + redis only
+uv run manage.py migrate
+uv run manage.py runserver --noreload &
+RUNSERVER_PID=$!
+uv run manage.py rqworker default &
+WORKER_PID=$!
+for i in 1 2 3 4 5; do curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null && break; sleep 1; done
 test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
 test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
-docker build -t 09-ssh-deploy:test .
-! docker compose logs web worker 2>&1 | grep -iE 'traceback|^error|critical|unhandled'
-docker compose logs worker 2>&1 | grep -iE 'rqworker|listening on|default'
-docker compose down -v --rmi local
+docker build --target prod -t 09-ssh-deploy:test .
+kill "$RUNSERVER_PID" "$WORKER_PID"
+docker compose down -v
 docker rmi 09-ssh-deploy:test
 ```
 
@@ -73,7 +75,7 @@ Read-only audit of the project in the current directory. Quote the file path and
 Verify these structural facts:
 
 **Foundation**
-- Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production,test}.py`, `Dockerfile`, `docker-compose.yml`, `docker-compose.override.yml`, `deploy/docker-compose.prod.yml`, `deploy/.env.prod.example`, `mise.toml`, `.github/workflows/{test.yml,deploy.yml}`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`.
+- Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production,test}.py`, `Dockerfile` (multi-stage), `docker-compose.yml` (local services only — `db`, `redis`; no `web` / `worker`), `deploy/docker-compose.prod.yml`, `deploy/.env.prod.example`, `mise.toml`, `.github/workflows/{test.yml,deploy.yml}`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`. No `Dockerfile.dev`, no `docker-compose.override.yml`.
 - `mise.toml` has `[tasks.deploy-migrate]` and `[tasks.deploy]` (with `depends = ["deploy-migrate"]`) targeting `deploy/docker-compose.prod.yml`.
 - `pyproject.toml` runtime deps include `psycopg[binary]`, `django-tasks-rq`, `django-rq`, `django-csp`, `django-dbbackup`, `django-storages[s3]` (or `boto3`), `sentry-sdk`, `structlog`, `django-structlog`, `gunicorn`. (`django.tasks` is built into Django 6 — no separate `django-tasks` package.) Dev deps include `pytest`, `pytest-django`, `ruff`.
 - `pyproject.toml` does NOT list `django-axes`, `django-allauth`, `django-mail-auth`, or anymail/email packages — auth = none, email = none.
@@ -88,7 +90,7 @@ Verify these structural facts:
 **Tasks**
 - `INSTALLED_APPS` includes `django_rq` and `django_tasks_rq`. `RQ_QUEUES` defined; top-level `RQ = {"JOB_CLASS": "django_tasks_rq.Job"}`.
 - A registered Django app has `apps.py` with `ready()` importing `tasks`, and a `tasks.py` defining at least one `@task`.
-- `docker-compose.yml` (or override) defines a `worker` service running `manage.py rqworker default`.
+- `deploy/docker-compose.prod.yml` defines a `worker` service running `python manage.py rqworker default` (prod-side; dev runs the worker on the host).
 
 **Logging + Sentry/Bugsink**
 - `structlog` configured in `base.py`. `LOGGING` at module scope. `django_structlog.middlewares.RequestMiddleware` in `MIDDLEWARE` directly after `AuthenticationMiddleware`. `django_structlog` in `INSTALLED_APPS`.
@@ -101,7 +103,7 @@ Verify these structural facts:
 **Deploy artefacts**
 - `deploy/.env.prod.example` ships every var the prod compose references, including `DJANGO_SETTINGS_MODULE=config.settings.production`, `DJANGO_ALLOWED_HOSTS=example.com,localhost,127.0.0.1` (localhost+127.0.0.1 for the in-container healthcheck), `DJANGO_BEHIND_PROXY=True`, `POSTGRES_PASSWORD`, `GITHUB_REPOSITORY`.
 - `.github/workflows/deploy.yml` uses `secrets.SSH_HOST`, `secrets.SSH_USER`, `secrets.SSH_KEY`, `secrets.GHCR_TOKEN`. The SSH script `export GITHUB_REPOSITORY="${{ github.repository }}"` before `compose pull`. Every `docker compose` invocation passes `--env-file deploy/.env.prod`. `concurrency: group: deploy` set.
-- `docker/build-push-action` step has `target: prod` (multi-stage override layout).
+- `docker/build-push-action` step has `target: prod` (matching the `prod` stage in `references/docker.md`).
 - The container healthcheck in `deploy/docker-compose.prod.yml` uses python urllib (no curl dependency).
 - `.github/workflows/test.yml` runs migrations + pytest. Env block ships `EMAIL_URL=consolemail://`, `REDIS_URL=redis://localhost:6379`, `DJANGO_SECRET_KEY` placeholder, `DJANGO_DEBUG=False`.
 

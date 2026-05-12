@@ -12,7 +12,7 @@ Purpose: profile a few request paths with django-silk and run a simple backgroun
 
 Settings layout: split.
 Database: PostgreSQL.
-Local dev mode: uv on host. Postgres location: on the host (use `createdb silk_db`).
+Postgres location: on the host (use `createdb silk_db`).
 Lint with Ruff: yes.
 Test runner: pytest (required for django-test-migrations).
 Type check (pyright + django-stubs): no.

@@ -12,7 +12,7 @@ Before asking any §5/§6 question, build a map of what's already wired. Read ea
 - `manage.py` — confirms Django, surfaces the settings module path.
 - Settings — locate the active module (single `settings.py`, split `base/local/production`, or custom). Read `INSTALLED_APPS`, `MIDDLEWARE`, `AUTH_USER_MODEL`, `DATABASES`, `CACHES`, `STORAGES`, email backend, `LANGUAGES`, security flags, `CSP_*` keys.
 - `.env.example` and `.env` — which env vars are wired.
-- `Dockerfile*`, `compose*.yml`, `docker-compose.override.yml`, `.devcontainer/` — dev-mode flavour.
+- `Dockerfile`, `docker-compose.yml`, `deploy/docker-compose.prod.yml`, `.devcontainer/` — which deploy artefacts already exist.
 - `.pre-commit-config.yaml` — existing hook set.
 - `.github/workflows/` — CI presence and shape.
 - Deploy artefacts — `fly.toml`, `Caddyfile`, deploy scripts, GitHub-SSH workflow, `dbbackup` settings.
@@ -30,7 +30,7 @@ For each group in the Reference files section of `SKILL.md`, mark each component
 Don't ask Foundation questions. Read them off the repo:
 
 - **Database engine** → `DATABASES['default']['ENGINE']`.
-- **Dev mode** → `Dockerfile.dev` or `docker-compose.override.yml` present → `override`; single `docker-compose.yml` only → `simple`; no Docker → `uv-on-host`.
+- **Local Postgres** → `db` service in `docker-compose.yml` → Postgres-in-Docker; otherwise host Postgres (or SQLite per the engine above).
 - **Settings layout** → single `settings.py` vs `settings/` package with `base.py` / `local.py` / `production.py`.
 - **Custom user** → `AUTH_USER_MODEL` set to anything other than `auth.User`.
 

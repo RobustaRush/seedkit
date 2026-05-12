@@ -61,7 +61,7 @@ place — the report references it.>
 
 Coverage rules. Use these to regenerate the suite when the skill changes.
 
-1. **Test case 1 is the minimal example.** SQLite, single-file settings, uv-on-host, no lint, no add-ons, no production. This is the smallest path that boots a working project. If this fails, nothing else matters.
+1. **Test case 1 is the minimal example.** SQLite, single-file settings, no lint, no add-ons, no production. This is the smallest path that boots a working project. If this fails, nothing else matters.
 
 2. **Group orthogonal answers into the smallest number of test projects** that still touches every option at least once. Do not enumerate the full Cartesian product. Pairwise coverage across the variation dimensions below is the target.
 
@@ -71,8 +71,7 @@ Coverage rules. Use these to regenerate the suite when the skill changes.
    - Settings layout: `single` / `split`
    - Database: `sqlite` / `postgres`
    - Request handling: `wsgi` / `asgi` / `asgi+channels`
-   - Local dev mode: `uv-host` / `docker-compose`
-   - Postgres location (only when `postgres` + `uv-host`): `host` / `docker-db-only`
+   - Postgres location (only when `postgres`): `host` / `docker-db-only`
    - Custom user model (`AUTH_USER_MODEL`): `yes` / `no`
    - Lint (Ruff): `yes` / `no`
    - Test runner: `pytest` / `manage.py test` (default)
@@ -101,13 +100,13 @@ Coverage rules. Use these to regenerate the suite when the skill changes.
    - GDPR: `yes` / `no`
    - CI: `yes` / `no`
    - Deploy target: `vps` / `managed` / `github-ssh`
-   - Production Dockerfile: `single-stage` / `multi-stage`
+   - Production Dockerfile: multi-stage by default (uv builder → slim runtime) — `references/docker.md`
 
 4. **Respect dependencies between options.** If the skill requires Redis for Celery, the test case must enable Redis. Don't write impossible combinations.
 
 5. **Each prompt must be self-contained.** The AI should never need to ask follow-up questions. Phrase the prompt as a complete spec: project name, purpose, every choice listed explicitly.
 
-6. **Each test case must run end-to-end** in the chosen dev mode, including `migrate`, `createsuperuser`, and the boot check (admin login). Add-on-specific checks (e.g. "enqueue and consume a Celery task") belong in the test case.
+6. **Each test case must run end-to-end** on the host (`uv run manage.py …`), including `migrate`, `createsuperuser`, and the boot check (admin login). Postgres / Redis / Mailpit / MinIO services come from `docker compose up -d`. Add-on-specific checks (e.g. "enqueue and consume a Celery task") belong in the test case.
 
 7. **Check report is mandatory and produced by an independent reviewer.** After running, invoke `claude -p "..." --model claude-opus-4-7` from a fresh session against the generated project; do not let the same model that built the project grade its own output. Paste the reviewer's response into the report and add the human-curated bullets (what worked, what broke, fixes applied, suggested skill changes). The report drives skill improvements.
 

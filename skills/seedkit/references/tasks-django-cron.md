@@ -37,22 +37,13 @@ def daily_report() -> None:
 uv run manage.py crontask
 ```
 
-## Local — docker-compose.yml
+## Local — run on the host
 
-```yaml
-services:
-  cron:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    volumes:
-      - .:/app
-    env_file: .env
-    command: python manage.py crontask
-    depends_on:
-      db:
-        condition: service_healthy
+```sh
+uv run manage.py crontask
 ```
+
+Third terminal alongside the worker and runserver.
 
 ## VPS — docker-compose.prod.yml
 

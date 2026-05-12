@@ -12,7 +12,7 @@ Purpose: small e-commerce site with admin and SMTP transactional email.
 
 Settings layout: split (`config/settings/base.py`, `local.py`, `production.py`).
 Database: PostgreSQL.
-Local dev mode: uv on host. Postgres location: on the host (use `createdb` for the project DB).
+Postgres location: on the host (use `createdb` for the project DB).
 Lint with Ruff: yes.
 Test runner: pytest + pytest-django.
 Type check (pyright + django-stubs): yes.
@@ -34,7 +34,7 @@ Add-ons:
   - `robots.txt`: yes.
   - `django-extensions`: no.
 
-Production setup: VPS (Docker + Caddy). Dockerfile structure: simple (separate `Dockerfile.dev` + production `Dockerfile`). Use single-stage prod Dockerfile.
+Production setup: VPS (Docker + Caddy). Use the multi-stage `Dockerfile` from `references/docker.md` (uv builder → `python:3.12-slim-bookworm` runtime).
 
 Assume Postgres is already running locally on port 5432 with user `postgres` / password `postgres`. Create database `shop_db` if missing (Postgres identifiers can't start with a digit, so use a clean name). Run the foundation + boot check, then run `python manage.py tailwind build` once so the CSS asset exists, and verify the index page returns the Tailwind-styled HTML.
 ```
@@ -166,7 +166,7 @@ Verify these structural facts:
 - `templates/404.html`, `templates/403.html`, `templates/500.html` present. `500.html` does NOT extend `base.html`.
 
 **Production artifacts**
-- Files present at project root: `Dockerfile`, `Dockerfile.dev`, `.dockerignore`. Under `deploy/`: `docker-compose.prod.yml`, `Caddyfile`. (No root `docker-compose.yml` — dev mode is `uv on host`.)
+- Files present at project root: `Dockerfile` (multi-stage `builder` + `prod` targets), `.dockerignore`. Under `deploy/`: `docker-compose.prod.yml`, `Caddyfile`. No root `docker-compose.yml` (Postgres is on the host; no local services to compose).
 - `Dockerfile` uses `ghcr.io/astral-sh/uv:python3.12-bookworm-slim`, runs `uv sync --frozen --no-dev`, contains a `collectstatic --noinput` step under `DJANGO_SETTINGS_MODULE=config.settings.production`, switches to a non-root `django` user, and ends with `CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000"]`.
 - `pyproject.toml` runtime deps include `gunicorn`.
 - `.dockerignore` lists `.venv`.

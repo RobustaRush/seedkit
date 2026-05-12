@@ -12,7 +12,6 @@ Purpose: a tiny blog to verify the skill works end-to-end.
 
 Settings layout: single file (`config/settings.py`).
 Database: SQLite.
-Local dev mode: uv on host.
 Lint with Ruff: no.
 Test runner: manage.py test (stock Django).
 Type check (pyright + django-stubs): no.

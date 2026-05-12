@@ -16,7 +16,7 @@ uv add 'celery[redis]'
 
 ## config/celery.py
 
-Default the settings module to match the layout — split: `"config.settings.production"` (mirrors wsgi/asgi); single-file: `"config.settings"`. A worker booted without `DJANGO_SETTINGS_MODULE` set should run with prod hardening; dev compose / shells override via the env var.
+Default the settings module to match the layout — split: `"config.settings.production"` (mirrors wsgi/asgi); single-file: `"config.settings"`. A worker booted without `DJANGO_SETTINGS_MODULE` set should run with prod hardening; the host dev shell sets `DJANGO_SETTINGS_MODULE=config.settings.local` to override.
 
 ```python
 import os
@@ -53,26 +53,13 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True  # silence Celery 5+ deprecatio
 
 Add `@shared_task` functions to `<app>/tasks.py` inside a registered Django app — `app.autodiscover_tasks()` only scans `INSTALLED_APPS`, **not** `config/`. Use `from celery import shared_task` on each function. If the project has no domain app yet, the worker boots and idles; the user creates an app and adds `tasks.py` when they have real work to schedule.
 
-## Local — docker-compose.yml
+## Local — run on the host
 
-Reuse the dev image (`Dockerfile.dev` from `references/docker.md`) so the worker shares the bind-mounted source for live reload:
-
-```yaml
-services:
-  celery:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    volumes:
-      - .:/app          # venv lives at /opt/venv per references/docker.md
-    env_file: .env
-    command: celery -A config worker -l info
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+```sh
+uv run celery -A config worker -l info
 ```
+
+Open a second terminal alongside `uv run manage.py runserver`. The worker shares the project venv and the `.env` file. `docker compose up -d redis` (and `db` if Postgres-in-Docker) must already be running.
 
 ## VPS — docker-compose.prod.yml
 
@@ -121,21 +108,13 @@ CELERY_BEAT_SCHEDULE = {
 }
 ```
 
-### Local — docker-compose.yml
+### Local — run on the host
 
-```yaml
-services:
-  celery-beat:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    volumes:
-      - .:/app
-    env_file: .env
-    command: celery -A config beat -l info
-    depends_on:
-      - celery
+```sh
+uv run celery -A config beat -l info
 ```
+
+Third terminal, alongside the worker and runserver.
 
 ### VPS — docker-compose.prod.yml
 

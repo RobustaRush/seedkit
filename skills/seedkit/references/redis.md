@@ -33,17 +33,14 @@ CACHES = {
 
 ## Local — docker-compose.yml
 
+Add to the same compose file as the `db` service (`references/docker.md`):
+
 ```yaml
 services:
-  web:
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
   redis:
     image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"   # host Django / workers reach it via localhost
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -54,7 +51,7 @@ services:
 `.env`:
 
 ```sh
-REDIS_URL=redis://redis:6379   # cache /0, Celery broker /1, results /2, RQ /3
+REDIS_URL=redis://localhost:6379   # cache /0, Celery broker /1, results /2, RQ /3
 ```
 
 ## VPS — docker-compose.prod.yml

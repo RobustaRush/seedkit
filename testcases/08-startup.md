@@ -12,8 +12,7 @@ Purpose: production app deployed to Fly.io with a slim multi-stage runtime image
 
 Settings layout: split.
 Database: PostgreSQL.
-Local dev mode: docker-compose (web + db + redis + minio).
-Docker structure: override (one multi-stage `Dockerfile` with `dev`/`prod` targets, `docker-compose.yml` + `docker-compose.override.yml`).
+Postgres location: Postgres-in-Docker (`db` service alongside `redis` and `minio` in `docker-compose.yml`, port `127.0.0.1:5432` published).
 Lint with Ruff: yes.
 Test runner: pytest + pytest-django.
 Type check (pyright + django-stubs): yes.
@@ -54,28 +53,32 @@ Run the foundation + boot check locally. Generate `Dockerfile`, `fly.toml`, `.gi
 
 ```sh
 cd 08-fly-app
-docker compose up -d
-docker compose exec -T web uv run manage.py migrate
-curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null
+docker compose up -d                    # db + redis + minio
+uv run manage.py migrate
+uv run manage.py runserver --noreload &
+RUNSERVER_PID=$!
+uv run celery -A config worker -l info &
+WORKER_PID=$!
+for i in 1 2 3 4 5; do curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null && break; sleep 1; done
 curl -sf http://127.0.0.1:8000/accounts/login/ > /dev/null
 test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
 test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
-docker compose exec -e DJANGO_SETTINGS_MODULE=config.settings.bolt -T web \
-  uv run python -c "from django.conf import settings; \
-    assert 'django.contrib.admin' not in settings.INSTALLED_APPS; \
-    assert settings.ROOT_URLCONF == 'config.urls_bolt'; \
-    assert settings.TEMPLATES == []"
-docker compose exec -d -e DJANGO_SETTINGS_MODULE=config.settings.bolt web \
-  uv run manage.py runbolt --dev --port 8001
+DJANGO_SETTINGS_MODULE=config.settings.bolt uv run python -c "
+from django.conf import settings
+assert 'django.contrib.admin' not in settings.INSTALLED_APPS
+assert settings.ROOT_URLCONF == 'config.urls_bolt'
+assert settings.TEMPLATES == []
+"
+DJANGO_SETTINGS_MODULE=config.settings.bolt uv run manage.py runbolt --dev --port 8001 &
+BOLT_PID=$!
 sleep 2
 curl -sf http://127.0.0.1:8001/users/1 || true
 uv run pyright
-docker build -t 08-fly-app:test .
-docker images 08-fly-app:test
+docker build --target prod -t 08-fly-app:test .
 docker run --rm 08-fly-app:test python --version | grep -q '3\.12'
-! docker compose logs web worker 2>&1 | grep -iE 'traceback|^error|critical|unhandled'
-docker compose logs worker 2>&1 | grep -iE 'celery@.*ready|mingle|sync with'
-docker compose down -v --rmi local
+docker run --rm 08-fly-app:test which uv && echo "uv leaked into runtime image" && exit 1 || true
+kill "$RUNSERVER_PID" "$WORKER_PID" "$BOLT_PID"
+docker compose down -v
 docker rmi 08-fly-app:test
 ```
 
@@ -86,7 +89,7 @@ Read-only audit of the project in the current directory. Quote the file path and
 Verify these structural facts:
 
 **Foundation**
-- Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production,bolt,test}.py`, `config/urls.py`, `config/urls_bolt.py`, `Dockerfile`, `docker-compose.yml`, `docker-compose.override.yml`, `fly.toml`, `mise.toml`, `.github/workflows/test.yml`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`.
+- Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production,bolt,test}.py`, `config/urls.py`, `config/urls_bolt.py`, `Dockerfile` (multi-stage), `docker-compose.yml` (local services only — `db`, `redis`, `minio`; no `web` / `worker`), `fly.toml`, `mise.toml`, `.github/workflows/test.yml`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`. No `Dockerfile.dev`, no `docker-compose.override.yml`.
 - `mise.toml` has `[tasks.deploy]` running `fly deploy`.
 - `pyproject.toml` runtime deps include `psycopg[binary]`, `celery[redis]` (or `celery` + `redis`), `django-storages[s3]`, `django-mail-auth`, `django-axes`, `django-csp`, `django-bolt`, `msgspec`, `django-anymail[postmark]`, `sentry-sdk`, `gunicorn`. Dev deps include `pytest`, `pytest-django`, `pyright`, `django-stubs`, `django-stubs-ext`, `ruff`.
 
@@ -109,8 +112,8 @@ Verify these structural facts:
 - GDPR scaffolding present: `data_export` / `data_delete` views or management commands.
 
 **Deploy artefacts**
-- `Dockerfile` is multi-stage with named `dev` / `prod` targets. The shared base that runs `uv sync` uses `ghcr.io/astral-sh/uv:python3.12-bookworm` with `build-essential` installed (django-bolt has no aarch64-linux wheel; the Rust extension compiles from source). Final `prod` stage uses `python:3.12-slim-bookworm`.
-- `fly.toml` has `[processes]` with `web`, `worker`, `bolt`. The `bolt` process sets `DJANGO_SETTINGS_MODULE=config.settings.bolt`. `[env]` sets `PORT` and `DJANGO_BEHIND_PROXY=True`. `DJANGO_ALLOWED_HOSTS` / `DJANGO_SECRET_KEY` / `DATABASE_URL` go via `fly secrets set` per `deploy-managed.md` — do not hardcode in `[env]`. `[[checks]]` (or service health) hits `/readyz`.
+- `Dockerfile` is multi-stage: `builder` runs `uv sync` on `ghcr.io/astral-sh/uv:python3.12-bookworm` with `build-essential pkg-config` installed (django-bolt has no aarch64-linux wheel; the Rust extension compiles from source). Final `prod` stage uses `python:3.12-slim-bookworm` with `/opt/venv/bin` on PATH and no uv binary.
+- `fly.toml` has `[processes]` with `web`, `worker`, `bolt`. The `bolt` process sets `DJANGO_SETTINGS_MODULE=config.settings.bolt`. `[env]` sets `PORT` and `DJANGO_BEHIND_PROXY=True`. `DJANGO_ALLOWED_HOSTS` / `DJANGO_SECRET_KEY` / `DATABASE_URL` go via `fly secrets set` per `deploy-managed.md` — do not hardcode in `[env]`. `[deploy] release_command = "python manage.py migrate"` (not `uv run` — the slim runtime has no uv). `[[checks]]` (or service health) hits `/readyz`.
 - `[checks]` / `[services.checks]` block in `fly.toml` references `/readyz`.
 
 **Health**

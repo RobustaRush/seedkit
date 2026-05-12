@@ -194,24 +194,16 @@ createdb {project_slug}
 DATABASE_URL=postgres://{user}:{password}@localhost:5432/{project_slug}
 ```
 
-### Variant B — Postgres in Docker, Django on host
+### Variant B — Postgres in Docker
 
-Run only the `db` service from `references/docker.md`:
+Run the `db` service from `references/docker.md`:
 
 ```sh
 docker compose up -d db
 ```
 
-`.env` (host connects to the published port):
+`.env` (host Django connects to the published port):
 
 ```sh
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
-```
-
-### Variant C — full stack in docker-compose
-
-See `references/docker.md`. `.env` uses the service hostname:
-
-```sh
-DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
 ```

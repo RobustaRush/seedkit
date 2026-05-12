@@ -21,21 +21,19 @@ Email backend (`references/email.md`) must be configured first — both options 
 uv add django-allauth
 ```
 
-### Settings
+### Settings — `base.py`
+
+Append rather than redeclare so `production.py` overrides (WhiteNoise position, CSP middleware) survive:
 
 ```python
-INSTALLED_APPS = [
-    ...
+INSTALLED_APPS += [
     "django.contrib.sites",
     "allauth",
     "allauth.account",
     # "allauth.socialaccount",   # uncomment for social providers
 ]
 
-MIDDLEWARE = [
-    ...
-    "allauth.account.middleware.AccountMiddleware",
-]
+MIDDLEWARE += ["allauth.account.middleware.AccountMiddleware"]
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
@@ -122,11 +120,13 @@ Decide before the first migration. The choice mirrors `references/custom-user.md
 # `mailauth.contrib.admin` MUST come before `django.contrib.admin` —
 # Django resolves admin templates / login view in app order, so the
 # overriding app has to load first. After-ordering silently leaves the
-# stock password-login admin in place.
+# stock password-login admin in place. This requires editing the
+# existing INSTALLED_APPS list in place rather than appending.
 INSTALLED_APPS = [
-    ...
+    # ... existing prefix entries kept ...
     "mailauth.contrib.admin",       # admin login → magic link too
     "django.contrib.admin",         # already present from startproject
+    # ... other contrib apps ...
     "mailauth",
     "mailauth.contrib.user",        # only if EmailUser route picked
 ]

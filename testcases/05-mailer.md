@@ -12,7 +12,6 @@ Purpose: scratch project to exercise django-orbit and verify outbound mail flows
 
 Settings layout: single file.
 Database: SQLite.
-Local dev mode: uv on host.
 Lint with Ruff: yes.
 Test runner: manage.py test (stock Django).
 Type check (pyright + django-stubs): no.

@@ -2,18 +2,11 @@
 
 Docs: <https://containers.dev/> · <https://code.visualstudio.com/docs/devcontainers/containers>
 
-Optional foundation-level add-on. Adds `.devcontainer/devcontainer.json` so VS Code / Codespaces / JetBrains Gateway open the project in a pre-configured container with `uv`, the right Python, and (if Docker dev mode was chosen) the project's compose stack already running.
+Wraps a Python image with `uv` so VS Code / Codespaces / JetBrains Gateway open the project in a pre-configured container.
 
 Skip this when the user works in a plain shell — there's nothing else to set up.
 
-## When to apply
-
-- `local dev mode = uv on host`: the devcontainer wraps a thin Python image, runs `uv sync` on attach, and points VS Code at the local checkout.
-- `local dev mode = docker-compose`: the devcontainer reuses the existing `docker-compose.yml` so VS Code attaches to the `web` service — no parallel container.
-
-The two flavours share the same `devcontainer.json` shape but with different `image` / `dockerComposeFile` blocks.
-
-## `.devcontainer/devcontainer.json` — uv-on-host
+## `.devcontainer/devcontainer.json`
 
 ```json
 {
@@ -44,38 +37,7 @@ The two flavours share the same `devcontainer.json` shape but with different `im
 }
 ```
 
-## `.devcontainer/devcontainer.json` — docker-compose dev mode
-
-```json
-{
-  "name": "{{project_name}}",
-  "dockerComposeFile": ["../docker-compose.yml"],
-  "service": "web",
-  "workspaceFolder": "/app",
-  "shutdownAction": "stopCompose",
-  "forwardPorts": [8000],
-  "postAttachCommand": "uv run manage.py migrate",
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-python.python",
-        "ms-python.vscode-pylance",
-        "charliermarsh.ruff",
-        "batisteo.vscode-django"
-      ],
-      "settings": {
-        "python.defaultInterpreterPath": "/app/.venv/bin/python"
-      }
-    }
-  }
-}
-```
-
-When the project uses Docker structure `override` (`docker-compose.yml` + `docker-compose.override.yml`), the `dockerComposeFile` array should list **both** so the dev layer applies:
-
-```json
-"dockerComposeFile": ["../docker-compose.yml", "../docker-compose.override.yml"]
-```
+If the project's local services (Postgres / Redis / Mailpit) live in `docker-compose.yml`, the devcontainer's network reaches them via `host.docker.internal` rather than service names. Document that in the README so the user runs `docker compose up -d` on the host before reopening in the container.
 
 ## Ruff / pyright / pre-commit
 
@@ -86,4 +48,3 @@ Add the matching extensions only if the corresponding add-on was chosen — don'
 - `forwardPorts` is dev-only — don't add 5432 / 6379 unless the user wants Postgres / Redis exposed *from inside* the editor (e.g., for a DB GUI). Most don't need it.
 - Don't bake secrets into `containerEnv`. Devcontainer files are committed; the project's `.env` is not, and that's where credentials belong.
 - Don't pin the devcontainer Python image to a different minor than `pyproject.toml`'s `requires-python`. Drift here is the most common "works locally, breaks on the host" failure.
-- `postCreateCommand` runs on container creation; `postAttachCommand` runs every time the editor reattaches. `migrate` belongs in `postAttach` so schema changes pulled from main apply automatically.

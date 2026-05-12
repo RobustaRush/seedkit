@@ -41,24 +41,13 @@ uv run manage.py migrate
 uv run manage.py db_worker
 ```
 
-## Local — docker-compose.yml
+## Local — run on the host
 
-Mirror the dev `web` service so code edits reach the worker:
-
-```yaml
-services:
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    volumes:
-      - .:/app
-    env_file: .env
-    command: python manage.py db_worker
-    depends_on:
-      db:
-        condition: service_healthy
+```sh
+uv run manage.py db_worker
 ```
+
+Open a second terminal alongside `uv run manage.py runserver`. The worker shares the project venv and reads from the same DB.
 
 ## VPS — docker-compose.prod.yml
 

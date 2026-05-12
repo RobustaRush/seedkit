@@ -78,14 +78,14 @@ MIDDLEWARE.insert(auth_idx + 1, "django_structlog.middlewares.RequestMiddleware"
 
 Always-on. `LOGGING` belongs at module scope in `base.py` — never inside an `if DEBUG:` block, or production runs with bare Django defaults (no console handler at the root level).
 
-For Celery, add `django_structlog.celery.steps.DjangoStructLogInitStep` to the app's boot steps — it binds `task_id` / `task_name` and propagates the parent request's `correlation_id`:
+For Celery, add `django_structlog.celery.steps.DjangoStructLogInitStep` to the app's boot steps — it binds `task_id` / `task_name` and propagates the parent request's `correlation_id`. This is a one-line delta to the existing `config/celery.py` from `references/tasks-celery.md`; do **not** rewrite the file from scratch:
 
 ```python
-# config/celery.py
-from celery import Celery
+# config/celery.py — additions only
 from django_structlog.celery.steps import DjangoStructLogInitStep
 
-app = Celery("config")
+# ... existing Celery() / config_from_object / autodiscover_tasks lines stay ...
+
 app.steps["worker"].add(DjangoStructLogInitStep)
 ```
 

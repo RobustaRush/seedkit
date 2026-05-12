@@ -61,6 +61,12 @@ jobs:
 
       - run: uv sync --frozen
 
+      # Catches security-setting regressions (SSL_REDIRECT without proxy,
+      # missing HSTS, etc.) at CI time instead of first-deploy.
+      - run: uv run manage.py check --deploy --fail-level WARNING
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.production
+
       - run: uv run pytest        # or `uv run manage.py test` if pytest wasn't chosen
 ```
 
