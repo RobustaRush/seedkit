@@ -51,11 +51,24 @@ GA4 expanded — both hosts go into all three directives:
 'img-src':     ("'self'", 'data:', "https://www.googletagmanager.com", "https://www.google-analytics.com"),
 ```
 
+More rows:
+
+| Add-on | Directive | Add |
+|---|---|---|
 | `analytics-umami` (self-hosted) | `script-src`, `connect-src` | the Umami host |
 | `analytics-goatcounter` | `script-src`, `connect-src` | `https://gc.zgo.at` |
 | `storage-s3` (uploaded media in `<img>`) | `img-src` | the S3 / CDN host |
 | `error-reporting-sentry` (browser SDK) | `connect-src`, `script-src` | the Sentry / GlitchTip ingest host |
 | `django-tailwind-cli` | nothing (bundled CSS served from `'self'`) | — |
+
+Umami host is env-driven — read it in `production.py` so the directive matches `ANALYTICS_HOST`:
+
+```python
+# ANALYTICS_HOST comes from `from .base import *`
+_UMAMI = (ANALYTICS_HOST,) if ANALYTICS_HOST else ()
+CONTENT_SECURITY_POLICY["DIRECTIVES"]["script-src"]  = ("'self'", *_UMAMI)
+CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] = ("'self'", *_UMAMI)
+```
 
 Don't speculatively add hosts — only when the matching add-on is in scope.
 

@@ -71,11 +71,39 @@ Don't log request bodies or `Authorization` headers. With structured logging add
 
 ## User data export & deletion
 
-Management commands:
+Two management commands under a registered app (e.g. `jobs/management/commands/`):
 
-```sh
-manage.py export_user_data <user_id> > data.json
-manage.py delete_user <user_id>
+```python
+# export_user_data.py
+import json
+from django.contrib.auth import get_user_model
+from django.core import serializers
+from django.core.management.base import BaseCommand
+
+class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument("user_id", type=int)
+
+    def handle(self, *args, user_id, **opts):
+        user = get_user_model().objects.get(pk=user_id)
+        data = json.loads(serializers.serialize("json", [user]))
+        self.stdout.write(json.dumps(data, indent=2))
 ```
 
-Implement deletion as a transaction that cascades to user-owned rows and writes an entry to an immutable audit log.
+```python
+# delete_user_data.py
+from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
+from django.db import transaction
+
+class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument("user_id", type=int)
+
+    def handle(self, *args, user_id, **opts):
+        with transaction.atomic():
+            get_user_model().objects.filter(pk=user_id).delete()
+        self.stdout.write(self.style.SUCCESS(f"deleted user {user_id}"))
+```
+
+Extend `export_user_data` to dump user-owned rows from project apps. Deletion relies on `on_delete=CASCADE` for related models; add an immutable audit log entry if regulators require proof of erasure.

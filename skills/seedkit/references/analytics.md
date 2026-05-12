@@ -72,6 +72,21 @@ In `templates/base.html`, before `</body>`:
 {% include "_analytics.html" %}
 ```
 
+If no frontend reference created `templates/base.html` (e.g. `frontend: none`), ship a minimal one so the include resolves — without it the analytics snippet is dead:
+
+```django
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>{% block title %}{% endblock %}</title></head>
+<body>
+  {% block content %}{% endblock %}
+  {% include "_analytics.html" %}
+</body>
+</html>
+```
+
+Register `BASE_DIR / "templates"` in `TEMPLATES[0]["DIRS"]`.
+
 ## Backends
 
 ### GoatCounter
