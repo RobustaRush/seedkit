@@ -11,6 +11,8 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 - `tasks-django-rq.md` and `tasks-django-db.md` `uv add` include `django-tasks` explicitly alongside the backend package — it was coming in transitively, leaving the runtime dep undeclared.
 - Testcase 07-saas aligns structural assertions with skill design: `deploy/docker-compose.prod.yml` / `deploy/Caddyfile` paths (per `deploy-vps.md`), `/opt/venv/bin` on PATH (per `docker.md`), CI runs `pytest` without a pre-`migrate` step (per `ci.md`), and `INSTALLED_APPS` only registers `django_tasks_db` since Django 6's `django.tasks` is in core.
 - `dev-tools.md` prod `silk_profile` fallback is now a class implementing `__call__` + `__enter__`/`__exit__`, not a decorator factory — the same reference shows `with silk_profile(...)` inside `@task` bodies, which raised `AttributeError` on prod boot.
+- `auth-hardening.md` promotes `AXES_HANDLER = 'axes.handlers.cache.AxesCacheHandler'` from a Pitfalls aside to a `production.py` code snippet; agents now copy the line into `production.py` instead of skipping it.
+- `docker.md` Variant B multi-stage final stage is named `AS prod` (was `AS runtime`) so testcases that assert a `prod` target match the slim-runtime path.
 
 ### Changed
 - `docker.md` BuildKit cache mount (`--mount=type=cache,target=/root/.cache/uv`) is now standard on every `RUN uv sync`, with `# syntax=docker/dockerfile:1` at the top of each Dockerfile. Was framed as "optional, speeds up CI"; it's actually load-bearing whenever a multi-stage build re-runs `uv sync` on Rust/C-backed packages without a manylinux/aarch64 wheel (e.g. `django-bolt` on linux/arm64) — without the cache mount the wheel recompiles in each stage.

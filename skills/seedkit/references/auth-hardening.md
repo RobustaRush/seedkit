@@ -56,10 +56,17 @@ AXES_RESET_ON_SUCCESS = True
 uv run manage.py migrate
 ```
 
+### `production.py` — cache handler when Redis is in scope
+
+```python
+# axes writes one DB row per failed attempt; the cache handler keeps the hot
+# path in Redis. See references/redis.md for CACHES wiring.
+AXES_HANDLER = 'axes.handlers.cache.AxesCacheHandler'
+```
+
 ### Pitfalls
 
 - Behind a reverse proxy the `IP_address` lockout dimension only works if `IPWARE` (or the equivalent) is reading `X-Forwarded-For`. With WhiteNoise / Caddy / nginx wired correctly this is fine; check by hitting the login form from a known IP and reading `axes_accessattempt`.
-- `axes` writes one DB row per failed attempt. When Redis is already in scope, switch to the cache handler in `production.py` — `AXES_HANDLER = 'axes.handlers.cache.AxesCacheHandler'` (see `references/redis.md`).
 
 ## 2FA
 
