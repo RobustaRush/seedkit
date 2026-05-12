@@ -9,10 +9,10 @@ Requires Redis (`references/redis.md`).
 ## Install
 
 ```sh
-uv add django-tasks django-tasks-rq django-rq
+uv add django-tasks-rq django-rq
 ```
 
-`django-tasks` ships `django.tasks` for Django <6.0 and is a transitive dep of `django-tasks-rq` — declare it explicitly so the dependency isn't implicit.
+Django 6.0+ ships `django.tasks` in stdlib — don't add the standalone `django-tasks` package, it shadows the stdlib module.
 
 ## INSTALLED_APPS
 
@@ -48,6 +48,15 @@ RQ_QUEUES = {
 # and every task raises `'Task' object is not callable`.
 RQ = {"JOB_CLASS": "django_tasks_rq.Job"}
 ```
+
+## URLs
+
+```python
+# config/urls.py
+path("django-rq/", include("django_rq.urls")),
+```
+
+`django_rq.urls` is a module, not a URLconf — wrap with `include()`.
 
 ## Run worker (host)
 
