@@ -7,8 +7,10 @@ Docs: <https://github.com/RealOrangeOne/django-tasks-database>
 ## Install
 
 ```sh
-uv add django-tasks-db
+uv add django-tasks django-tasks-db
 ```
+
+`django-tasks` ships `django.tasks` for Django <6.0 and is a transitive dep of `django-tasks-db` — declare it explicitly so the dependency isn't implicit.
 
 ## INSTALLED_APPS
 

@@ -78,8 +78,8 @@ Read-only audit of the project in the current directory. Quote the file path and
 Verify these structural facts:
 
 **Foundation**
-- Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production,test}.py`, `config/routers.py`, `Dockerfile`, `Dockerfile.dev`, `docker-compose.yml`, `docker-compose.prod.yml`, `Caddyfile`, `litestream.yml`, `entrypoint.sh`, `mise.toml`, `.github/workflows/test.yml`, `.pre-commit-config.yaml`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`.
-- `mise.toml` has `[tasks.deploy-migrate]` running `docker compose -f docker-compose.prod.yml run --rm web uv run manage.py migrate` and `[tasks.deploy]` with `depends = ["deploy-migrate"]` running `docker compose -f docker-compose.prod.yml up -d`.
+- Files present: `pyproject.toml`, `manage.py`, `config/settings/{base,local,production,test}.py`, `config/routers.py`, `Dockerfile`, `Dockerfile.dev`, `docker-compose.yml`, `deploy/docker-compose.prod.yml`, `deploy/Caddyfile`, `litestream.yml`, `entrypoint.sh`, `mise.toml`, `.github/workflows/test.yml`, `.pre-commit-config.yaml`, `.env`, `.env.example`, `.dockerignore`, `.gitignore`.
+- `mise.toml` has `[tasks.deploy-migrate]` running `docker compose -f deploy/docker-compose.prod.yml run --rm web uv run manage.py migrate` and `[tasks.deploy]` with `depends = ["deploy-migrate"]` running `docker compose -f deploy/docker-compose.prod.yml up -d`.
 - `pyproject.toml` runtime deps include `django-environ`, `django-tasks`, `django-tasks-db`, `whitenoise`, `django-allauth[mfa]`, `django-axes`, `django-csp`, `sentry-sdk`, `structlog`, `django-structlog`, `gunicorn`. **No** `psycopg`, `celery`, `redis`, `django-dbbackup`. Dev deps include `pytest`, `pytest-django`, `pyright`, `django-stubs`, `django-stubs-ext`, `ruff`, `pre-commit`.
 
 **Settings split + SQLite mini-prod**
@@ -100,17 +100,17 @@ Verify these structural facts:
 **Logging + Sentry + tasks**
 - `structlog` configured in `base.py`. `LOGGING` at module scope. `django_structlog.middlewares.RequestMiddleware` in `MIDDLEWARE` directly after `AuthenticationMiddleware`. `django_structlog` in `INSTALLED_APPS`.
 - `sentry_sdk.init(...)` called from `production.py` only; DSN read from env via the gated default.
-- A registered Django app has `apps.py` with `ready()` importing `tasks`, and a `tasks.py` defining at least one `@task` (from `django_tasks`). `INSTALLED_APPS` includes `django_tasks` and `django_tasks_db`. `TASKS = {"default": {"BACKEND": "django_tasks_db.DatabaseBackend"}}` (or equivalent) in `base.py` or `production.py`.
+- A registered Django app has `apps.py` with `ready()` importing `tasks`, and a `tasks.py` defining at least one `@task` (from `django_tasks`). `INSTALLED_APPS` includes `django_tasks_db` (Django 6's `django.tasks` is in core — no app entry needed). `TASKS = {"default": {"BACKEND": "django_tasks_db.DatabaseBackend"}}` (or equivalent) in `base.py` or `production.py`.
 
 **Deploy artefacts**
-- `Dockerfile` is single-stage on `ghcr.io/astral-sh/uv:python3.12-bookworm-slim`, with `UV_COMPILE_BYTECODE=1`, `UV_LINK_MODE=copy`, two-step `uv sync`, `/app/.venv/bin` on PATH, runs as `django` user. Installs the Litestream `.deb` (`wget` + `dpkg -i litestream-v0.3.13-linux-amd64.deb`).
+- `Dockerfile` is single-stage on `ghcr.io/astral-sh/uv:python3.12-bookworm-slim`, with `UV_COMPILE_BYTECODE=1`, `UV_LINK_MODE=copy`, `UV_PROJECT_ENVIRONMENT=/opt/venv`, two-step `uv sync`, `/opt/venv/bin` on PATH, runs as `django` user. Installs the Litestream `.deb` (`wget` + `dpkg -i litestream-v0.3.13-linux-amd64.deb`).
 - `entrypoint.sh` runs `litestream restore -if-db-not-exists -if-replica-exists /data/site.sqlite3`, then `python manage.py migrate --noinput`, then `createcachetable --database cache`, then `exec litestream replicate -exec "gunicorn config.wsgi --bind 0.0.0.0:8000"`. `Dockerfile` `CMD` invokes `entrypoint.sh`.
 - `litestream.yml` declares `dbs: [{path: /data/site.sqlite3, replicas: [{type: s3, ...}]}]` reading bucket/endpoint/keys from env.
 - `Caddyfile` upstream block uses `health_uri /healthz` (liveness, not `/readyz`).
 - `docker-compose.prod.yml` defines a single `web` service with `restart: unless-stopped`, mounts a named `sqlite_data:/data` volume, and a container-level healthcheck (python urllib, no curl). **No** `db`, `redis`, or `celery` services. Top-level `volumes:` declares `sqlite_data`.
 - `docker-compose.yml` (dev) also mounts `sqlite_data:/data` on `web` and declares the volume at the top.
 - `.env` / `.env.example` set `DATABASE_URL=sqlite:////data/site.sqlite3` and list the Litestream S3 env vars (`S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`).
-- `.github/workflows/test.yml` runs migrations + pytest against SQLite (no Postgres/Redis services in the workflow). Env block ships `EMAIL_URL=consolemail://`, `DATABASE_URL=sqlite:///db.sqlite3`, `DJANGO_SECRET_KEY` placeholder, `DJANGO_DEBUG=False`.
+- `.github/workflows/test.yml` runs `uv run pytest` against SQLite (no `manage.py migrate` step — `pytest-django` builds the test DB from migrations; no Postgres/Redis services in the workflow). Env block ships `EMAIL_URL=consolemail://`, a `DATABASE_URL` pointing at a SQLite file, `DJANGO_SECRET_KEY` placeholder, `DJANGO_DEBUG=False`.
 
 **Health**
 - `pages/views.py` (or equivalent — `config/views.py` is fine) defines `liveness` / `readiness`; `path('healthz', ...)` and `path('readyz', ...)` in `config/urls.py`.
