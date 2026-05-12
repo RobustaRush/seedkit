@@ -9,10 +9,10 @@ WebSockets, long-lived connections, server-pushed events. Picked at Foundation Â
 ## Install
 
 ```sh
-uv add channels 'channels-redis'
+uv add channels 'channels-redis' daphne
 ```
 
-`channels-redis` is the production-grade channel-layer backend. The in-memory layer is fine for a single dev process but doesn't span workers, so any scale or separate ASGI worker breaks broadcast.
+`daphne` isn't pulled in transitively by `channels`; install it explicitly so the `INSTALLED_APPS` entry resolves. `channels-redis` is the production-grade channel-layer backend. The in-memory layer is fine for a single dev process but doesn't span workers, so any scale or separate ASGI worker breaks broadcast.
 
 ## Settings
 
@@ -80,8 +80,9 @@ from django.urls import path
 from chat.consumers import ChatConsumer
 
 websocket_urlpatterns = [
-    path("ws/chat/<str:room>/", ChatConsumer.as_asgi()),
+    path("ws/chat/<str:room>/", ChatConsumer.as_asgi()),  # type: ignore[arg-type]
 ]
+# django-stubs has no model for ASGI views in `path()`; the type: ignore keeps pyright clean.
 ```
 
 ```python

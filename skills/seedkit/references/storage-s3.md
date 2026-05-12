@@ -103,6 +103,33 @@ AWS_S3_REGION_NAME=us-east-1
 # AWS_S3_URL_PROTOCOL=https:                 # override to http: for plain MinIO
 ```
 
+## Dev — MinIO in docker-compose
+
+Append to the compose file from `references/docker.md`:
+
+```yaml
+services:
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+    ports: ["9000:9000", "9001:9001"]
+    volumes: ["miniodata:/data"]
+    healthcheck:
+      # `wget` isn't in minio/minio:latest — use curl, which is.
+      test: ["CMD", "curl", "-sf", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  miniodata:
+```
+
+Don't add `minio: { condition: service_healthy }` to `web.depends_on` — `STORAGES` falls back to FileSystemStorage when the bucket env is empty, so `web` boots independently.
+
 ## Dockerfile — remove build-time collectstatic
 
 The Dockerfile in `references/docker.md` runs `collectstatic` at build. That works for WhiteNoise (local dir baked in) but **fails for S3** — collectstatic uploads to the bucket and needs real AWS credentials, which must not enter the build context. Delete the line:

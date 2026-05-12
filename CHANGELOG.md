@@ -11,6 +11,8 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 - `deploy-vps.md` Caddyfile snippets call out that `example.com` needs replacing — Caddy fails TLS issuance for the placeholder domain.
 - `dev-tasks.md` generates `deploy-migrate` + `deploy` tasks when a deploy target was picked (vps / github-ssh / managed-fly). `deploy` depends on `deploy-migrate` so the one-shot migrate precedes `up -d`. Testcases 07/08/09 switch task runner to `mise` and assert the deploy tasks exist.
 - README adds a status note that the testcase harness currently runs only against Claude Sonnet.
+- `realtime.md` install line adds `daphne` (channels doesn't pull it transitively); routing snippet carries `# type: ignore[arg-type]` for `path(..., Consumer.as_asgi())`.
+- `storage-s3.md` adds a MinIO docker-compose snippet with a `curl` healthcheck (`wget` is absent in `minio/minio:latest`) and a note not to gate `web.depends_on` on it.
 
 ## 26.20.1 — 2026-05-11
 
