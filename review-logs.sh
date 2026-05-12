@@ -100,11 +100,11 @@ Workflow:
    - Cross-reference, don't duplicate.
 3. If nothing real surfaces, that's a valid outcome — say "no skill change", skip to step 7.
 4. Bump the version to **__TODAY__** in both files (only if you made an edit in step 2):
-   - `/Users/kmmbvnr/Workspace/Robusta/seedkit/.claude-plugin/plugin.json` → set `"version": "__TODAY__"`.
-   - `/Users/kmmbvnr/Workspace/Robusta/seedkit/skills/seedkit/SKILL.md` frontmatter → set `version: __TODAY__`.
-5. Update `/Users/kmmbvnr/Workspace/Robusta/seedkit/CHANGELOG.md`: if a `## __TODAY__ — ` section already exists, extend the matching Keep-a-Changelog bullet (`### Added` / `### Changed` / `### Fixed` / `### Removed`) in place; otherwise insert a new section at the top under the `# Changelog` heading. One short, high-level, user-facing bullet per theme — never one bullet per edit. If CHANGELOG.md exceeds 200 lines after the edit, trim the oldest sections at the bottom to bring it near 150 lines.
-6. Inside `/Users/kmmbvnr/Workspace/Robusta/seedkit/`: `git add -A`, commit, and `git push origin main`. Use the host gitconfig — never pass `--author` or `-c user.email`.
-7. Inside `/Users/kmmbvnr/Workspace/Robusta/`: `git add seedkit`, commit `chore: bump seedkit/ — <one-line reason>`, push. Skip steps 6–7 if no edits were made.
+   - `__REPO__/.claude-plugin/plugin.json` → set `"version": "__TODAY__"`.
+   - `__REPO__/skills/seedkit/SKILL.md` frontmatter → set `version: __TODAY__`.
+5. Update `__REPO__/CHANGELOG.md`: if a `## __TODAY__ — ` section already exists, extend the matching Keep-a-Changelog bullet (`### Added` / `### Changed` / `### Fixed` / `### Removed`) in place; otherwise insert a new section at the top under the `# Changelog` heading. One short, high-level, user-facing bullet per theme — never one bullet per edit. If CHANGELOG.md exceeds 200 lines after the edit, trim the oldest sections at the bottom to bring it near 150 lines.
+6. Inside `__REPO__/`: `git add -A`, commit, and `git push origin main`. Use the host gitconfig — never pass `--author` or `-c user.email`.
+7. Inside `__PARENT__/`: `git add seedkit`, commit `chore: bump seedkit/ — <one-line reason>`, push. Skip steps 6–7 if no edits were made.
 8. `rm` the log file at LOGPATH (it's gitignored — plain `rm`, not `git rm`).
 9. Final line: `[<log basename>] <one sentence outcome>`.
 
@@ -116,6 +116,8 @@ Hard constraints:
 EOF
 TODAY_VER=$(date +%y.%V.%u)
 PROMPT_TEMPLATE="${PROMPT_TEMPLATE//__TODAY__/$TODAY_VER}"
+PROMPT_TEMPLATE="${PROMPT_TEMPLATE//__REPO__/$REPO}"
+PROMPT_TEMPLATE="${PROMPT_TEMPLATE//__PARENT__/$PARENT}"
 
 total=${#LOGS[@]}
 idx=0
