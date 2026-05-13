@@ -20,7 +20,7 @@ INSTALLED_APPS = [
 
 TASKS = {
     "default": {
-        "BACKEND": "django_tasks_db.backend.DatabaseBackend",
+        "BACKEND": "django_tasks_db.DatabaseBackend",
         "QUEUES": ["default"],
     },
 }

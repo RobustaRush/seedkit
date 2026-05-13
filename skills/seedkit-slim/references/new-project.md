@@ -78,6 +78,7 @@ Must include `.venv/`, `.env`, `*.sqlite3`, `staticfiles/`, `media/`, `.ruff_cac
 ## Boot check
 
 ```sh
+uv run manage.py makemigrations  # required when §1.6 custom AUTH_USER_MODEL=yes — first migrate aborts otherwise
 uv run manage.py migrate
 uv run manage.py createsuperuser
 uv run manage.py runserver --noreload &
