@@ -8,6 +8,7 @@ Foundation conventions for §1. Use the snippets verbatim.
 uv init --bare {project_slug}
 cd {project_slug}
 sed -i.bak -E 's/^requires-python = .*/requires-python = ">=3.12"/' pyproject.toml && rm pyproject.toml.bak
+printf '\n[tool.uv]\npackage = false\n' >> pyproject.toml  # Django apps aren't installable packages — without this, uv sync invokes hatchling and fails
 uv add 'django>=6.0,<7.0' django-environ
 uv run django-admin startproject config .
 ```
@@ -23,7 +24,9 @@ import environ
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env()
-environ.Env.read_env(BASE_DIR / ".env")
+_env_file = BASE_DIR / ".env"
+if _env_file.exists():
+    environ.Env.read_env(_env_file)  # Docker images have no .env; bare read_env() raises FileNotFoundError
 
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else env.NOTSET)
