@@ -85,7 +85,7 @@ Only when Foundation §1.4 = `asgi+channels`.
 ## 3. Production & Deploy
 
 1. Security settings: yes / no. Default no.
-   - If yes: `django-csp` — yes / no. Default yes.
+   - If yes: `django-csp` — yes / no. Default yes. See `references/django-csp.md`.
 2. Health checks (`/healthz`, `/readyz`): yes / no. Default yes.
 3. Error reporting: `bugsink` / `sentry-sdk` / `glitchtip` / none. Default none.
 4. GDPR helpers: yes / no. Default no.

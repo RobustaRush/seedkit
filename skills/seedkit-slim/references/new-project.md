@@ -7,6 +7,7 @@ Foundation conventions for §1. Use the snippets verbatim.
 ```sh
 uv init --bare {project_slug}
 cd {project_slug}
+uv python pin 3.12  # uv init writes .python-version from the host default — pin away from any 3.14 prerelease
 sed -i.bak -E 's/^requires-python = .*/requires-python = ">=3.12"/' pyproject.toml && rm pyproject.toml.bak
 printf '\n[tool.uv]\npackage = false\n' >> pyproject.toml  # Django apps aren't installable packages — without this, uv sync invokes hatchling and fails
 uv add 'django>=6.0,<7.0' django-environ

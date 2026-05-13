@@ -17,6 +17,10 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 
 ### Changed
 - `new-project.md` directs dev tools through `uv add --group dev` (PEP 735 `[dependency-groups]`). The old `[tool.uv] dev-dependencies` table is deprecated in uv 0.11+.
+- `new-project.md` runs `uv python pin 3.12` right after `uv init --bare` so the project doesn't inherit a host 3.14 prerelease.
+
+### Added
+- `skills/seedkit-slim/references/django-csp.md` — django-csp 4.0+ uses the nested `CONTENT_SECURITY_POLICY = {"DIRECTIVES": {…}}` shape; the legacy flat `CSP_*` keys raise `csp.E001` at startup.
 
 ### Fixed
 - `django-tasks-db.md` backend path is `django_tasks_db.DatabaseBackend` (no `.backend.` infix) — the previous snippet raised `ImportError` on boot.
