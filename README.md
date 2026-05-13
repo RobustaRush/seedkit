@@ -43,6 +43,16 @@ Then, in whatever empty directory you'd like to populate:
 /seedkit
 ```
 
+## Two variants
+
+Two skills ship in this repo.
+
+**`/seedkit`** started from the actual package docs — the reference files have exact package versions, config snippets, and known pitfalls.
+
+**`/seedkit-slim`** relies only on what the model already knows — no reference files.
+
+Both go through the same test cycle: generate code, boot it, check it. Failures get fixed in the skill text.
+
 ## What's in the skill
 
 The skill targets the problems that show up in LLM-generated Django code that doesn't run out of the box: stale package versions, outdated patterns, wrong async defaults, missing production wiring. The testcase loop's job is to find those failures and fix them in the instructions, so the next generation doesn't repeat them.
