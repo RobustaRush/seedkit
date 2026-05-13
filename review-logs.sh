@@ -71,9 +71,12 @@ if ! git -C "$REPO" diff-index --quiet HEAD --; then
     echo "seedkit submodule has uncommitted changes — commit or stash first" >&2
     exit 1
 fi
-if ! git -C "$PARENT" diff-index --quiet HEAD -- seedkit; then
-    echo "parent repo has uncommitted seedkit pointer drift — bump or stash first" >&2
-    exit 1
+CURRENT_BRANCH=$(git -C "$REPO" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+if [[ "$CURRENT_BRANCH" == "main" ]] && git -C "$PARENT" rev-parse --git-dir >/dev/null 2>&1; then
+    if ! git -C "$PARENT" diff-index --quiet HEAD -- seedkit; then
+        echo "parent repo has uncommitted seedkit pointer drift — bump or stash first" >&2
+        exit 1
+    fi
 fi
 
 # The agent receives this as a single prompt. LOGPATH and TODAY are
@@ -104,7 +107,7 @@ Workflow:
    - `__REPO__/.claude-plugin/plugin.json` → set `"version": "__TODAY__"`.
    - `__REPO__/skills/seedkit-slim/SKILL.md` frontmatter → set `version: __TODAY__`.
 5. Update `__REPO__/CHANGELOG.md`: if a `## __TODAY__ — ` section already exists, extend the matching Keep-a-Changelog bullet (`### Added` / `### Changed` / `### Fixed` / `### Removed`) in place; otherwise insert a new section at the top under the `# Changelog` heading. One short, high-level, user-facing bullet per theme — never one bullet per edit. If CHANGELOG.md exceeds 200 lines after the edit, trim the oldest sections at the bottom to bring it near 150 lines.
-6. Inside `__REPO__/`: `git add -A`, commit, and `git push origin train-seedkit-slim`. Use the host gitconfig — never pass `--author` or `-c user.email`.
+6. Inside `__REPO__/`: `git add -A`, commit, and `git push origin __BRANCH__`. Use the host gitconfig — never pass `--author` or `-c user.email`.
 7. Inside `__PARENT__/`: `git add seedkit`, commit `chore: bump seedkit/ — <one-line reason>`, push. Skip steps 6–7 if no edits were made.
 8. `rm` the log file at LOGPATH (it's gitignored — plain `rm`, not `git rm`).
 9. Final line: `[<log basename>] <one sentence outcome>`.
@@ -119,6 +122,7 @@ TODAY_VER=$(date +%y.%V.%u)
 PROMPT_TEMPLATE="${PROMPT_TEMPLATE//__TODAY__/$TODAY_VER}"
 PROMPT_TEMPLATE="${PROMPT_TEMPLATE//__REPO__/$REPO}"
 PROMPT_TEMPLATE="${PROMPT_TEMPLATE//__PARENT__/$PARENT}"
+PROMPT_TEMPLATE="${PROMPT_TEMPLATE//__BRANCH__/$CURRENT_BRANCH}"
 
 total=${#LOGS[@]}
 idx=0
