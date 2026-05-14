@@ -2,6 +2,11 @@
 
 Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One section per day; all of a day's commits collapse into one block. Trim to ≤ 200 lines; git keeps the rest.
 
+## 26.20.4 — 2026-05-14
+
+### Fixed
+- `new-project.md` swaps `sed` before `uv python pin 3.12` — on a Python 3.14 host the pin failed against the stock `requires-python = ">=3.14"` before the relaxation ran.
+
 ## 26.20.3 — 2026-05-13
 
 ### Added

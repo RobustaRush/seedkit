@@ -1,6 +1,6 @@
 ---
 name: seedkit-slim
-version: 26.20.3
+version: 26.20.4
 description: Bootstrap a new Django project, or add components to an existing one — auth, payments, REST, Celery / django-tasks, async / WebSockets, Tailwind, S3, structlog, healthchecks, Docker, CI, deploy, dbbackup, Sentry. Use whenever the user wants to scaffold Django or extend an existing Django project.
 ---
 
