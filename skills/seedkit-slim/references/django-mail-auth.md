@@ -7,10 +7,11 @@ Passwordless email login. PyPI distribution is `django-mail-auth`; the import/ap
 ```python
 # config/settings.py
 INSTALLED_APPS = [
+    "mailauth.contrib.admin",  # MUST precede django.contrib.admin — replaces the admin login view with a magic-link form
+    "django.contrib.admin",
     # ...
     "django.contrib.sites",
     "mailauth",
-    "mailauth.contrib.admin",  # admin login via emailed magic link
 ]
 
 SITE_ID = 1

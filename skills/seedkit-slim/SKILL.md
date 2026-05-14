@@ -58,7 +58,7 @@ See `references/new-project.md` for the verbatim snippets (settings, urls, `.env
 
 ### 2.4 Background & Email
 
-1. Background tasks: `celery` / `django-tasks` (db backend) / `django-tasks-rq` / none. Default `django-tasks` (db) when DB=sqlite, else none.
+1. Background tasks: `celery` / `django-tasks` (db backend) / `django-tasks-rq` / none. Default `django-tasks` (db) when DB=sqlite, else none. See `references/celery.md` for `celery`.
 2. Email: `console` / `smtp` / `mailpit` / `django-anymail` / none. Always ask.
 
 ### 2.5 Frontend & Site Basics
@@ -66,7 +66,7 @@ See `references/new-project.md` for the verbatim snippets (settings, urls, `.env
 1. Frontend: `django-tailwind-cli` / none. Default none. See `references/tailwind-cli.md`.
    - If tailwind: custom 404/403/500 templates — yes / no. Default no.
    - If tailwind: DaisyUI — yes / no. Always ask.
-2. i18n (gettext, LocaleMiddleware): yes / no. Default no.
+2. i18n (gettext, LocaleMiddleware): yes / no. Default no. If yes: set `USE_I18N = True`, add `django.middleware.locale.LocaleMiddleware` after `SessionMiddleware`, declare `LANGUAGES = [("en", "English"), ...]` (Django's default list is large; restrict to what the project ships), and `LOCALE_PATHS = [BASE_DIR / "locale"]`.
 3. `django-cors-headers`: yes / no. Default no.
 4. `robots.txt`: yes / no. Default no.
 
