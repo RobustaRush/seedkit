@@ -203,10 +203,12 @@ SaaS, US-hosted. Cookies required. **EU users need a consent banner before loadi
 
 ```html
 <script async src="https://www.googletagmanager.com/gtag/js?id={{ ANALYTICS_ID }}"></script>
-<script>
+<script nonce="{{ request.csp_nonce }}">
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
   gtag('config', '{{ ANALYTICS_ID }}');
 </script>
 ```
+
+The `nonce="{{ request.csp_nonce }}"` is required when `references/csp.md` is active — `script-src` has no `'unsafe-inline'`, so the inline init block is blocked without a nonce. The attribute is harmless when CSP is off (browsers ignore unknown nonces).

@@ -6,6 +6,7 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 
 ### Fixed
 - `testcases/04-media-vault.md` — align assertions with the storage-s3 reference: drop the stale `.dockerignore` requirement (deploy=none has no Dockerfile) and rename the expected MinIO volume `minio-data` → `miniodata`.
+- `references/analytics.md` + `references/csp.md` — GA4 inline init `<script>` carries `nonce="{{ request.csp_nonce }}"` so the snippet survives the CSP policy (no `'unsafe-inline'` in `script-src`).
 
 ## 26.20.3 — 2026-05-13
 

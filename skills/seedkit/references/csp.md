@@ -72,6 +72,10 @@ CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] = ("'self'", *_UMAMI)
 
 Don't speculatively add hosts — only when the matching add-on is in scope.
 
+## Inline scripts: use a nonce, not `'unsafe-inline'`
+
+Third-party snippets that need an inline init block (GA4 `gtag('config', ...)`, etc.) should carry `nonce="{{ request.csp_nonce }}"`. django-csp injects a fresh `'nonce-...'` into `script-src` per response whenever the template renders `request.csp_nonce` — no extra config needed.
+
 ## Report-Only first
 
 For the first deploy after adding CSP, prefer report-only mode so existing pages don't break:
