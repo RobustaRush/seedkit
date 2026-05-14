@@ -35,6 +35,22 @@ CELERY_BEAT_SCHEDULE = {
 REDIS_URL=redis://localhost:6379
 ```
 
+## Compose service
+
+```yaml
+# docker-compose.yml
+services:
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data  # shadow the image's `VOLUME /data` — otherwise Compose creates a fresh anonymous volume on every `up`
+    ports:
+      - "6379:6379"
+
+volumes:
+  redis_data:
+```
+
 ## App wiring
 
 ```python
