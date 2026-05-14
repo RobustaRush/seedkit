@@ -4,6 +4,30 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 
 ## 26.20.3 — 2026-05-13
 
+### Added
+- `skills/seedkit-slim/references/django-allauth.md` — modern `ACCOUNT_LOGIN_METHODS` / `ACCOUNT_SIGNUP_FIELDS` keys (allauth 0.65+) plus URL wiring for `allauth.mfa.urls`. Slim runs were emitting deprecated `ACCOUNT_AUTHENTICATION_METHOD` / `ACCOUNT_EMAIL_REQUIRED` / `ACCOUNT_USERNAME_REQUIRED` and getting startup warnings.
+- `skills/seedkit-slim/references/new-project.md` — foundation snippets for §1 (settings with `DJANGO_*` env vars + `env.NOTSET` prod guards, `/` → `/admin/` redirect in `config/urls.py`, `.gitignore` contents, `django>=6.0,<7.0` pin, boot check using `--noreload`). Slim runs were missing all of these.
+- `skills/seedkit-slim/references/django-mail-auth.md` — app label is `mailauth` (not `mail_auth`), backend `mailauth.backends.MailAuthBackend`, requires `django.contrib.sites` + `SITE_ID`, and ships no templates — `registration/login.html` + `registration/login_requested.html` must be scaffolded or `accounts/login/` returns 500.
+- `skills/seedkit-slim/references/django-tasks-rq.md` — backend module is `django_tasks_rq.backend` (singular), `django_rq` must be in `INSTALLED_APPS` for its migrations, plus the `RQ = {"JOB_CLASS": "django_tasks_rq.Job"}` setting.
+- `skills/seedkit-slim/references/django-modern-rest.md` — `pyjwt` is an implicit dep (imported unconditionally) and router-mount wiring for `config/urls.py`.
+- `skills/seedkit-slim/references/pyright.md` — `djangoSettingsModule` belongs under `[tool.django-stubs]`, not `[tool.pyright]`; channels `as_asgi()` needs `# type: ignore[arg-type]` in `path()`.
+- `skills/seedkit-slim/references/django-orbit.md` and `references/mailpit.md` — debug-only gating for orbit (app, middleware at index 1, URL mount, logging handler all inside `if DEBUG:`) and Mailpit compose with loopback-only port binds + `EMAIL_URL` wiring. Without these the slim agent shipped orbit in INSTALLED_APPS unconditionally and bound 1025/8025 to all interfaces.
+- `skills/seedkit-slim/references/django-tasks-db.md`, `django-zeal.md`, `django-migration-linter.md` — DB backend ships as the separate `django-tasks-db` package (`django_tasks_db.backend.DatabaseBackend`); zeal 2.x middleware is the lowercase function `zeal.middleware.zeal_middleware`; `lintmigrations` needs `django_migration_linter` in `INSTALLED_APPS` plus `MIGRATION_LINTER_OPTIONS.exclude_apps` for third-party migrations.
+- `skills/seedkit-slim/references/healthcheck.md`, `django-axes.md`, `django-bolt.md` — trivial `/healthz` + `/readyz` views (avoid pulling `django-health-check`, whose v4 `INSTALLED_APPS` shape broke slim runs); axes v8 wiring without the removed `AXES_LOCKOUT_CALLABLE`; bolt `urls_bolt.py` needs `urlpatterns: list = []` and the builder stage needs `build-essential pkg-config` for the aarch64-linux source build. `pyright.md` notes `user.pk` (django-stubs has no `User.id`).
+
+### Changed
+- `new-project.md` directs dev tools through `uv add --group dev` (PEP 735 `[dependency-groups]`). The old `[tool.uv] dev-dependencies` table is deprecated in uv 0.11+.
+- `new-project.md` runs `uv python pin 3.12` right after `uv init --bare` so the project doesn't inherit a host 3.14 prerelease.
+
+### Added
+- `skills/seedkit-slim/references/django-csp.md` — django-csp 4.0+ uses the nested `CONTENT_SECURITY_POLICY = {"DIRECTIVES": {…}}` shape; the legacy flat `CSP_*` keys raise `csp.E001` at startup.
+
+### Fixed
+- `django-tasks-db.md` backend path is `django_tasks_db.DatabaseBackend` (no `.backend.` infix) — the previous snippet raised `ImportError` on boot.
+- `new-project.md` boot check runs `makemigrations` before the first `migrate` so the §1.6 custom `AUTH_USER_MODEL` doesn't abort the initial `migrate`.
+- `new-project.md` appends `[tool.uv] package = false` to `pyproject.toml` right after `uv init --bare`. Django apps aren't installable; without this, `uv sync` invoked hatchling and failed mid-foundation.
+- `new-project.md` settings snippet guards `environ.Env.read_env()` with `if _env_file.exists()`. Docker images have no `.env` and bare `read_env()` raised `FileNotFoundError` during `collectstatic`.
+
 ### Changed
 - Testcase Prompt blocks no longer name specific reference files for the agent to read (`references/docker.md`, `references/realtime.md`, `references/database.md`, `references/email.md`). The skill picks references itself; prompts only state the requirement. Touched 02-shop, 03-jobs-board, 04-media-vault, 07-saas, 09-internal-ops.
 
