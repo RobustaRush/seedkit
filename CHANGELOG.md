@@ -10,6 +10,7 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 
 ### Fixed
 - `django-migration-linter.md` moves `exclude_apps` into a `setup.cfg [django_migration_linter]` section, gates `django_migration_linter` in `INSTALLED_APPS` on `DEBUG`, and corrects the django-tasks-db app label to `django_tasks_database`.
+- `pyright.md` guards `django_stubs_ext.monkeypatch()` with `try/except ImportError` (dev-only package, `uv sync --no-dev` images crashed on boot) and notes the `# type: ignore[call-arg]` tag for `env(...)` defaults.
 
 ### Added
 - `skills/seedkit-slim/references/celery.md` — Redis broker / results / beat wiring with `django-redis`, per-subsystem `REDIS_URL` segmentation, `CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True`, `config/celery.py` + `config/__init__.py` exports, and an autodiscovery probe. Slim runs were missing the dep, the retry flag, and packing every subsystem into db 0.

@@ -16,8 +16,17 @@ django_settings_module = "config.settings.local"
 Install: `uv add --dev pyright django-stubs django-stubs-ext`. In `settings/base.py`:
 
 ```python
-import django_stubs_ext
-django_stubs_ext.monkeypatch()
+try:
+    import django_stubs_ext
+    django_stubs_ext.monkeypatch()
+except ImportError:  # dev-only; prod runs `uv sync --no-dev`
+    pass
+```
+
+`env(...)` with a non-NOTSET default trips the `django-environ` stubs (the `default` param is typed against a `NoValue` sentinel). Tag those sites:
+
+```python
+DEBUG = env.bool("DJANGO_DEBUG", default=False)  # type: ignore[call-arg]
 ```
 
 When `path()` complains about `Consumer.as_asgi()`:
