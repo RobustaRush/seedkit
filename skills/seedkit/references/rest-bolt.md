@@ -12,7 +12,7 @@ Pre-1.0 — README explicitly says "under active development". Pin a version.
 uv add django-bolt msgspec
 ```
 
-`msgspec` is a transitive dep of `django-bolt`, but `api/api.py` imports it directly — pin it explicitly so the lockfile records it as a runtime dep.
+`msgspec` is a transitive dep of `django-bolt`, but the API module imports it directly — pin it explicitly so the lockfile records it as a runtime dep.
 
 The wheel includes a precompiled Rust extension. uv pulls the wheel on x86_64 / arm64 macOS and x86_64 Linux without a toolchain. **No aarch64-linux wheel** is published — Docker builds on Apple Silicon (linux/arm64 platform) compile from source. The builder stage in `references/docker.md` must switch to the full uv image plus build tools:
 
@@ -40,17 +40,19 @@ INSTALLED_APPS = [
 
 ## Layout
 
-API definitions live inside a registered Django app, not at project root. Create one if needed: `uv run manage.py startapp api`.
+`runbolt` discovers `BoltAPI()` instances via three paths, in order:
 
-```
-api/
-  __init__.py
-  apps.py
-  api.py        # BoltAPI() instance + routes
-  schemas.py    # msgspec.Struct models
-```
+1. **Explicit** — `settings.BOLT_API = ["dotted.path:attr", ...]`. Wins if set.
+2. **Project-level** — `<project>.api` or `<project>.bolt_api`, where `<project>` is `ROOT_URLCONF.split(".")[0]`. For stock `config.urls` that's `config/api.py`. No app, no `INSTALLED_APPS` entry.
+3. **Per-app** — `<app>.api` / `<app>.bolt_api` for each app in `INSTALLED_APPS`. AppConfig may set `bolt_api = "dotted:attr"`.
 
-## Minimal endpoint — `api/api.py`
+Default to **project-level** — drop `config/api.py` next to `config/urls.py`. Do not auto-create an `api/` app.
+
+Switch to **per-app** when the API grows its own models, admin, migrations, or splits across modules.
+
+Use **`settings.BOLT_API`** for monorepos or shared API modules outside the `<project>` namespace.
+
+## Minimal endpoint — `config/api.py`
 
 ```python
 import msgspec

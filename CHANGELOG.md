@@ -2,6 +2,11 @@
 
 Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One section per day; all of a day's commits collapse into one block. Trim to ≤ 200 lines; git keeps the rest.
 
+## 26.21.1 — 2026-05-18
+
+### Fixed
+- `references/rest-bolt.md` — document all three `runbolt` discovery paths (explicit `BOLT_API`, project-level `config/api.py`, per-app). Default to project-level so an `api/` app isn't auto-created for stateless API surfaces; per-app stays the right choice once the API grows models/admin/migrations.
+
 ## 26.20.5 — 2026-05-15
 
 ### Fixed
