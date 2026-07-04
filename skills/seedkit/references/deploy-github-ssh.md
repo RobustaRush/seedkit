@@ -7,6 +7,14 @@ This pattern is built on top of `references/deploy-vps.md`. Read that first
 `docker-compose.prod.yml`, the Caddy reverse proxy, and the `/healthz`
 container healthcheck.
 
+One change to the inherited `docker-compose.prod.yml`: the `web` image line is
+built and pushed by CI, and the owner isn't known at scaffold time. Point it at
+the exported env var, not a hardcoded `{owner}/{project_slug}`:
+
+```yaml
+    image: ghcr.io/${GITHUB_REPOSITORY}:latest
+```
+
 ## Secrets
 
 Set in repo settings:
