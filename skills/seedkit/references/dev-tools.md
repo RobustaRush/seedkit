@@ -179,16 +179,7 @@ def expensive_operation():
     ...
 ```
 
-For tasks under `django-tasks` / Celery, never stack `@silk_profile` outside `@task` — the task registry resolves the outer callable, so the worker would look up the silk wrapper instead of the task. Use the context-manager form inside the task body:
-
-```python
-from django.tasks import task
-
-@task()
-def send_welcome_email(user_id):
-    with silk_profile(name="send_welcome_email"):
-        ...
-```
+Don't wrap task bodies with `silk_profile` — it only records inside a request-scoped `DataCollector`, which a worker process has none of, so it logs `Cannot execute silk_profile as silk is not installed correctly` and records nothing. Profile the same logic from a request-scoped view instead.
 
 #### Clear old data
 
