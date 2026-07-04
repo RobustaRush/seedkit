@@ -16,16 +16,18 @@ AUTHENTICATION_BACKENDS = [
 
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1  # hours
-AXES_LOCKOUT_PARAMETERS = ['ip_address', 'username']
+# Nested list = AND (lock the attacking ip+username pair). A flat
+# ['ip_address', 'username'] is OR — anyone can lock a known username out.
+AXES_LOCKOUT_PARAMETERS = [['ip_address', 'username']]
 AXES_RESET_ON_SUCCESS = True
 ```
 
 Don't set `AXES_LOCKOUT_CALLABLE` — `axes.helpers.lockout_response` was removed in v8. The default lockout response is correct.
+
+With allauth, the username dimension never fires out of the box (allauth posts the identifier as `login`, axes reads `username`) — either wire axes' allauth integration steps or lock on `['ip_address']` only. Plain `django-axes` resolves every request to the proxy IP behind Caddy/nginx — install `'django-axes[ipware]'` on proxied deploys.
 
 In `production.py`, when Redis is in scope:
 
 ```python
 AXES_HANDLER = 'axes.handlers.cache.AxesCacheHandler'
 ```
-
-`axes` ships its own models — run `migrate` after install.

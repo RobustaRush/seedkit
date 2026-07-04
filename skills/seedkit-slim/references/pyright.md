@@ -10,7 +10,7 @@ venvPath = "."
 venv = ".venv"
 
 [tool.django-stubs]
-django_settings_module = "config.settings.local"
+django_settings_module = "config.settings.local"  # single-file layout: "config.settings"
 ```
 
 Install: `uv add --dev pyright django-stubs django-stubs-ext`. In `settings/base.py`:

@@ -11,13 +11,13 @@ uv add django-bolt msgspec
 No aarch64-linux wheel is published. Docker builds on Apple Silicon compile the Rust extension from source — the builder stage needs the toolchain:
 
 ```dockerfile
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS builder
+FROM ghcr.io/astral-sh/uv:python3.13-trixie AS builder
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential pkg-config \
     && rm -rf /var/lib/apt/lists/*
 ```
 
-The runtime stage stays on `python:3.12-slim-bookworm`.
+The runtime stage stays on `python:3.13-slim-trixie` (same Debian suite as the builder — a suite mismatch fails at import with `GLIBC_x.xx not found`).
 
 `config/urls_bolt.py` — BoltAPI auto-discovers handlers, but Django's URL conf check still requires `urlpatterns`:
 

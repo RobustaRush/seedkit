@@ -1,28 +1,32 @@
 # django-modern-rest
 
+Import name is `dmr` — not `modern_rest` / `django_modern_rest`. Not a Django app: nothing goes in `INSTALLED_APPS`, no migrations.
+
 ```sh
-uv add django-modern-rest pyjwt  # django-modern-rest imports jwt at module load even without JWT auth — missing pyjwt breaks `manage.py check`
+uv add 'django-modern-rest[msgspec,openapi]' pyjwt  # `import dmr` reaches dmr.security.jwt unconditionally — without pyjwt even `manage.py check` breaks
+```
+
+Controllers are class-based views; there is no `router.register()`:
+
+```python
+# api/controllers.py
+from dmr import Body, Controller
+from dmr.plugins.msgspec import MsgspecSerializer
+
+class UserController(Controller[MsgspecSerializer]):
+    async def post(self, parsed_body: Body[UserCreate]) -> User: ...
 ```
 
 ```python
-# settings.py
-INSTALLED_APPS = [
-    # ...
-    "modern_rest",
-]
-```
+# config/urls.py
+from django.urls import include, path
+from dmr.routing import Router
+from api.controllers import UserController
 
-Controllers live in `<app>/controllers.py`; request schemas use `msgspec.Struct`. Mount the router in `config/urls.py`:
-
-```python
-from modern_rest import Router
-from api.controllers import MediaController
-
-router = Router()
-router.register(MediaController)
+router = Router("api/", [path("users/", UserController.as_view(), name="users")])
 
 urlpatterns = [
     # ...
-    path("api/", router.urls),
+    path(router.prefix, include((router.urls, "api"), namespace="api")),
 ]
 ```

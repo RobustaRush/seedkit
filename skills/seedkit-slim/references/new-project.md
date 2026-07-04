@@ -7,7 +7,7 @@ Foundation conventions for §1. Use the snippets verbatim.
 ```sh
 uv init --bare {project_slug}
 cd {project_slug}
-uv python pin 3.12  # uv init writes .python-version from the host default — pin away from any 3.14 prerelease
+uv python pin 3.13  # uv init writes .python-version from the host default — pin explicitly so dev/CI/Docker agree
 sed -i.bak -E 's/^requires-python = .*/requires-python = ">=3.12"/' pyproject.toml && rm pyproject.toml.bak
 printf '\n[tool.uv]\npackage = false\n' >> pyproject.toml  # Django apps aren't installable packages — without this, uv sync invokes hatchling and fails
 uv add 'django>=6.0,<7.0' django-environ
@@ -33,7 +33,7 @@ if _env_file.exists():
 
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-build-only" if DEBUG else env.NOTSET)
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[] if DEBUG else env.NOTSET)  # empty default boots in prod, then 400s every request
 DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}" if DEBUG else env.NOTSET)}  # 4 slashes = absolute path
 ```
 
@@ -47,19 +47,7 @@ In production `DJANGO_DEBUG` is unset and `env.NOTSET` makes django-environ rais
 
 ## Root URL
 
-`startproject`'s `config/urls.py` only routes `/admin/`, so `/` 404s. Add a redirect:
-
-```python
-# config/urls.py
-from django.contrib import admin
-from django.urls import path
-from django.views.generic import RedirectView
-
-urlpatterns = [
-    path("", RedirectView.as_view(url="/admin/", permanent=False)),
-    path("admin/", admin.site.urls),
-]
-```
+`startproject`'s `config/urls.py` only routes `/admin/`, so `/` 404s — add `path("", RedirectView.as_view(url="/admin/", permanent=False))`.
 
 ## .env.example and .env
 

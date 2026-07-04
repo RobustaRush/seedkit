@@ -163,6 +163,8 @@ Verified sound against current upstream: allauth 65.x settings names (`ACCOUNT_L
 
 # Part II — seedkit-slim (reviewed 2026-07-04)
 
+**Status update 2026-07-04:** II.1–II.4 applied same-day (CHANGELOG 26.27.6) — wrong correctives fixed, `csp.md`/`dj-stripe.md`/`deploy-pitfalls.md` added, cuts and pin bumps done. II.3's optional healthcheck compression skipped.
+
 **Design premise reviewed against:** the skill deliberately stays short and assumes the LLM's own Django knowledge; references exist only to correct what LLMs reliably get wrong (renamed packages, post-cutoff API changes, empirically-hit traps). Verification: every disputed claim checked against installed packages in a clean venv or upstream source, not docs alone.
 
 ## Verdict

@@ -1,6 +1,6 @@
 ---
 name: seedkit-slim
-version: 26.20.3
+version: 26.27.6
 description: Bootstrap a new Django project, or add components to an existing one — auth, payments, REST, Celery / django-tasks, async / WebSockets, Tailwind, S3, structlog, healthchecks, Docker, CI, deploy, dbbackup, Sentry. Use whenever the user wants to scaffold Django or extend an existing Django project.
 ---
 
@@ -26,7 +26,7 @@ See `references/new-project.md` for the verbatim snippets (settings, urls, `.env
 1. Project name + one-line purpose.
 2. Settings layout: `single settings.py` / `split base+local+production`.
 3. Database: `sqlite` / `postgresql`.
-4. Request handling: `wsgi` / `asgi` / `asgi+channels`. Default `wsgi`.
+4. Request handling: `wsgi` / `asgi` / `asgi+channels`. Default `wsgi`. For asgi modes install `uvicorn-worker` and run `gunicorn -k uvicorn_worker.UvicornWorker` — the in-tree `uvicorn.workers` module is deprecated.
 5. If postgresql: `host` / `docker` (single-service compose for local DB).
 6. Custom `AUTH_USER_MODEL`: yes / no.
 
@@ -85,12 +85,12 @@ Only when Foundation §1.4 = `asgi+channels`.
 ## 3. Production & Deploy
 
 1. Security settings: yes / no. Default no.
-   - If yes: `django-csp` — yes / no. Default yes. See `references/django-csp.md`.
+   - If yes: CSP — yes / no. Default yes. Django ≥ 6.0 ships CSP in core; see `references/csp.md`.
 2. Health checks (`/healthz`, `/readyz`): yes / no. Default yes.
 3. Error reporting: `bugsink` / `sentry-sdk` / `glitchtip` / none. Default none.
 4. GDPR helpers: yes / no. Default no.
 5. CI on GitHub Actions: yes / no. Default no.
-6. Deploy: `vps` (Docker + Caddy) / `managed` (Fly / Railway / Render) / `github-ssh` / none. Default none.
+6. Deploy: `vps` (Docker + Caddy) / `managed` (Fly / Railway / Render) / `github-ssh` / none. Default none. Read `references/deploy-pitfalls.md` before generating deploy files.
    - If `vps` or `github-ssh`: `django-dbbackup` — yes / no. Default yes.
 
 ## 4. Smoke + README
