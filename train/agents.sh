@@ -116,12 +116,17 @@ extract_section() {
 cli_dispatch() {
     case "$CASE_CLI" in
         claude)
+            # CLAUDE_CODE_DISABLE_AUTO_MEMORY — harness runs must be
+            # reproducible on any machine, not shaped by this operator's
+            # persistent memory (~/.claude/projects/.../memory/).
             if [[ -n "${CASE_TOOLS:-}" ]]; then
+                CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 \
                 claude -p "$PROMPT" --model="$CASE_MODEL" \
                     --allowedTools "$CASE_TOOLS" \
                     --output-format stream-json --include-partial-messages \
                     --print --verbose
             else
+                CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 \
                 claude -p "$PROMPT" --model="$CASE_MODEL" \
                     --dangerously-skip-permissions \
                     --output-format stream-json --include-partial-messages \
