@@ -39,6 +39,44 @@ cli_require() {
     esac
 }
 
+# _kill_watchdog_tree <watchdog-pid> — the watchdog subshell shares the
+# script's own process group (no job control, so plain `&` gets no new
+# pgid), and killing it doesn't reap its `sleep` child (SIGTERM to a
+# parent never cascades to children). Kill the child(ren) by ppid first,
+# `.` as pgrep's pattern since macOS pgrep requires one and matches
+# every command name.
+_kill_watchdog_tree() {
+    local wd=$1 child
+    [[ -n "$wd" ]] || return 0
+    for child in $(pgrep -P "$wd" . 2>/dev/null); do
+        kill -TERM "$child" 2>/dev/null || true
+    done
+    kill -TERM "$wd" 2>/dev/null || true
+}
+
+# Ctrl-C at the terminal only signals processes in the terminal's
+# foreground process group. The cmd run_watched backgrounds is setsid'd
+# into its own detached session (see setsid_exec) precisely so a stuck
+# tree can be reaped later — which also means it never sees the
+# terminal's SIGINT. This trap, installed for the run_watched() call's
+# duration, kills that pgrp too so Ctrl-C actually tears the run down.
+_run_watched_interrupt() {
+    local sig=$1
+    echo >&2
+    if [[ -n "${RUN_WATCHED_PGID:-}" ]]; then
+        echo "[interrupt] SIG$sig — killing pgrp $RUN_WATCHED_PGID" >&2
+        kill -TERM -- -"$RUN_WATCHED_PGID" 2>/dev/null || true
+        sleep 2
+        kill -KILL -- -"$RUN_WATCHED_PGID" 2>/dev/null || true
+    fi
+    # The watchdog's own `(sleep ...) &` is an async job of this
+    # non-interactive script, so SIGINT/SIGQUIT never reach it (bash
+    # ignores those two signals for async commands started without job
+    # control) — TERM it explicitly or it outlives our own exit.
+    _kill_watchdog_tree "${RUN_WATCHED_WATCHDOG_PID:-}"
+    exit 130
+}
+
 # run_watched <timeout_seconds> <label> <cmd...>
 #
 # Runs cmd in the background (cmd must already setsid itself — see
@@ -48,8 +86,12 @@ cli_require() {
 # the command exits. Sets $RUN_WATCHED_RC to the command's real exit code.
 run_watched() {
     local timeout=$1 label=$2; shift 2
+    trap '_run_watched_interrupt INT' INT
+    trap '_run_watched_interrupt TERM' TERM
+
     "$@" &
     local pid=$! pgid=$!
+    RUN_WATCHED_PGID=$pgid
 
     (
         sleep "$timeout"
@@ -62,16 +104,19 @@ run_watched() {
         fi
     ) &
     local watchdog=$!
+    RUN_WATCHED_WATCHDOG_PID=$watchdog
 
     wait "$pid"
     RUN_WATCHED_RC=$?
 
-    kill "$watchdog" 2>/dev/null || true
+    _kill_watchdog_tree "$watchdog"
     wait "$watchdog" 2>/dev/null || true
 
     kill -TERM -- -"$pgid" 2>/dev/null || true
     sleep 1
     kill -KILL -- -"$pgid" 2>/dev/null || true
+
+    unset RUN_WATCHED_WATCHDOG_PID RUN_WATCHED_PGID
 }
 
 # extract_section <file> <section-name>
