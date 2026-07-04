@@ -2,6 +2,11 @@
 
 Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One section per day; all of a day's commits collapse into one block. Trim to ≤ 200 lines; git keeps the rest.
 
+## 26.27.7 — 2026-07-05
+
+### Fixed
+- Testcase 01 boot check no longer races: `runserver --noreload` + a `curl` poll loop, matching SKILL.md §4 (bare `runserver &` + one immediate `curl` fired before the WSGI listener was up).
+
 ## 26.27.6 — 2026-07-04
 
 ### Fixed
