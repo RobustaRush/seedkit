@@ -24,6 +24,7 @@ Task runner: none.
 Add-ons:
   - debug: django-orbit (observability dashboard + MCP)
   - email: console backend in local, plus Mailpit running in Docker for richer inspection
+  - HTML email base template + `send_test_email` command: yes. Also `uv run manage.py startapp mailer`, register `mailer` in `INSTALLED_APPS`, and put the command under `mailer/management/commands/`.
   - CORS: no.
   - REST API: none.
   - Frontend: none.
@@ -32,7 +33,7 @@ Add-ons:
   - robots.txt: no.
   - django-extensions: no.
   - Devcontainer: no.
-Run the foundation + boot check. Spin up Mailpit via a one-service `docker-compose.yml`, point Django at SMTP `localhost:1025`, send a test mail, and confirm it appears in Mailpit's UI on `:8025`.
+Run the foundation + boot check. Spin up Mailpit via a one-service `docker-compose.yml`, point Django at SMTP `localhost:1025`, send the test mail with `manage.py send_test_email`, and confirm it appears in Mailpit's UI on `:8025`.
 ```
 
 ## Boot check
@@ -47,13 +48,8 @@ curl -sf http://127.0.0.1:8000/orbit/ > /dev/null
 curl -sf http://127.0.0.1:8025/ > /dev/null
 test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
 test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
-# Send a test mail and verify Mailpit captured it. `manage.py shell -c`
-# sets DJANGO_SETTINGS_MODULE and calls django.setup() for us — bare
-# `python -c` would silently no-op without env wiring.
-uv run manage.py shell -c "
-from django.core.mail import send_mail
-send_mail('hello', 'body', 'from@example.com', ['to@example.com'])
-"
+# Send the test mail (text + HTML alternative) and verify Mailpit captured it.
+uv run manage.py send_test_email to@example.com
 sleep 1
 TOTAL=$(curl -sf http://127.0.0.1:8025/api/v1/messages | python3 -c 'import json,sys; print(json.load(sys.stdin)["total"])')
 test "$TOTAL" -ge 1
@@ -80,6 +76,11 @@ Verify these structural facts:
 - `EMAIL_URL`, `DEFAULT_FROM_EMAIL`, `SERVER_EMAIL` set via `env.email_url(...)` / `env(...)` with the gated-default idiom.
 - `LOGGING` is at module scope (NOT inside `if DEBUG:`); `if DEBUG:` block only appends the orbit handler.
 - `if DEBUG:` block adds `"orbit"` to `INSTALLED_APPS` and inserts `"orbit.middleware.OrbitMiddleware"` at MIDDLEWARE index 1 (after `SecurityMiddleware`, not before).
+
+**HTML email**
+- Files present: `templates/email/base.html` (table layout, inline `style=` attributes, `{% block content %}`), `templates/email/test.html` (extends `email/base.html`), `mailer/management/commands/send_test_email.py`.
+- The command builds `EmailMultiAlternatives` and calls `attach_alternative(..., "text/html")` — not `send_mail`.
+- `templates/email/base.html` contains no Tailwind utility classes and no `<style>` block.
 
 **URLs + health**
 - `config/urls.py` mounts `orbit.urls` only when `settings.DEBUG`.

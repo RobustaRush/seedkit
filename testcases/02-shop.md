@@ -25,9 +25,11 @@ Task runner: mise.
 Add-ons:
   - storage: WhiteNoise for static files (no media volume yet)
   - email: SMTP (console backend in local, SMTP in production)
+  - HTML email base template: no.
   - CORS: no.
   - REST API: none.
-  - Frontend: `tailwind-cli` (custom 404/403/500 templates: yes; DaisyUI: yes). Also add a `pages` app with an `IndexView(TemplateView)` wired at `/`. Its `index.html` must include `text-blue-600` and `text-4xl` (utility check) and a `<button class="btn btn-primary">` (DaisyUI check) — concrete grep targets for the integration tests below.
+  - Frontend: `tailwind-cli` (custom 404/403/500 templates: yes; DaisyUI: yes; favicon: yes — agent-drawn SVG). Also add a `pages` app with an `IndexView(TemplateView)` wired at `/`. Its `index.html` must include `text-blue-600` and `text-4xl` (utility check) and a `<button class="btn btn-primary">` (DaisyUI check) — concrete grep targets for the integration tests below.
+  - SEO (meta/OG tags + sitemap): yes. The sitemap lists the `pages` index URL.
   - Auth hardening: `django-axes` (yes), 2FA (no).
   - Billing: `stripe` raw SDK.
   - Health check endpoints: yes.
@@ -56,6 +58,10 @@ curl -sf http://127.0.0.1:8000/ | grep -q 'data-theme='
 test "$(curl -sf http://127.0.0.1:8000/healthz)" = "ok"
 test "$(curl -sf http://127.0.0.1:8000/readyz)" = "ready"
 curl -sf http://127.0.0.1:8000/robots.txt | grep -q 'User-agent: \*'
+curl -sf http://127.0.0.1:8000/ | grep -q 'favicon.svg'
+curl -sf http://127.0.0.1:8000/static/favicon.svg | grep -q '<svg'
+curl -sf http://127.0.0.1:8000/ | grep -q 'property="og:title"'
+curl -sf http://127.0.0.1:8000/sitemap.xml | grep -q '<urlset'
 uv run ruff check .
 uv run pyright
 # Task runner sanity — mise.toml present.
@@ -164,6 +170,11 @@ Verify these structural facts:
 - `templates/base.html` loads `{% load tailwind_cli %}`, calls `{% tailwind_css %}` inside `<head>`, and contains `<html data-theme=`.
 - `templates/index.html` extends `base.html` and contains the literals `text-blue-600`, `text-4xl`, and `btn-primary`.
 - `templates/404.html`, `templates/403.html`, `templates/500.html` present. `500.html` does NOT extend `base.html`.
+
+**Favicon + SEO**
+- `assets/favicon.svg` present, contains `<svg`. `templates/base.html` links it via `{% static 'favicon.svg' %}` and loads `{% load static %}`.
+- `templates/base.html` `<head>` contains `property="og:title"`, `property="og:description"`, `rel="canonical"`, and `name="description"`.
+- `INSTALLED_APPS` contains `django.contrib.sitemaps`. `config/sitemaps.py` (or an app equivalent) defines a `Sitemap` subclass; `config/urls.py` wires `path("sitemap.xml", ...)`. `SITEMAP_URL` read via `env(...)` and listed in `.env.example`.
 
 **Production artifacts**
 - Files present at project root: `Dockerfile` (multi-stage `builder` + `prod` targets), `.dockerignore`. Under `deploy/`: `docker-compose.prod.yml`, `Caddyfile`. No root `docker-compose.yml` (Postgres is on the host; no local services to compose).

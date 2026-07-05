@@ -4,6 +4,12 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 
 ## 26.27.7 — 2026-07-05
 
+### Added
+- `seo.md` — meta/OG tags block for `base.html` + `django.contrib.sitemaps` wiring; defines the `SITEMAP_URL` that `robots.md`'s view already consumed. New §5.5 question (default no, skipped when Frontend = none).
+- `favicon.md` — agent-drawn SVG favicon matching the project (initial/motif + theme colors), PNG fallbacks via `rsvg-convert`/`sips` when available (ImageMagick excluded — stock builds can't rasterize SVG `<text>`). Follow-up under Frontend, default yes with Tailwind.
+- `email.md` gains an HTML email base template (table layout, inline styles) + `send_test_email` management command; follow-up under the email-backend question, default no. Testcase 05 exercises it end-to-end via Mailpit.
+- SKILL.md §8: new-project runs now emit `AGENTS.md` (stack decisions, layout, key commands) plus a one-line `CLAUDE.md` (`@AGENTS.md`) so coding agents pick up project context.
+
 ### Fixed
 - `ci.md`'s placeholder `DJANGO_SECRET_KEY` is now 50+ chars — the old `test-key` tripped `security.W009` at the workflow's own `check --deploy --fail-level WARNING` step.
 - `pytest.md` seeds a smoke test per touched app — a project shipping only empty `startapp` stubs makes `pytest` exit 5 ("no tests collected"), turning CI red on first push. `dev-tasks.md` skips `deploy-migrate` for the SQLite + Litestream deploy (migrate runs in `entrypoint.sh`), so `deploy` is a bare `up -d`.

@@ -23,6 +23,7 @@ Structured logging: no.
 Task runner: none.
 Add-ons:
   - email: console backend (`EMAIL_URL=consolemail://`).
+  - HTML email base template: no.
   - CORS: no.
   - REST API: none.
   - Frontend: none.
@@ -44,6 +45,7 @@ cd 01-minimal-blog
 uv run manage.py runserver --noreload &
 for i in 1 2 3 4 5; do curl -sf http://127.0.0.1:8000/admin/login/ > /dev/null && break; sleep 1; done
 kill $(jobs -p) 2>/dev/null; wait
+test -f AGENTS.md && grep -qx '@AGENTS.md' CLAUDE.md
 ```
 
 ## Review
@@ -53,6 +55,7 @@ Read-only audit of the project in the current directory. Quote the file path and
 Verify these structural facts:
 
 - Files present at the project root: `pyproject.toml`, `uv.lock`, `manage.py`, `config/settings.py`, `db.sqlite3`, `.env`, `.gitignore`.
+- `AGENTS.md` present: lists the stack decisions (single-file settings, SQLite, no add-ons) and the key commands. `CLAUDE.md` contains exactly one line: `@AGENTS.md`.
 - `pyproject.toml` declares `django>=6.0,<7.0` and `django-environ`. No Ruff config, no pyright config.
 - `config/settings.py` reads `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, `DATABASE_URL` via `environ.Env()`, and uses `env.NOTSET` for the prod branch of `SECRET_KEY` and `DATABASES`.
 - No Docker files (`Dockerfile`, `docker-compose.yml`).

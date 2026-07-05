@@ -27,6 +27,7 @@ Add-ons:
   - tasks: Django Tasks with the Database backend (`django-tasks-db`). Also `uv run manage.py startapp jobs`, register `jobs` in `INSTALLED_APPS`, wire `jobs/apps.py` `ready()` to import `tasks`, and add a sample `@task` to `jobs/tasks.py`.
   - analytics: GoatCounter (self-hosted snippet, env-driven site code)
   - email: console backend in local (`EMAIL_URL=consolemail://`).
+  - HTML email base template: no.
   - CORS: no.
   - REST API: none.
   - Frontend: none.

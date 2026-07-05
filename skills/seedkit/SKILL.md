@@ -1,7 +1,7 @@
 ---
 name: seedkit
 version: 26.27.7
-description: Bootstrap a new Django project, or add components — auth (allauth, magic-link, axes, 2FA), payments (Stripe, dj-stripe), REST (django-modern-rest, django-bolt), Celery / django-tasks, async views & WebSockets (ASGI, uvicorn worker, django-channels, channels-redis), Tailwind+DaisyUI, S3 storage, structlog, healthchecks, Docker, CI, deploy (VPS / Fly / GitHub-SSH), dbbackup, Sentry/Bugsink — to an existing Django codebase. Use whenever the user wants to scaffold Django, integrate a Django package, set up async / WebSockets, set up production deploys, wire CI/CD, or extend an existing Django project.
+description: Bootstrap a new Django project, or add components — auth (allauth, magic-link, axes, 2FA), payments (Stripe, dj-stripe), REST (django-modern-rest, django-bolt), Celery / django-tasks, async views & WebSockets (ASGI, uvicorn worker, django-channels, channels-redis), Tailwind+DaisyUI, favicon, SEO meta tags + sitemap, HTML email templates, S3 storage, structlog, healthchecks, Docker, CI, deploy (VPS / Fly / GitHub-SSH), dbbackup, Sentry/Bugsink — to an existing Django codebase. Use whenever the user wants to scaffold Django, integrate a Django package, set up async / WebSockets, set up production deploys, wire CI/CD, or extend an existing Django project.
 ---
 
 ## How this skill works
@@ -66,6 +66,8 @@ For every question that involves a third-party package: 1–2 sentences from the
 ### Frontend & Site Basics
 
 - `references/tailwind.md` — Tailwind CSS standalone CLI; DaisyUI; custom 404/403/500
+- `references/favicon.md` — agent-drawn SVG favicon (+ PNG fallbacks when tooling exists)
+- `references/seo.md` — meta/OG tags + `django.contrib.sitemaps`
 - `references/i18n.md` — gettext, LocaleMiddleware, makemessages
 - `references/cors.md` — `django-cors-headers`
 - `references/robots.md` — `robots.txt`
@@ -152,15 +154,18 @@ For new projects: ask every question. For existing projects: only ask about comp
 
 1. Background tasks: `celery` / `django-tasks-db` / `django-tasks-rq` / `none`. **Default `django-tasks-db` when DB=SQLite, else `none`.**
 2. Email backend: `console` / `smtp` / `mailpit` / `anymail` / `none`. **Always ask** — every project sends mail eventually (password resets, error reports, allauth verification).
+   - If backend ≠ none: HTML email base template + `send_test_email` command? **Default no.**
 
 #### 5.5 Frontend & Site Basics
 
 1. Frontend: `tailwind` / `none`. **Default none.**
    - If tailwind: custom 404/403/500 templates? **Default no.**
    - If tailwind: DaisyUI components? **No default — always ask explicitly.**
-2. i18n (gettext, LocaleMiddleware, makemessages): yes / no. **Default no** — cost of adding later is real.
-3. CORS: yes / no. **Default no** — only when there's a separate frontend on a different domain.
-4. `robots.txt`: yes / no. **Default no** — only for public-facing sites.
+   - If tailwind: favicon (agent-drawn SVG matching the project)? **Default yes.**
+2. SEO basics (meta/OG tags + sitemap): yes / no. **Default no** — only for public-facing sites. Skip if Frontend = none (the meta block needs `base.html`).
+3. i18n (gettext, LocaleMiddleware, makemessages): yes / no. **Default no** — cost of adding later is real.
+4. CORS: yes / no. **Default no** — only when there's a separate frontend on a different domain.
+5. `robots.txt`: yes / no. **Default no** — only for public-facing sites.
 
 #### 5.6 SaaS / Product
 
@@ -195,13 +200,19 @@ After §6, ask the user to run, using the task-runner names from §5.1 if one wa
 
 Wait for the user to confirm the browser login works before §8.
 
-### 8. README
+### 8. README + agent context
 
 After applying any reference, append the decision and any new commands to `README.md`. Finalize at the end of the run with stack summary and key commands (install, test, migrate, run, deploy). Don't hardcode dependency versions — read them from `pyproject.toml`. If a task runner was applied (§5.1), show task-runner names (`mise run dev`, `just test`) in the README's main command list — not the raw `uv run …` invocations.
 
 If a deploy target was applied (§6.6), copy the deploy command block from the matching `references/deploy-*.md` verbatim into a `## Deploy` section in `README.md`. The block includes the one-shot `manage.py migrate` step that runs before `docker compose up -d` — without it, the first `up -d --build` hits an empty database and every page 500s.
 
-For new projects only, append a final line to `README.md`: `Built with [Seedkit](https://github.com/RobustaRush/seedkit).` Skip on existing-project runs.
+For new projects only (no question — always):
+
+- Write `AGENTS.md`: one line per stack decision (layout, DB, request handling, each applied add-on), the project layout tree, and the same key-commands block the README gets. Coding agents load it as project context, so keep it factual and short — no marketing prose.
+- Write `CLAUDE.md` containing exactly one line: `@AGENTS.md`.
+- Append a final line to `README.md`: `Built with [Seedkit](https://github.com/RobustaRush/seedkit).`
+
+Skip all three on existing-project runs.
 
 ## Common pitfalls
 

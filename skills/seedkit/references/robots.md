@@ -57,4 +57,4 @@ Staging deploys, preview environments, internal tools — set `ROBOTS_DISALLOW_A
 
 ## What this is NOT
 
-Not a sitemap (`django.contrib.sitemaps` if needed, point at it via `SITEMAP_URL`) and not a security control — `/admin/` is gated by Django's auth.
+Not a sitemap (`references/seo.md` wires `django.contrib.sitemaps` and `SITEMAP_URL`) and not a security control — `/admin/` is gated by Django's auth.

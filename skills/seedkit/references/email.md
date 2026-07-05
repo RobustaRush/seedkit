@@ -224,3 +224,89 @@ Open <http://localhost:8025> to view captured emails.
 - Inline every CSS rule. Gmail / Outlook strip `<style>` blocks. Tools like `premailer` can do this at build time; for a starter, write inline styles by hand and keep the palette small.
 - Don't reference Tailwind classes in email HTML. Tailwind output is purged against templates `@source`'d in `source.css` — email templates would either bloat the bundle (if added to `@source`) or miss styles (if not). Write the small inline subset you need.
 - Test with a real client. Litmus / Email on Acid render previews; or just send to one Gmail and one Outlook account before declaring a template done.
+
+---
+
+## Optional — HTML email base template
+
+Apply when the user opts in (follow-up under the email-backend question). Without it, transactional mail (allauth verification, password resets) goes out as bare text — functional, but off-brand once the product has a look.
+
+The Mailpit `### Pitfalls` above set the constraints: table layout, inline styles only, no Tailwind classes.
+
+### `templates/email/base.html`
+
+```django
+<!DOCTYPE html>
+<html>
+<body style="margin:0; padding:0; background-color:#f4f4f5;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:24px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+               style="background-color:#ffffff; border-radius:8px; max-width:600px; width:100%;">
+          <tr>
+            <td style="padding:32px; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:1.5; color:#18181b;">
+              <p style="margin:0 0 16px; font-size:20px; font-weight:bold;"><project name></p>
+              {% block content %}{% endblock %}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 32px; font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#71717a;">
+              <project name> · <site URL>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+```
+
+Replace `<project name>` / `<site URL>` at scaffold time. Match the two color pairs to the project's theme. Every message keeps a plain-text version alongside the HTML — send both via `EmailMultiAlternatives` (the command below shows the shape).
+
+When allauth is selected, override its email templates under `templates/account/email/` to extend this base. With django-mail-auth, the optional `templates/registration/login_email.html` (see `references/auth.md`) can extend it too.
+
+### `send_test_email` command
+
+Under a registered app (e.g. `<app>/management/commands/send_test_email.py`). If the project has no domain app yet, hold this until one exists — same rule as `tasks.py` (see SKILL.md App layout).
+
+```python
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.core.management.base import BaseCommand
+from django.template.loader import render_to_string
+
+
+class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument("recipient")
+
+    def handle(self, *args, recipient, **opts):
+        msg = EmailMultiAlternatives(
+            subject="Test email",
+            body="If you can read this, plain-text email delivery works.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[recipient],
+        )
+        msg.attach_alternative(render_to_string("email/test.html"), "text/html")
+        msg.send()
+        self.stdout.write(self.style.SUCCESS(f"sent to {recipient}"))
+```
+
+### `templates/email/test.html`
+
+```django
+{% extends "email/base.html" %}
+{% block content %}
+<p style="margin:0;">If you can read this with styling, HTML email rendering works.</p>
+{% endblock %}
+```
+
+### Verifying
+
+```sh
+uv run manage.py send_test_email you@example.com
+```
+
+With the console backend the MIME source prints to stdout; with Mailpit up, inspect the rendered HTML at <http://localhost:8025>.
