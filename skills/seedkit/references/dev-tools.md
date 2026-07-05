@@ -345,10 +345,10 @@ Add after `uv sync --frozen` and before the test step in `.github/workflows/test
 
 ```ini
 [django_migration_linter]
-exclude_apps = silk,allauth,account,socialaccount,django_tasks_database
+exclude_apps = silk,allauth,account,socialaccount,django_tasks_db
 ```
 
-`django_tasks_database` is the label for the `django_tasks_db` `INSTALLED_APPS` entry — they don't match. Check `AppConfig.label` if `lintmigrations` still flags an app you tried to exclude.
+Check `AppConfig.label` (allauth registers as `account`/`socialaccount`, not `allauth`) if `lintmigrations` still flags an app you tried to exclude.
 
 ### django-test-migrations
 

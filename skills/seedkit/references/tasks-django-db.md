@@ -10,16 +10,17 @@ Docs: <https://github.com/RealOrangeOne/django-tasks-database>
 uv add django-tasks-db
 ```
 
-Django 6.0+ ships `django.tasks` in stdlib — don't add the standalone `django-tasks` package, it shadows the stdlib module.
+`django-tasks-db` 0.12.0 is built against the standalone `django-tasks` backport (import path `django_tasks`) and pulls it in as a dependency — Django 6's stdlib `django.tasks` is a separate module. Use `from django_tasks import task` in app code.
 
 ## INSTALLED_APPS
 
-`django.tasks` is built into Django 6.0+. Only the backend's app registers:
+`django_tasks` (the backport app) is the Tasks API; `django_tasks_db` ships the task-table migrations. Both register:
 
 ```python
 INSTALLED_APPS = [
     ...
-    "django_tasks_db",   # ships migrations for the task table
+    "django_tasks",
+    "django_tasks_db",
 ]
 ```
 
@@ -27,6 +28,14 @@ INSTALLED_APPS = [
 
 ```python
 TASKS = {"default": {"BACKEND": "django_tasks_db.DatabaseBackend"}}
+```
+
+## Test settings
+
+The eager backend in `config/settings/test.py` comes from the backport too:
+
+```python
+TASKS = {"default": {"BACKEND": "django_tasks.backends.immediate.ImmediateBackend"}}
 ```
 
 ## Migrate

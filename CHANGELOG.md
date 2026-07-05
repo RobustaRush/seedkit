@@ -5,7 +5,8 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 ## 26.28.1 — 2026-07-06
 
 ### Fixed
-- `tasks-django-rq.md`: `django-tasks-rq` 0.12.0 is built against the standalone `django-tasks` backport (import `django_tasks`), not Django 6's stdlib `django.tasks` — `INSTALLED_APPS` lists `django_tasks` (`django_tasks_rq` is a backend module with no AppConfig) and app code imports `from django_tasks import task`.
+- `tasks-django-rq.md` / `tasks-django-db.md`: both 0.12.0 adapters are built against the standalone `django-tasks` backport (import `django_tasks`), not Django 6's stdlib `django.tasks` — register `django_tasks`, import `from django_tasks import task`, and use `django_tasks.backends.immediate.ImmediateBackend` as the test eager backend.
+- `dev-tools.md`: `lintmigrations` `exclude_apps` used the wrong label `django_tasks_database`; the app label is `django_tasks_db`, so its migrations weren't skipped.
 - `SKILL.md`: `startapp` ordering pitfall now also covers packages a settings block references (e.g. `orbit.handlers.OrbitLogHandler`) — `uv add` them before the next `startapp` imports settings.
 
 ## 26.27.7 — 2026-07-05
