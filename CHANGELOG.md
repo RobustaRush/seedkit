@@ -2,6 +2,11 @@
 
 Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One section per day; all of a day's commits collapse into one block. Trim to ≤ 200 lines; git keeps the rest.
 
+## 26.28.1 — 2026-07-06
+
+### Fixed
+- `tasks-django-rq.md`: `django-tasks-rq` 0.12.0 is built against the standalone `django-tasks` backport (import `django_tasks`), not Django 6's stdlib `django.tasks` — `INSTALLED_APPS` lists `django_tasks` (`django_tasks_rq` is a backend module with no AppConfig) and app code imports `from django_tasks import task`.
+
 ## 26.27.7 — 2026-07-05
 
 ### Added

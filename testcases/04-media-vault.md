@@ -118,7 +118,7 @@ Verify these structural facts:
 - `django_structlog.middlewares.RequestMiddleware` in `MIDDLEWARE` directly after `AuthenticationMiddleware`. `django_structlog` in `INSTALLED_APPS`. `pyproject.toml` runtime deps include `django-structlog`.
 
 **Tasks**
-- `INSTALLED_APPS` includes `django_rq` and `django_tasks_rq`. `RQ_QUEUES` defined; `RQ = {"JOB_CLASS": "django_tasks_rq.Job"}` at module scope (not inside `RQ_QUEUES`).
+- `INSTALLED_APPS` includes `django_rq` and `django_tasks` (`django_tasks_rq` is a backend module, not an app). `RQ_QUEUES` defined; `RQ = {"JOB_CLASS": "django_tasks_rq.Job"}` at module scope (not inside `RQ_QUEUES`).
 - A registered Django app has `apps.py` with `ready()` importing `tasks`, and a `tasks.py` defining at least one `@task`.
 
 **CORS + Devcontainer + Health**

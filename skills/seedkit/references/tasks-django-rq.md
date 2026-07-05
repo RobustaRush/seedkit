@@ -4,7 +4,7 @@ Docs: <https://github.com/RealOrangeOne/django-tasks-rq> · <https://python-rq.o
 
 Requires Redis (`references/redis.md`).
 
-`django-rq` provides the `rqworker` management command + admin. `django.tasks` (built into Django 6.0+) is the Tasks API — `from django.tasks import task`. `django-tasks-rq` is the adapter from that API to RQ.
+`django-rq` provides the `rqworker` management command + admin. `django-tasks` (the standalone backport, import path `django_tasks`) is the Tasks API — `from django_tasks import task`. `django-tasks-rq` is the adapter from that API to RQ.
 
 ## Install
 
@@ -12,17 +12,17 @@ Requires Redis (`references/redis.md`).
 uv add django-tasks-rq django-rq
 ```
 
-Django 6.0+ ships `django.tasks` in stdlib — don't add the standalone `django-tasks` package, it shadows the stdlib module.
+`django-tasks-rq` 0.12.0 is built against the standalone `django-tasks` backport (import path `django_tasks`) and pulls it in as a dependency — Django 6's stdlib `django.tasks` is a separate module. Use `from django_tasks import task` in app code.
 
 ## INSTALLED_APPS
 
-`django_rq` and `django_tasks_rq` are both apps and both register:
+`django_rq` and `django_tasks` (the backport app) both register. `django_tasks_rq` is a backend module, not an app — don't list it:
 
 ```python
 INSTALLED_APPS = [
     ...
     "django_rq",
-    "django_tasks_rq",
+    "django_tasks",
 ]
 ```
 
