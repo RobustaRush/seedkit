@@ -32,7 +32,7 @@ BASELINE_ROOT="$WORKSPACE/baselines"
 LOGS="$WORKSPACE/logs"
 BASELINE_CLI="${BASELINE_CLI:-claude}"
 case "$BASELINE_CLI" in
-    claude) DEFAULT_MODEL="claude-sonnet-4-6" ;;
+    claude) DEFAULT_MODEL="claude-sonnet-5" ;;
     agy) DEFAULT_MODEL="gemini-3.5-flash" ;;
     codex) DEFAULT_MODEL="" ;;  # let the CLI apply its own default
     *) echo "BASELINE_CLI must be one of: claude codex agy (got: $BASELINE_CLI)" >&2; exit 1 ;;

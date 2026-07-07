@@ -21,7 +21,7 @@ LLMs write Django from memory, and that memory is a year or two old: deprecated 
 |                      | boilerplate generator | raw LLM         | seedkit                 |
 |----------------------|-----------------------|-----------------|-------------------------|
 | Your exact stack     | fixed menu            | yes             | yes                     |
-| Current package APIs | age with the template | training cutoff | looked up at generation |
+| Current package APIs | frozen in time        | training cutoff | looked up at generation |
 | Output verified      | template's own CI     | no              | 9 end-to-end scenarios, audited by a second LLM |
 | Deterministic        | yes                   | no              | no                      |
 
