@@ -18,12 +18,7 @@ An agent skill to start new Django projects or extend existing ones. One sentenc
 
 LLMs write Django from memory, and that memory is a year or two old: deprecated auth settings, last version's Stripe webhooks, database ports open to the local network. seedkit keeps the knowledge in reference files instead — built from package docs, tested end-to-end, fixed after every failure. The model just types.
 
-|                      | boilerplate generator | raw LLM         | seedkit                 |
-|----------------------|-----------------------|-----------------|-------------------------|
-| Your exact stack     | fixed menu            | yes             | yes                     |
-| Current package APIs | frozen in time        | training cutoff | looked up at generation |
-| Output verified      | template's own CI     | no              | 9 end-to-end scenarios, audited by a second LLM |
-| Deterministic        | yes                   | no              | no                      |
+A boilerplate generator only offers a fixed menu, frozen at the template's last update; a raw LLM writes any stack you ask for, but from year-old memory. seedkit gives you your exact stack with each package's current API looked up at generation, and the output checked against 9 end-to-end scenarios and audited by a second LLM.
 
 The whole test suite runs on Claude Sonnet: a mid-tier model does the scaffolding, and the frontier-model hours from your subscription go to the code only you can write.
 
