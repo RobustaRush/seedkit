@@ -1,10 +1,11 @@
 # Developer tools
 
-Docs: <https://github.com/jazzband/django-silk> · <https://github.com/kmmbvnr/django-orbit> · <https://github.com/PedroBern/django-zeal> · <https://github.com/3YOURMIND/django-migration-linter> · <https://django-test-migrations.readthedocs.io/> · <https://django-extensions.readthedocs.io/>
+Docs: <https://github.com/jazzband/django-silk> · <https://github.com/kmmbvnr/django-orbit> · <https://github.com/adamchainz/django-browser-reload> · <https://github.com/PedroBern/django-zeal> · <https://github.com/3YOURMIND/django-migration-linter> · <https://django-test-migrations.readthedocs.io/> · <https://django-extensions.readthedocs.io/>
 
 Dev-only Django add-ons. Each section is independent — apply only the ones the user opts into.
 
 - **Debug toolbar** (orbit / silk) — pick one or none.
+- **Browser auto-reload** — `django-browser-reload` refreshes the tab on code / template / static changes.
 - **django-extensions** — `shell_plus`, `runserver_plus`, `show_urls`.
 - **Database safety** — pick any of `django-zeal`, `django-migration-linter`, `django-test-migrations`.
 
@@ -199,6 +200,39 @@ SILKY_MAX_RECORDED_REQUESTS_CHECK_PERCENT = 10
 #### Dashboard
 
 `http://localhost:8000/silk/`
+
+## Browser auto-reload — django-browser-reload
+
+Reloads the browser tab when Python code, templates, or static files change under `runserver`. Requires `django.contrib.staticfiles` in `INSTALLED_APPS` (the `startproject` default has it). WSGI and ASGI both supported.
+
+### Install
+
+```sh
+uv add --dev django-browser-reload
+```
+
+### Settings (local / DEBUG-gated)
+
+```python
+# config/settings/local.py  (or DEBUG-gated block in single settings)
+if DEBUG:
+    INSTALLED_APPS += ["django_browser_reload"]
+    # Append last — it must run after any middleware that encodes the response
+    # (e.g. GZipMiddleware); it injects the reload <script> before </body>.
+    MIDDLEWARE += ["django_browser_reload.middleware.BrowserReloadMiddleware"]
+```
+
+### URLs
+
+```python
+if settings.DEBUG:
+    from django.urls import include, path
+    urlpatterns += [path("__reload__/", include("django_browser_reload.urls"))]
+```
+
+The script tag is only injected when `DEBUG=True`, and the dep + app live behind the dev gate — production responses are untouched.
+
+Optional companion: [django-watchfiles](https://github.com/adamchainz/django-watchfiles) makes the underlying file watching faster.
 
 ## django-extensions
 

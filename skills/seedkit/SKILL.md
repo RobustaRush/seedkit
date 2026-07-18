@@ -39,7 +39,7 @@ For every question that involves a third-party package: 1–2 sentences from the
 - `references/typecheck.md` — pyright + django-stubs
 - `references/pre-commit.md` — pre-commit hook config wiring lint / format / typecheck
 - `references/devcontainer.md` — `.devcontainer/devcontainer.json` for VS Code / Codespaces / JetBrains Gateway
-- `references/dev-tools.md` — debug toolbar (orbit / silk), `django-extensions`, db-safety (zeal / migration-linter / test-migrations)
+- `references/dev-tools.md` — debug toolbar (orbit / silk), browser auto-reload (django-browser-reload), `django-extensions`, db-safety (zeal / migration-linter / test-migrations)
 - `references/dev-tasks.md` — task runner (mise / just / make / poe) — short names for the long `uv run …` commands the README would otherwise list
 - `references/logging.md` — `structlog` JSON-in-prod / pretty-in-dev
 
@@ -135,10 +135,11 @@ For new projects: ask every question. For existing projects: only ask about comp
 4. Pre-commit hooks: yes / no. **Default no** — recommend yes if lint=yes; wires whichever of lint / format / typecheck were chosen.
 5. Devcontainer: yes / no. **Default no.** Wraps a Python image with uv pre-installed so VS Code / Codespaces / JetBrains Gateway open the project ready to run.
 6. Debug toolbar: `django-orbit` / `django-silk` / `none`. **Default none.**
-7. DB safety: any of `django-zeal` / `django-migration-linter` / `django-test-migrations`. **Default none.** Skip `django-test-migrations` if pytest = no.
-8. `django-extensions`: yes / no. **Default no.**
-9. Structured logging via `structlog`: yes / no. **Default no.**
-10. Task runner: `mise` / `just` / `make` / `poe` / `none`. **Default mise** (recommended). Detect what's installed with `command -v` and offer the first hit; mention the others. See `references/dev-tasks.md`.
+7. Browser auto-reload via `django-browser-reload`: yes / no. **Default no.**
+8. DB safety: any of `django-zeal` / `django-migration-linter` / `django-test-migrations`. **Default none.** Skip `django-test-migrations` if pytest = no.
+9. `django-extensions`: yes / no. **Default no.**
+10. Structured logging via `structlog`: yes / no. **Default no.**
+11. Task runner: `mise` / `just` / `make` / `poe` / `none`. **Default mise** (recommended). Detect what's installed with `command -v` and offer the first hit; mention the others. See `references/dev-tasks.md`.
 
 #### 5.2 Auth & Accounts
 

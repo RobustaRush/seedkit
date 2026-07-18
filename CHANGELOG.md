@@ -5,6 +5,7 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 ## 26.29.6 — 2026-07-18
 
 ### Added
+- `dev-tools.md` gains `django-browser-reload` — browser tab auto-reloads on code / template / static changes under `runserver`; dev-gated app + middleware (appended last, after response-encoding middleware) + `__reload__/` URLs. New §5.1 question, default no.
 - `conventions.md` — the cross-file contract (env var names, Redis DB map `/0`–`/5`, prod compose service shape with key order, SameSite rule, Python pins, test settings module). Registered in SKILL.md's reference list with a pitfall rule: when two references disagree, conventions.md wins.
 
 ### Changed
