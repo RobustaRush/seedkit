@@ -5,14 +5,24 @@ Docs: <https://caddyserver.com/docs/> · <https://docs.docker.com/compose/>
 ## deploy/docker-compose.prod.yml
 
 ```yaml
+# The default json-file log driver grows without bound — cap it once here
+# and attach to every service, or the VPS disk fills in a few months.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   web:
     image: ghcr.io/{owner}/{project_slug}:latest
     restart: unless-stopped
     env_file: .env.prod
+    logging: *logging
     healthcheck:
       # python+urllib instead of curl — the prod image only installs
-      # postgresql-client and slim has no curl.
+      # postgresql-client and slim has no curl. DJANGO_ALLOWED_HOSTS must
+      # include localhost (see deploy/.env.prod.example) or this probe 400s.
       test: ["CMD-SHELL", "python -c 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen(\"http://localhost:8000/healthz\",timeout=2).status==200 else 1)'"]
       interval: 10s
       timeout: 3s
@@ -29,6 +39,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    logging: *logging
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -45,6 +56,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
+    logging: *logging
     depends_on:
       - web
 
@@ -54,10 +66,18 @@ volumes:
   caddy_config:
 ```
 
+Every service added later (`redis`, `celery`, `celery-beat`, `ws`) gets the same `logging: *logging` line.
+
+Stock `postgres` ships `shared_buffers=128MB` — laptop sizing. On a dedicated box, add `command: postgres -c shared_buffers=<25% of RAM> -c effective_cache_size=<75% of RAM>` to the `db` service (<https://pgtune.leopard.in.ua/> generates the full set).
+
 ## deploy/Caddyfile
 
 ```
 example.com {     # replace with the real domain — Caddy fails to issue TLS for example.com
+    encode zstd gzip          # Caddy doesn't compress by default; WhiteNoise only covers /static/
+    request_body {
+        max_size 10MB         # Caddy's default is unlimited — raise per project if uploads need more
+    }
     reverse_proxy web:8000 {
         # Probe `/healthz` (process up) — NOT `/readyz` (DB+deps).
         # A transient DB blip on /readyz flips the upstream to "down" and
@@ -76,6 +96,10 @@ If the project also serves user-uploaded media via a shared volume (i.e. media o
 
 ```
 example.com {     # replace with the real domain
+    encode zstd gzip
+    request_body {
+        max_size 10MB
+    }
     handle /media/* {
         uri strip_prefix /media   # without this, file_server resolves /srv/media/media/<file>
         root * /srv/media
@@ -97,6 +121,9 @@ git pull
 docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml pull
 docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml run --rm web python manage.py migrate
 docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml up -d
+docker image prune -f   # old :latest layers otherwise accumulate until the disk fills
 ```
+
+`up -d` recreates `web` in place — expect a few seconds of downtime per deploy; this stack trades zero-downtime for one-box simplicity.
 
 Migrations run as a one-shot `docker compose run` *before* `up -d`. Compose's `depends_on: condition: service_healthy` (wired in `references/docker.md`) gates `web` on Postgres being ready — no `entrypoint.sh`, no `pg_isready` loop, no `migrate --noinput` baked into container start. The container's job is `gunicorn`, full stop. (Exception: the SQLite + Litestream pattern in `references/database.md` legitimately uses an entrypoint to restore the DB from S3 before launching gunicorn under `litestream replicate`.)

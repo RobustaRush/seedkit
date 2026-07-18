@@ -37,21 +37,21 @@ Only one of `wsgi.py` / `asgi.py` gets the production pointer — whichever the 
 
 ```dockerfile
 # wsgi
-CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000", "--max-requests", "1000", "--max-requests-jitter", "100", "--access-logfile", "-"]
 
 # asgi or asgi+channels
-CMD ["gunicorn", "-k", "uvicorn_worker.UvicornWorker", "config.asgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "-k", "uvicorn_worker.UvicornWorker", "config.asgi:application", "--bind", "0.0.0.0:8000", "--max-requests", "1000", "--max-requests-jitter", "100", "--access-logfile", "-"]
 ```
 
 Replace the `gunicorn config.wsgi …` line in `references/docker.md` and `references/deploy-vps.md` with the ASGI variant when the mode is `asgi` or `asgi+channels`.
 
 ## Worker count
 
-`gunicorn`'s default `--workers` formula (`2 * cpu + 1`) assumes sync workers. For ASGI/uvicorn workers, **start with the CPU count**; each worker already handles many concurrent requests inside its event loop, so multiplying inflates memory without throughput.
+gunicorn reads `WEB_CONCURRENCY` natively as the worker count (default 1). The `2 * cpu + 1` formula assumes sync workers. For ASGI/uvicorn workers, **start with the CPU count**; each worker already handles many concurrent requests inside its event loop, so multiplying inflates memory without throughput.
 
 ```sh
-# entrypoint or compose env
-GUNICORN_CMD_ARGS="--workers=${WEB_CONCURRENCY:-2}"
+# .env.prod
+WEB_CONCURRENCY=4   # cores for uvicorn workers; 2×cores+1 for sync WSGI workers
 ```
 
 ## Healthcheck

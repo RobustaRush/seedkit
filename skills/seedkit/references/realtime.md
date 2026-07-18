@@ -131,6 +131,7 @@ services:
     image: ${WEB_IMAGE}
     command: gunicorn -k uvicorn_worker.UvicornWorker config.asgi:application --bind 0.0.0.0:8001 --workers ${WS_CONCURRENCY:-2}
     env_file: .env
+    logging: *logging
     depends_on:
       redis:
         condition: service_started

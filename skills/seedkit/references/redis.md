@@ -68,12 +68,21 @@ services:
   redis:
     image: redis:8-alpine
     restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru
+    logging: *logging
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+volumes:
+  redis_data:
 ```
+
+AOF + the volume keep queued Celery / RQ jobs across container restarts. `volatile-lru` evicts only keys with a TTL when `maxmemory` is hit — cache entries have one, broker / queue keys don't. Size `--maxmemory` to the box.
 
 `.env.prod`:
 

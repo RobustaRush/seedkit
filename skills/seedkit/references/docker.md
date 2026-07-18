@@ -142,8 +142,10 @@ COPY --from=builder --chown=django:django /app /app
 
 USER django
 
-CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000", "--max-requests", "1000", "--max-requests-jitter", "100", "--access-logfile", "-"]
 ```
+
+Worker count comes from `WEB_CONCURRENCY` — gunicorn reads it natively and defaults to **1 worker** without it. Set it in `.env.prod`: `2×cores+1` for sync (WSGI) workers, cores for uvicorn workers (`references/async.md`). `--max-requests` + jitter recycle workers periodically so slow memory leaks don't accumulate on a long-lived box.
 
 Common settings — `UV_COMPILE_BYTECODE=1` (pre-compile `.pyc`), `UV_LINK_MODE=copy` (silence hardlink errors), two-step `uv sync` (deps first, project after), `UV_PROJECT_ENVIRONMENT=/opt/venv`. The cache-mount on `/root/.cache/uv` persists uv's wheel cache across builds — Rust-backed deps without a manylinux/aarch64 wheel compile once and the wheel is reused.
 

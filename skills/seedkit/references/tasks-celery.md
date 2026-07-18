@@ -47,6 +47,8 @@ REDIS_URL = env("REDIS_URL", default="redis://127.0.0.1:6379")
 CELERY_BROKER_URL = f"{REDIS_URL}/1"
 CELERY_RESULT_BACKEND = f"{REDIS_URL}/2"
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True  # silence Celery 5+ deprecation
+CELERY_TASK_SOFT_TIME_LIMIT = 540  # raises SoftTimeLimitExceeded inside the task — chance to clean up
+CELERY_TASK_TIME_LIMIT = 600       # hard kill; a hung task otherwise pins the worker forever
 ```
 
 ## Define a task
@@ -72,6 +74,13 @@ services:
     restart: unless-stopped
     command: celery -A config worker -l info
     env_file: .env.prod
+    logging: *logging
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     depends_on:
       db:
         condition: service_healthy
@@ -102,7 +111,8 @@ from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     "example-task": {
-        "task": "{project_slug}.tasks.example_task",
+        # Path points into a registered domain app's tasks.py (see "Define a task").
+        "task": "{app_label}.tasks.example_task",
         "schedule": crontab(hour=8, minute=0),
     },
 }
@@ -125,6 +135,7 @@ services:
     restart: unless-stopped
     command: celery -A config beat -l info
     env_file: .env.prod
+    logging: *logging
     depends_on:
       - celery
 ```

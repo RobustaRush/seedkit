@@ -47,6 +47,7 @@ DJANGO_BEHIND_PROXY=True            # Caddy terminates TLS; required for
                                     # SECURE_SSL_REDIRECT to work right.
 DATABASE_URL=postgres://postgres:CHANGE_ME@db:5432/postgres
 REDIS_URL=redis://redis:6379
+WEB_CONCURRENCY=4                   # gunicorn worker count — 2×cores+1 sync, cores for uvicorn
 
 # Postgres
 POSTGRES_PASSWORD=CHANGE_ME
@@ -117,13 +118,17 @@ jobs:
             # to flip to "healthy" — don't sleep-and-curl on plain HTTP if
             # SECURE_SSL_REDIRECT is on, that returns 301 and `curl` without
             # `-L` reads success regardless of the upstream actually being up.
+            status=starting
             for i in $(seq 1 30); do
               status=$(docker inspect -f '{{.State.Health.Status}}' \
                 $(docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml ps -q web) 2>/dev/null || echo starting)
-              [ "$status" = "healthy" ] && exit 0
+              [ "$status" = "healthy" ] && break
               sleep 2
             done
-            echo "web never became healthy"; exit 1
+            [ "$status" = "healthy" ] || { echo "web never became healthy"; exit 1; }
+            # Prune only after a healthy deploy — old :latest layers otherwise
+            # accumulate until the disk fills.
+            docker image prune -f
 ```
 
 ## Test workflow — also pin `DJANGO_SETTINGS_MODULE`
