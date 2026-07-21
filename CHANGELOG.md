@@ -6,6 +6,7 @@ Versioned `YY.WW.D` — `date +%y.%V.%u` — year / ISO week / ISO weekday. One 
 
 ### Removed
 - `skills/seedkit-slim/` — the questionnaire-only slim variant is no longer part of the published skill; the repo now ships a single `/seedkit`. Its last state is preserved on the `slim` branch. Dropped the "Two variants" section from `README.md`.
+- `REVIEW.md` and the README "Fable 5 Audited" badge + bullet — every finding from the review is fixed (see the `26.29.6` §1–§5 entries below), so the standalone audit file and its README links are retired.
 
 ## 26.29.6 — 2026-07-18
 
