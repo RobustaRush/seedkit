@@ -16,7 +16,7 @@ An agent skill to start new Django projects or extend existing ones. One sentenc
 
 [![View Outputs](https://img.shields.io/badge/View%20Outputs-00C853?style=for-the-badge)](https://github.com/viewflow/seedkit-examples)
 
-![One prompt in, a running Django project out](.github/demo.gif)
+<img src=".github/demo.gif" alt="One prompt in, a running Django project out" width="700">
 
 One prompt like the first produces [07-vps-sqlite-saas](https://github.com/viewflow/seedkit-examples/tree/main/07-vps-sqlite-saas): Docker + Caddy deploy, Sentry, Litestream backups, CI.
 
