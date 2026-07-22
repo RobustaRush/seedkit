@@ -16,14 +16,16 @@ An agent skill to start new Django projects or extend existing ones. One sentenc
 
 [![View Outputs](https://img.shields.io/badge/View%20Outputs-00C853?style=for-the-badge)](https://github.com/viewflow/seedkit-examples)
 
+One prompt like the first produces [07-vps-sqlite-saas](https://github.com/viewflow/seedkit-examples/tree/main/07-vps-sqlite-saas): Docker + Caddy deploy, Sentry, Litestream backups, CI.
+
 LLMs write Django from memory. That memory is a year or two old. Think deprecated auth settings and last version's Stripe webhooks. Or database ports open to the local network. seedkit keeps that knowledge in reference files instead. We build the files from package docs. We test them end-to-end and fix every failure. The model types.
 
 What you get:
 
-- **Current APIs, not model memory.** References come from package docs; version pins re-resolve at generation time. Nothing goes stale the way an unmaintained template repo does.
+- **Current APIs, not model memory.** References come from package docs; version pins re-resolve at generation time. Nothing goes stale the way an unmaintained starter template does.
 - **Tested output.** Nine end-to-end scenarios: generate, boot, smoke-check, audit by a second LLM ([see the outputs](https://github.com/viewflow/seedkit-examples)). We fix every failure back into the skill.
+- **Works on the project you already have.** Generators only start from zero. `/seedkit add [feature]` wires a new package into a live repo: deps, settings, `.env` example, the CI step.
 - **Your exact stack, not a preset.** A cookiecutter hands you its choices, and you spend day one deleting. Here you pick: Celery or RQ, allauth or magic links, VPS or Fly. You get only the code for the options you picked.
-- **Works on the project you already have.** `/seedkit add [feature]` wires a new package into an existing repo the same way — something no template can do.
 - **Plain Django, no lock-in.** The output is a normal Django project you own. No wrapper library, no runtime dependency on seedkit, nothing extra to upgrade later.
 - **100+ hours of AI work, already spent.** The references distill those generate–boot–fix cycles. So scaffolding runs clean on mid-tier Sonnet. Your frontier-model hours go to the code only you can write.
 
