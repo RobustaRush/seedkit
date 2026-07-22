@@ -14,11 +14,7 @@ An agent skill to start new Django projects or extend existing ones. One sentenc
 /seedkit look at our repo and tell us what's worth adding next
 ```
 
-<img src=".github/demo.gif" alt="One prompt in, a running Django project out" width="700">
-
 [![View Outputs](https://img.shields.io/badge/View%20Outputs-00C853?style=for-the-badge)](https://github.com/viewflow/seedkit-examples)
-
-One prompt like the first produces [07-vps-sqlite-saas](https://github.com/viewflow/seedkit-examples/tree/main/07-vps-sqlite-saas): Docker + Caddy deploy, Sentry, Litestream backups, CI.
 
 LLMs write Django from memory. That memory is a year or two old. Think deprecated auth settings and last version's Stripe webhooks. Or database ports open to the local network. seedkit keeps that knowledge in [maintained reference files](https://github.com/viewflow/seedkit/tree/main/skills/seedkit/references) instead. We build the files from package docs. We test them end-to-end and fix every failure. The model types.
 
@@ -45,6 +41,10 @@ Helps you with:
 - **Dev experience:** [request profiling](https://github.com/jazzband/django-silk), [auto browser reload](https://github.com/adamchainz/django-browser-reload), [pre-commit hooks](https://pre-commit.com/), [devcontainers](https://containers.dev/).
 - **Ops:** [scheduled DB backups](https://django-dbbackup.readthedocs.io/), [Docker for local dev](https://docs.docker.com/compose/), [auto-HTTPS reverse proxy](https://caddyserver.com/docs/), [managed deploys on Fly/Railway/Render](https://fly.io/docs/django/).
 - **CI/CD:** [CI pipeline](https://docs.github.com/en/actions), [deploy over SSH](https://github.com/appleboy/ssh-action).
+
+<img src=".github/demo.gif" alt="One prompt in, a running Django project out" width="700">
+
+One prompt like the first produces [07-vps-sqlite-saas](https://github.com/viewflow/seedkit-examples/tree/main/07-vps-sqlite-saas): Docker + Caddy deploy, Sentry, Litestream backups, CI.
 
 ## Install
 
