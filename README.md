@@ -2,6 +2,8 @@
 
 An agent skill to start new Django projects or extend existing ones. One sentence in, a running project out. It wires packages together, splits dev and prod settings, and adds CI.
 
+![One prompt in, a running Django project out](.github/demo.gif)
+
 ```
 /seedkit SaaS landing + waitlist, GDPR-friendly stack (mail, analytics, error reporting), VPS deploy
 ```
