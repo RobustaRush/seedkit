@@ -14,9 +14,9 @@ An agent skill to start new Django projects or extend existing ones. One sentenc
 /seedkit look at our repo and tell us what's worth adding next
 ```
 
-[![View Outputs](https://img.shields.io/badge/View%20Outputs-00C853?style=for-the-badge)](https://github.com/viewflow/seedkit-examples)
-
 <img src=".github/demo.gif" alt="One prompt in, a running Django project out" width="700">
+
+[![View Outputs](https://img.shields.io/badge/View%20Outputs-00C853?style=for-the-badge)](https://github.com/viewflow/seedkit-examples)
 
 One prompt like the first produces [07-vps-sqlite-saas](https://github.com/viewflow/seedkit-examples/tree/main/07-vps-sqlite-saas): Docker + Caddy deploy, Sentry, Litestream backups, CI.
 
