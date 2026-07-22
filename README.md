@@ -27,7 +27,7 @@ What you get:
 - **Works on the project you already have.** Generators only start from zero. `/seedkit add [feature]` wires a new package into a live repo: deps, settings, `.env` example, the CI step.
 - **Your exact stack, not a preset.** A cookiecutter hands you its choices, and you spend day one deleting. Here you pick: Celery or RQ, allauth or magic links, VPS or Fly. You get only the code for the options you picked.
 - **Plain Django, no lock-in.** The output is a normal Django project you own. No wrapper library, no runtime dependency on seedkit, nothing extra to upgrade later.
-- **100+ hours of AI work, already spent.** The references distill those generate–boot–fix cycles. So scaffolding runs clean on mid-tier Sonnet. Your frontier-model hours go to the code only you can write.
+- **Skip the generate–boot–fix grind.** The references distill 100+ hours of those cycles, so scaffolding runs clean on mid-tier Sonnet. Your frontier-model hours go to the code only you can write.
 
 Helps you with:
 
@@ -71,7 +71,7 @@ Then, in whatever empty directory you'd like to populate:
 
 ## Project Status
 
-The skill improves with every run. Each failure the test scenarios surface becomes a reference fix, so each release scaffolds better than the last.
+Each failure the test scenarios surface becomes a reference fix, so each release scaffolds better than the last.
 
 Verification runs on Claude Sonnet today. Other models (Opus, Haiku, GPT, Gemini) and the production deploy targets (VPS, Fly, GitHub-SSH) are wired up but less traveled. Hit something odd there — or anywhere — [open an issue](https://github.com/viewflow/seedkit/issues/new): bug reports go straight into the test loop and come out as fixes.
 
